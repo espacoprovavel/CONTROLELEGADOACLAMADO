@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legado RH — Gestão de Funcionários</title>
+<meta name="description" content="Sistema interno de gestão de funcionários da LEGADO ACLAMADO — UNIPESSOAL LDA. 100% offline.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --bg-alt: #e8edf3;
+  --ink: #002244;
+  --ink-soft: #4B4B4B;
+  --line: #c8d3e0;
+  --accent: #003366;
+  --accent-hover: #002244;
+  --accent-deep: #132347;
+  --gold: #D4AF37;
+  --gold-soft: #b89530;
+  --green: #2e7d32;
+  --red: #AC3838;
+  --card: #ffffff;
+  --shadow: 0 1px 3px rgba(0,34,68,0.08), 0 4px 12px rgba(0,34,68,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Poppins', system-ui, sans-serif;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,51,102,0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+h1, h2, h3, .mono-num { font-family: 'Montserrat', sans-serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ---------- Header ---------- */
+header {
+  background: var(--accent);
+  border-bottom: 3px solid var(--gold);
+  color: #fff;
+  padding: 18px 24px;
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo {
+  width: 46px; height: 46px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat'; font-weight: 800; font-size: 20px; color: var(--accent-deep);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.brand h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.3px; }
+.brand .sub { font-size: 11px; opacity: 0.85; font-weight: 400; letter-spacing: 0.5px; }
+.stats { display: flex; gap: 28px; }
+.stat { text-align: center; }
+.stat .num {
+  font-family: 'Montserrat'; font-weight: 700; font-size: 28px; color: var(--gold);
+  line-height: 1;
+}
+.stat .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; margin-top: 4px; }
+
+/* ---------- Container ---------- */
+.container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+/* ---------- Backup banner ---------- */
+.backup-banner {
+  background: #fff8e1; border: 1px solid var(--gold); border-left: 4px solid var(--gold);
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+}
+.backup-banner .msg { font-size: 14px; color: var(--ink-soft); }
+.backup-banner .msg strong { color: var(--ink); }
+.backup-banner .actions { display: flex; gap: 10px; }
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; margin-bottom: 24px; box-shadow: var(--shadow);
+}
+.search-box { flex: 1; min-width: 220px; position: relative; }
+.search-box input {
+  width: 100%; padding: 11px 14px 11px 40px; border: 1px solid var(--line);
+  border-radius: 9px; font-family: 'Poppins'; font-size: 14px; color: var(--ink);
+  background: var(--bg);
+}
+.search-box input:focus { outline: none; border-color: var(--accent); background: #fff; }
+.search-box::before {
+  content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; opacity: 0.6;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: 'Poppins'; font-weight: 600; font-size: 13px; cursor: pointer;
+  border: none; border-radius: 9px; padding: 11px 16px; display: inline-flex;
+  align-items: center; gap: 7px; transition: all 0.15s ease; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-gold { background: var(--gold); color: var(--accent-deep); }
+.btn-gold:hover { background: var(--gold-soft); }
+.btn-ghost { background: var(--bg-alt); color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { background: #dde5ef; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #8f2e2e; }
+.btn-sm { padding: 7px 11px; font-size: 12px; }
+
+/* ---------- Sections ---------- */
+.group-section { margin-bottom: 32px; }
+.group-head {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.group-head .flag { font-size: 26px; }
+.group-head h2 { font-size: 20px; font-weight: 700; color: var(--ink); }
+.group-pill {
+  font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500;
+  background: var(--accent); color: var(--gold);
+  padding: 4px 12px; border-radius: 999px;
+}
+.group-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* ---------- Table ---------- */
+.table-wrap {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--bg-alt); text-align: left; padding: 12px 16px;
+  font-family: 'JetBrains Mono'; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--accent); font-weight: 500;
+  border-bottom: 1px solid var(--line);
+}
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.12s; }
+tbody tr:hover { background: var(--bg); }
+.emp-name { font-family: 'Montserrat'; font-weight: 700; color: var(--ink); }
+.cell-mono { font-family: 'JetBrains Mono'; font-size: 13px; color: var(--ink-soft); }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.empty-row td { text-align: center; color: var(--ink-soft); padding: 28px; font-style: italic; }
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-block; padding: 4px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+}
+.badge-on { background: rgba(46,125,50,0.12); color: var(--green); }
+.badge-off { background: rgba(172,56,56,0.12); color: var(--red); }
+
+/* ---------- Footer ---------- */
+footer {
+  max-width: 1280px; margin: 32px auto 0; padding: 24px;
+  border-top: 1px solid var(--line); text-align: center;
+  font-size: 12px; color: var(--ink-soft);
+}
+footer .ver { font-family: 'JetBrains Mono'; color: var(--accent); font-weight: 500; }
+footer strong { color: var(--ink); }
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,34,68,0.45);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: none; align-items: flex-start; justify-content: center;
+  z-index: 1000; padding: 30px 16px; overflow-y: auto;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 14px; width: 100%; max-width: 860px;
+  box-shadow: 0 20px 60px rgba(0,34,68,0.3); overflow: hidden;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+.modal-head {
+  background: var(--accent); color: #fff; padding: 18px 24px;
+  border-bottom: 3px solid var(--gold);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-head h2 { font-size: 18px; font-weight: 700; }
+.modal-close {
+  background: rgba(255,255,255,0.15); border: none; color: #fff; cursor: pointer;
+  width: 32px; height: 32px; border-radius: 8px; font-size: 18px; line-height: 1;
+}
+.modal-close:hover { background: rgba(255,255,255,0.28); }
+.modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
+.modal-foot {
+  padding: 16px 24px; border-top: 1px solid var(--line); background: var(--bg);
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* ---------- Form ---------- */
+.form-section { margin-bottom: 24px; }
+.form-section-title {
+  font-family: 'JetBrains Mono'; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--accent); font-weight: 500;
+  padding-bottom: 8px; margin-bottom: 14px; border-bottom: 2px solid var(--bg-alt);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.full { grid-column: 1 / -1; }
+.field label {
+  font-size: 12px; font-weight: 500; color: var(--ink-soft);
+}
+.field label .req { color: var(--red); }
+.field input, .field select, .field textarea {
+  font-family: 'Poppins'; font-size: 14px; padding: 9px 11px;
+  border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,51,102,0.08);
+}
+.field textarea { resize: vertical; min-height: 80px; }
+
+/* ---------- Detail view ---------- */
+.detail-section { margin-bottom: 22px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+.detail-item { display: flex; flex-direction: column; gap: 2px; }
+.detail-item .dl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-soft); font-family: 'JetBrains Mono'; }
+.detail-item .dv { font-size: 14px; color: var(--ink); }
+.detail-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+.detail-head .dname { font-family: 'Montserrat'; font-weight: 800; font-size: 24px; }
+.detail-idline { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+
+/* ---------- Toast ---------- */
+#toastWrap {
+  position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: var(--accent); color: #fff; border-left: 4px solid var(--gold);
+  padding: 14px 18px; border-radius: 10px; font-size: 14px; max-width: 340px;
+  box-shadow: 0 8px 24px rgba(0,34,68,0.3); animation: toastIn 0.3s ease;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+.toast.out { animation: toastOut 0.3s ease forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .stats { gap: 18px; width: 100%; justify-content: space-around; }
+  .group-actions { margin-left: 0; width: 100%; }
+  .form-grid, .detail-grid { grid-template-columns: 1fr; }
+  thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tbody tr {
+    border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; padding: 6px;
+  }
+  tbody td { border: none; padding: 7px 10px; display: flex; justify-content: space-between; gap: 12px; }
+  tbody td::before {
+    content: attr(data-label); font-family: 'JetBrains Mono'; font-size: 11px;
+    text-transform: uppercase; color: var(--accent); font-weight: 500; align-self: center;
+  }
+  .row-actions { justify-content: flex-end; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">LA</div>
+      <div>
+        <h1>Legado RH</h1>
+        <div class="sub">LEGADO ACLAMADO — UNIPESSOAL LDA</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+      <div class="stat"><div class="num" id="statActivos">0</div><div class="lbl">Activos</div></div>
+      <div class="stat"><div class="num" id="statInactivos">0</div><div class="lbl">Inactivos</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="backup-banner" id="backupBanner" style="display:none;">
+    <div class="msg">⚠️ <strong>Já passaram mais de 7 dias desde o último backup.</strong> Proteja os dados dos funcionários.</div>
+    <div class="actions">
+      <button class="btn btn-gold btn-sm" id="bannerBackupBtn">Fazer backup agora</button>
+      <button class="btn btn-ghost btn-sm" id="bannerDismissBtn">Dispensar por hoje</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Pesquisar por nome, NIF, NISS, função, cliente ou CC…" aria-label="Pesquisar funcionários">
+    </div>
+    <button class="btn btn-primary" id="btnNew">＋ Novo Funcionário</button>
+    <button class="btn btn-ghost" id="btnPdfAll">📄 PDF Todos</button>
+    <button class="btn btn-ghost" id="btnZipAll">🗜️ ZIP Completo</button>
+    <button class="btn btn-ghost" id="btnBackup">💾 Backup JSON</button>
+    <button class="btn btn-ghost" id="btnImport">📥 Importar</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
+  </div>
+
+  <div id="groupsWrap"></div>
+
+</div>
+
+<footer>
+  <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
+  <div style="margin-top:6px;">
+    <span class="ver">v1.2</span> · 🔒 Sistema 100% offline — dados guardados apenas neste navegador ·
+    Última actualização: <span id="lastUpdate">—</span>
+  </div>
+</footer>
+
+<!-- Modal: Formulário -->
+<div class="modal-backdrop" id="formModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="formTitle">Novo Funcionário</h2>
+      <button class="modal-close" id="formClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="empForm">
+        <input type="hidden" id="f_id">
+
+        <div class="form-section">
+          <div class="form-section-title">1 · Dados Pessoais</div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="f_nome">Nome completo <span class="req">*</span></label>
+              <input type="text" id="f_nome" required>
+            </div>
+            <div class="field">
+              <label for="f_nasc">Data de nascimento</label>
+              <input type="date" id="f_nasc">
+            </div>
+            <div class="field">
+              <label for="f_nacionalidade">Nacionalidade</label>
+              <input type="text" id="f_nacionalidade" value="Portuguesa">
+            </div>
+            <div class="field">
+              <label for="f_naturalidade">Naturalidade</label>
+              <input type="text" id="f_naturalidade">
+            </div>
+            <div class="field">
+              <label for="f_estadocivil">Estado civil</label>
+              <select id="f_estadocivil">
+                <option value="">—</option>
+                <option>Solteiro(a)</option>
+                <option>Casado(a)</option>
+                <option>União de Facto</option>
+                <option>Divorciado(a)</option>
+                <option>Viúvo(a)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f_genero">Género</label>
+              <select id="f_genero">
+                <option value="">—</option>
+                <option>Masculino</option>
+                <option>Feminino</option>
+                <option>Outro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">2 · Documentação</div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f_cc">CC / BI</label>
+              <input type="text" id="f_cc">
+            </div>
+            <div class="field">
+              <label for="f_cc_val">Validade CC</label>
+              <input type="date" id="f_cc_val">
+            </div>
+            <div class="field">
+              <label for="f_nif">NIF <span class="req">*</span></label>
+              <input type="text" id="f_nif" required inputmode="numeric">
+            </div>
+            <div class="field">
+              <label for="f_niss">NISS</label>
+              <input type="text" id="f_niss" inputmode="numeric">
+            </div>
+            <div class="field">
+              <label for="f_passaporte">N.º Passaporte</label>
+              <input type="text" id="f_passaporte">
+            </div>
+            <div class="field">
+              <label for="f_pass_val">Validade Passaporte</label>
+              <input type="date" id="f_pass_val">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">3 · Contacto e Morada</div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f_tel">Telemóvel</label>
+              <input type="tel" id="f_tel">
+            </div>
+            <div class="field">
+              <label for="f_email">Email</label>
+              <input type="email" id="f_email">
+            </div>
+            <div class="field full">
+              <label for="f_morada">Morada</label>
+              <input type="text" id="f_morada">
+            </div>
+            <div class="field">
+              <label for="f_cp">Código postal</label>
+              <input type="text" id="f_cp">
+            </div>
+            <div class="field">
+              <label for="f_loc">Localidade</label>
+              <input type="text" id="f_loc">
+            </div>
+            <div class="field">
+              <label for="f_pais">País</label>
+              <input type="text" id="f_pais" value="Portugal">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">4 · Contrato de Trabalho</div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f_funcao">Função <span class="req">*</span></label>
+              <input type="text" id="f_funcao" required>
+            </div>
+            <div class="field">
+              <label for="f_categoria">Categoria profissional</label>
+              <input type="text" id="f_categoria">
+            </div>
+            <div class="field">
+              <label for="f_tipocontrato">Tipo de contrato</label>
+              <select id="f_tipocontrato">
+                <option value="">—</option>
+                <option>Sem termo</option>
+                <option>Termo certo</option>
+                <option>Termo incerto</option>
+                <option>Part-time</option>
+                <option>Estágio</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f_estado">Estado</label>
+              <select id="f_estado">
+                <option value="ativo">Activo</option>
+                <option value="inativo">Inactivo</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f_adm">Data admissão <span class="req">*</span></label>
+              <input type="date" id="f_adm" required>
+            </div>
+            <div class="field">
+              <label for="f_cess">Data cessação</label>
+              <input type="date" id="f_cess">
+            </div>
+            <div class="field">
+              <label for="f_venc">Vencimento base (€)</label>
+              <input type="number" id="f_venc" step="0.01" min="0">
+            </div>
+            <div class="field">
+              <label for="f_horario">Horário semanal (h)</label>
+              <input type="number" id="f_horario" step="1" min="0" value="40">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">5 · Cliente / Destacamento</div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="f_cliente">Empresa cliente</label>
+              <input type="text" id="f_cliente">
+            </div>
+            <div class="field">
+              <label for="f_cli_pais">País de destacamento</label>
+              <input type="text" id="f_cli_pais" value="Bélgica">
+            </div>
+            <div class="field">
+              <label for="f_cli_morada">Morada do local de trabalho</label>
+              <input type="text" id="f_cli_morada">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">6 · Conta Bancária</div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f_banco">Banco</label>
+              <input type="text" id="f_banco">
+            </div>
+            <div class="field">
+              <label for="f_iban">IBAN</label>
+              <input type="text" id="f_iban">
+            </div>
+            <div class="field">
+              <label for="f_swift">SWIFT / BIC</label>
+              <input type="text" id="f_swift">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">7 · Contacto de Emergência</div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f_emerg_nome">Nome</label>
+              <input type="text" id="f_emerg_nome">
+            </div>
+            <div class="field">
+              <label for="f_emerg_rel">Relação</label>
+              <input type="text" id="f_emerg_rel">
+            </div>
+            <div class="field">
+              <label for="f_emerg_tel">Telefone</label>
+              <input type="tel" id="f_emerg_tel">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">8 · Observações</div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="f_obs">Observações</label>
+              <textarea id="f_obs"></textarea>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="formCancel">Cancelar</button>
+      <button class="btn btn-primary" id="formSave">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhe -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Ficha do Funcionário</h2>
+      <button class="modal-close" id="detailClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="detailPdf">📄 PDF</button>
+      <button class="btn btn-gold" id="detailEdit">✏️ Editar</button>
+      <button class="btn btn-danger" id="detailDelete">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   LEGADO RH — Sistema de gestão de funcionários (v1.2)
+   100% offline · dados em localStorage
+   ============================================================ */
+
+const STORAGE_KEY = 'gf_funcionarios_v1';
+const BACKUP_KEY = 'gf_last_backup';
+const DISMISS_KEY = 'gf_banner_dismissed_today';
+
+let employees = [];
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function slug(s) {
+  return (s||'sem_nome').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || 'sem_nome';
+}
+function dateStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function uid() {
+  return 'F' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 320);
+  }, 3200);
+}
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ---------- Group resolver ---------- */
+function getGroup(emp) {
+  const p = (emp.cli_pais || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (p === 'belgica' || p.includes('belg')) return 'Bélgica';
+  if (p === 'portugal') return 'Portugal';
+  return 'Outros';
+}
+
+const GROUPS = [
+  { key: 'Bélgica',  flag: '🇧🇪' },
+  { key: 'Portugal', flag: '🇵🇹' },
+  { key: 'Outros',   flag: '🌐' }
+];
+
+/* ---------- Persistence ---------- */
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    employees = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    employees = [];
+  }
+  if (employees.length === 0) {
+    employees = [seedEmployee()];
+    save(false);
+  }
+}
+function save(updateStamp = true) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+  if (updateStamp) localStorage.setItem('gf_last_update', new Date().toISOString());
+}
+
+function seedEmployee() {
+  return {
+    id: uid(),
+    nome: 'João Manuel Silva Costa',
+    nasc: '1988-04-12',
+    nacionalidade: 'Portuguesa',
+    naturalidade: 'Braga',
+    estadocivil: 'Casado(a)',
+    genero: 'Masculino',
+    cc: '12345678 9 ZZ4',
+    cc_val: '2030-06-30',
+    nif: '234567890',
+    niss: '11223344556',
+    passaporte: '',
+    pass_val: '',
+    tel: '+351 912 345 678',
+    email: 'joao.costa@exemplo.pt',
+    morada: 'Rua das Flores, 25, 2.º Dto.',
+    cp: '4700-123',
+    loc: 'Braga',
+    pais: 'Portugal',
+    funcao: 'Operador de Desmancha',
+    categoria: 'Operador Especializado',
+    tipocontrato: 'Termo certo',
+    estado: 'ativo',
+    adm: '2024-01-15',
+    cess: '',
+    venc: 1100.00,
+    horario: 40,
+    cliente: 'Vleeshandel CIS & Seppe Van Den Broeck BV',
+    cli_pais: 'Bélgica',
+    cli_morada: 'Industriepark-Noord 12, 9100 Sint-Niklaas',
+    banco: 'Banco Comercial Português',
+    iban: 'PT50 0033 0000 1234 5678 9012 3',
+    swift: 'BCOMPTPL',
+    emerg_nome: 'Maria Costa',
+    emerg_rel: 'Cônjuge',
+    emerg_tel: '+351 913 000 111',
+    obs: 'Funcionário de demonstração. Pode eliminar este registo após inserir dados reais.'
+  };
+}
+
+/* ---------- Stats ---------- */
+function refreshStats() {
+  const total = employees.length;
+  const activos = employees.filter(e => e.estado === 'ativo').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statActivos').textContent = activos;
+  document.getElementById('statInactivos').textContent = total - activos;
+}
+
+/* ---------- Search filter ---------- */
+function matchesSearch(emp, q) {
+  if (!q) return true;
+  const hay = [emp.nome, emp.nif, emp.niss, emp.funcao, emp.cliente, emp.cc]
+    .map(x => (x || '').toString().toLowerCase()).join(' ');
+  return hay.includes(q.toLowerCase());
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const q = document.getElementById('searchInput').value.trim();
+  const wrap = document.getElementById('groupsWrap');
+  wrap.innerHTML = '';
+
+  GROUPS.forEach(g => {
+    const list = employees
+      .filter(e => getGroup(e) === g.key)
+      .filter(e => matchesSearch(e, q))
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
+
+    const totalInGroup = employees.filter(e => getGroup(e) === g.key).length;
+
+    const section = document.createElement('div');
+    section.className = 'group-section';
+
+    let rows = '';
+    if (list.length === 0) {
+      rows = `<tr class="empty-row"><td colspan="6">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários neste grupo.'}</td></tr>`;
+    } else {
+      rows = list.map(e => `
+        <tr data-id="${e.id}">
+          <td data-label="Nome"><span class="emp-name">${escapeHtml(e.nome)}</span></td>
+          <td data-label="NIF" class="cell-mono">${escapeHtml(e.nif)}</td>
+          <td data-label="Função">${escapeHtml(e.funcao)}</td>
+          <td data-label="Cliente">${escapeHtml(e.cliente) || '—'}</td>
+          <td data-label="Estado">${e.estado === 'ativo'
+            ? '<span class="badge badge-on">Activo</span>'
+            : '<span class="badge badge-off">Inactivo</span>'}</td>
+          <td data-label="Acções">
+            <div class="row-actions">
+              <button class="btn btn-ghost btn-sm act-view" data-id="${e.id}">Ver</button>
+              <button class="btn btn-ghost btn-sm act-pdf" data-id="${e.id}">PDF</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    section.innerHTML = `
+      <div class="group-head">
+        <span class="flag">${g.flag}</span>
+        <h2>${g.key}</h2>
+        <span class="group-pill">${list.length}${q && list.length !== totalInGroup ? ' / ' + totalInGroup : ''}</span>
+        <div class="group-actions">
+          <button class="btn btn-ghost btn-sm act-group-pdf" data-group="${g.key}">📄 PDF do Grupo</button>
+          <button class="btn btn-ghost btn-sm act-group-zip" data-group="${g.key}">🗜️ ZIP do Grupo</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th style="text-align:right;">Acções</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    wrap.appendChild(section);
+  });
+
+  refreshStats();
+}
+
+/* ---------- Modal helpers ---------- */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeAllModals() {
+  document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+}
+
+/* ---------- Form fields map ---------- */
+const FIELDS = ['nome','nasc','nacionalidade','naturalidade','estadocivil','genero',
+  'cc','cc_val','nif','niss','passaporte','pass_val',
+  'tel','email','morada','cp','loc','pais',
+  'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario',
+  'cliente','cli_pais','cli_morada',
+  'banco','iban','swift',
+  'emerg_nome','emerg_rel','emerg_tel','obs'];
+
+function openForm(emp) {
+  document.getElementById('empForm').reset();
+  document.getElementById('formTitle').textContent = emp ? 'Editar Funcionário' : 'Novo Funcionário';
+  document.getElementById('f_id').value = emp ? emp.id : '';
+  if (emp) {
+    FIELDS.forEach(f => {
+      const el = document.getElementById('f_' + f);
+      if (el) el.value = emp[f] != null ? emp[f] : '';
+    });
+  } else {
+    document.getElementById('f_nacionalidade').value = 'Portuguesa';
+    document.getElementById('f_pais').value = 'Portugal';
+    document.getElementById('f_cli_pais').value = 'Bélgica';
+    document.getElementById('f_horario').value = 40;
+    document.getElementById('f_estado').value = 'ativo';
+  }
+  openModal('formModal');
+  setTimeout(() => document.getElementById('f_nome').focus(), 50);
+}
+
+function saveForm() {
+  const nome = document.getElementById('f_nome').value.trim();
+  const nif = document.getElementById('f_nif').value.trim();
+  const funcao = document.getElementById('f_funcao').value.trim();
+  const adm = document.getElementById('f_adm').value;
+
+  if (!nome || !nif || !funcao || !adm) {
+    toast('Preencha os campos obrigatórios: Nome, NIF, Função e Data de admissão.');
+    return;
+  }
+
+  const id = document.getElementById('f_id').value;
+  const obj = id ? employees.find(e => e.id === id) : { id: uid() };
+  const target = id ? obj : obj;
+
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f_' + f);
+    if (!el) return;
+    let v = el.value;
+    if (f === 'venc') v = v === '' ? '' : parseFloat(v);
+    if (f === 'horario') v = v === '' ? '' : parseFloat(v);
+    target[f] = v;
+  });
+
+  if (!id) employees.push(target);
+  save();
+  render();
+  closeModal('formModal');
+  toast(id ? 'Funcionário actualizado.' : 'Funcionário criado.');
+  updateLastUpdate();
+}
+
+/* ---------- Detail view ---------- */
+function detailItem(label, val) {
+  return `<div class="detail-item"><span class="dl">${label}</span><span class="dv">${escapeHtml(val) || '—'}</span></div>`;
+}
+function viewDetail(id) {
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  const body = document.getElementById('detailBody');
+  const badge = e.estado === 'ativo'
+    ? '<span class="badge badge-on">Activo</span>'
+    : '<span class="badge badge-off">Inactivo</span>';
+  body.innerHTML = `
+    <div class="detail-head">
+      <span class="dname">${escapeHtml(e.nome)}</span> ${badge}
+    </div>
+    <div class="detail-idline">ID: ${escapeHtml(e.id)} · ${escapeHtml(getGroup(e))} · NIF: ${escapeHtml(e.nif)}</div>
+
+    <div class="detail-section">
+      <div class="form-section-title">1 · Dados Pessoais</div>
+      <div class="detail-grid">
+        ${detailItem('Data de nascimento', formatDate(e.nasc))}
+        ${detailItem('Nacionalidade', e.nacionalidade)}
+        ${detailItem('Naturalidade', e.naturalidade)}
+        ${detailItem('Estado civil', e.estadocivil)}
+        ${detailItem('Género', e.genero)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">2 · Documentação</div>
+      <div class="detail-grid">
+        ${detailItem('CC / BI', e.cc)}
+        ${detailItem('Validade CC', formatDate(e.cc_val))}
+        ${detailItem('NIF', e.nif)}
+        ${detailItem('NISS', e.niss)}
+        ${detailItem('N.º Passaporte', e.passaporte)}
+        ${detailItem('Validade Passaporte', formatDate(e.pass_val))}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">3 · Contacto e Morada</div>
+      <div class="detail-grid">
+        ${detailItem('Telemóvel', e.tel)}
+        ${detailItem('Email', e.email)}
+        ${detailItem('Morada', e.morada)}
+        ${detailItem('Código postal', e.cp)}
+        ${detailItem('Localidade', e.loc)}
+        ${detailItem('País', e.pais)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">4 · Contrato de Trabalho</div>
+      <div class="detail-grid">
+        ${detailItem('Função', e.funcao)}
+        ${detailItem('Categoria profissional', e.categoria)}
+        ${detailItem('Tipo de contrato', e.tipocontrato)}
+        ${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}
+        ${detailItem('Data admissão', formatDate(e.adm))}
+        ${detailItem('Data cessação', formatDate(e.cess))}
+        ${detailItem('Vencimento base (€)', e.venc !== '' && e.venc != null ? Number(e.venc).toFixed(2) : '')}
+        ${detailItem('Horário semanal (h)', e.horario)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">5 · Cliente / Destacamento</div>
+      <div class="detail-grid">
+        ${detailItem('Empresa cliente', e.cliente)}
+        ${detailItem('País de destacamento', e.cli_pais)}
+        ${detailItem('Morada do local de trabalho', e.cli_morada)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">6 · Conta Bancária</div>
+      <div class="detail-grid">
+        ${detailItem('Banco', e.banco)}
+        ${detailItem('IBAN', e.iban)}
+        ${detailItem('SWIFT / BIC', e.swift)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">7 · Contacto de Emergência</div>
+      <div class="detail-grid">
+        ${detailItem('Nome', e.emerg_nome)}
+        ${detailItem('Relação', e.emerg_rel)}
+        ${detailItem('Telefone', e.emerg_tel)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="form-section-title">8 · Observações</div>
+      <div class="detail-grid">
+        <div class="detail-item full" style="grid-column:1/-1;"><span class="dv">${escapeHtml(e.obs) || '—'}</span></div>
+      </div>
+    </div>`;
+
+  document.getElementById('detailEdit').dataset.id = e.id;
+  document.getElementById('detailDelete').dataset.id = e.id;
+  document.getElementById('detailPdf').dataset.id = e.id;
+  openModal('detailModal');
+}
+
+function deleteEmployee(id) {
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  if (!confirm(`Eliminar definitivamente o funcionário "${e.nome}"?\n\nEsta acção não pode ser anulada.`)) return;
+  employees = employees.filter(x => x.id !== id);
+  save();
+  render();
+  closeModal('detailModal');
+  toast('Funcionário eliminado.');
+  updateLastUpdate();
+}
+
+/* ============================================================
+   PDF generation (jsPDF)
+   ============================================================ */
+const { jsPDF } = window.jspdf;
+
+const C = {
+  navy: [0, 51, 102],
+  gold: [212, 175, 55],
+  text: [0, 34, 68],
+  gray: [120, 120, 120],
+  bgalt: [232, 237, 243]
+};
+
+function nowStamp() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+function pdfFooter(doc, pageW, pageH) {
+  const total = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.gray);
+    doc.text(`Gerado a ${nowStamp()}`, 15, pageH - 8);
+    doc.text(`Página ${i}/${total}`, pageW - 15, pageH - 8, { align: 'right' });
+  }
+}
+
+function drawEmployeePdf(doc, e, startY) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const colW = (pageW - margin * 2) / 2;
+
+  // Header band
+  doc.setFillColor(...C.navy);
+  doc.rect(0, 0, pageW, 28, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text('FICHA DE FUNCIONÁRIO', margin, 13);
+  doc.setFontSize(9);
+  doc.setTextColor(...C.gold);
+  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Documento confidencial · Uso interno', margin, 24.5);
+
+  let y = 40;
+
+  // Name
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(...C.text);
+  doc.text(e.nome || '—', margin, y);
+  y += 7;
+
+  // ID line
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...C.gray);
+  const estado = e.estado === 'ativo' ? 'Activo' : 'Inactivo';
+  doc.text(`ID: ${e.id} · NIF: ${e.nif || '—'} · Função: ${e.funcao || '—'} · Estado: ${estado}`, margin, y);
+  y += 8;
+
+  const sections = [
+    ['1 · DADOS PESSOAIS', [
+      ['Data de nascimento', formatDate(e.nasc)],
+      ['Nacionalidade', e.nacionalidade],
+      ['Naturalidade', e.naturalidade],
+      ['Estado civil', e.estadocivil],
+      ['Género', e.genero]
+    ]],
+    ['2 · DOCUMENTAÇÃO', [
+      ['CC / BI', e.cc],
+      ['Validade CC', formatDate(e.cc_val)],
+      ['NIF', e.nif],
+      ['NISS', e.niss],
+      ['N.º Passaporte', e.passaporte],
+      ['Validade Passaporte', formatDate(e.pass_val)]
+    ]],
+    ['3 · CONTACTO E MORADA', [
+      ['Telemóvel', e.tel],
+      ['Email', e.email],
+      ['Morada', e.morada],
+      ['Código postal', e.cp],
+      ['Localidade', e.loc],
+      ['País', e.pais]
+    ]],
+    ['4 · CONTRATO DE TRABALHO', [
+      ['Função', e.funcao],
+      ['Categoria profissional', e.categoria],
+      ['Tipo de contrato', e.tipocontrato],
+      ['Estado', estado],
+      ['Data admissão', formatDate(e.adm)],
+      ['Data cessação', formatDate(e.cess)],
+      ['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],
+      ['Horário semanal (h)', e.horario]
+    ]],
+    ['5 · CLIENTE / DESTACAMENTO', [
+      ['Empresa cliente', e.cliente],
+      ['País de destacamento', e.cli_pais],
+      ['Morada do local de trabalho', e.cli_morada]
+    ]],
+    ['6 · CONTA BANCÁRIA', [
+      ['Banco', e.banco],
+      ['IBAN', e.iban],
+      ['SWIFT / BIC', e.swift]
+    ]],
+    ['7 · CONTACTO DE EMERGÊNCIA', [
+      ['Nome', e.emerg_nome],
+      ['Relação', e.emerg_rel],
+      ['Telefone', e.emerg_tel]
+    ]],
+    ['8 · OBSERVAÇÕES', [
+      ['', e.obs]
+    ]]
+  ];
+
+  sections.forEach(([title, items]) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+
+    // Section title bar
+    doc.setFillColor(...C.bgalt);
+    doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F');
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...C.navy);
+    doc.text(title, margin + 2, y + 0.8);
+    y += 9;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    const filled = items.filter(([l, v]) => (v != null && v !== ''));
+    if (filled.length === 0) {
+      doc.setTextColor(...C.gray);
+      doc.text('—', margin + 2, y);
+      y += 7;
+      return;
+    }
+
+    let col = 0;
+    let rowMaxY = y;
+    filled.forEach(([label, val]) => {
+      if (y > 275) { doc.addPage(); y = 20; rowMaxY = y; col = 0; }
+      const x = margin + col * colW;
+      const value = String(val);
+      const lines = doc.splitTextToSize(value, colW - 6);
+
+      doc.setTextColor(...C.gray);
+      doc.setFontSize(7.5);
+      doc.setFont('courier', 'normal');
+      if (label) doc.text(label.toUpperCase(), x + 2, y);
+
+      doc.setTextColor(...C.text);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(lines, x + 2, y + (label ? 4.5 : 0));
+
+      const blockH = (label ? 4.5 : 0) + lines.length * 4.5 + 3;
+      const endY = y + blockH;
+      if (endY > rowMaxY) rowMaxY = endY;
+
+      col++;
+      if (col >= 2) { col = 0; y = rowMaxY; }
+    });
+    if (col !== 0) y = rowMaxY;
+    y += 3;
+  });
+
+  return y;
+}
+
+function generateSinglePdf(id) {
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  drawEmployeePdf(doc, e, 0);
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  pdfFooter(doc, pageW, pageH);
+  doc.save(`Ficha_${slug(e.nome)}_${dateStamp()}.pdf`);
+  toast('PDF gerado.');
+}
+
+function buildConsolidatedPdf(list, titleLabel) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  list.forEach((e, i) => {
+    if (i > 0) doc.addPage();
+    drawEmployeePdf(doc, e, 0);
+  });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  pdfFooter(doc, pageW, pageH);
+  return doc;
+}
+
+function generateAllPdf() {
+  if (employees.length === 0) { toast('Sem funcionários para exportar.'); return; }
+  const doc = buildConsolidatedPdf(employees, 'Todos');
+  doc.save(`Fichas_Consolidado_${dateStamp()}.pdf`);
+  toast('PDF consolidado gerado.');
+}
+
+function generateGroupPdf(group) {
+  const list = employees.filter(e => getGroup(e) === group);
+  if (list.length === 0) { toast(`Sem funcionários no grupo ${group}.`); return; }
+  const doc = buildConsolidatedPdf(list, group);
+  doc.save(`Fichas_${slug(group)}_${dateStamp()}.pdf`);
+  toast(`PDF do grupo ${group} gerado.`);
+}
+
+/* ============================================================
+   CSV export
+   ============================================================ */
+function buildCsv(list) {
+  const cols = ['id','nome','nif','niss','cc','funcao','estado','adm','cess','tel','email','morada','loc','cliente','cli_pais','venc','iban'];
+  const header = cols.join(';');
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = list.map(e => cols.map(c => {
+    if (c === 'estado') return esc(e.estado === 'ativo' ? 'Activo' : 'Inactivo');
+    return esc(e[c]);
+  }).join(';'));
+  return '﻿' + header + '\r\n' + rows.join('\r\n');
+}
+
+/* ============================================================
+   ZIP export
+   ============================================================ */
+async function buildZip(list, label) {
+  if (list.length === 0) { toast('Sem funcionários para exportar.'); return; }
+  const zip = new JSZip();
+  const folder = zip.folder('Fichas_Individuais');
+
+  list.forEach(e => {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    drawEmployeePdf(doc, e, 0);
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    pdfFooter(doc, pageW, pageH);
+    folder.file(`Ficha_${slug(e.nome)}.pdf`, doc.output('blob'));
+  });
+
+  // Consolidated PDF
+  const cons = buildConsolidatedPdf(list, label);
+  zip.file(`Fichas_Consolidado_${label === 'Completo' ? 'Todos' : slug(label)}.pdf`, cons.output('blob'));
+
+  // JSON backup
+  zip.file('backup.json', JSON.stringify(list, null, 2));
+
+  // CSV
+  zip.file('funcionarios.csv', buildCsv(list));
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const name = label === 'Completo'
+    ? `Legado_RH_Completo_${dateStamp()}.zip`
+    : `Legado_RH_${slug(label)}_${dateStamp()}.zip`;
+  saveAs(blob, name);
+  markBackup();
+  toast('ZIP gerado.');
+}
+
+/* ============================================================
+   JSON backup / import
+   ============================================================ */
+function downloadBackup() {
+  const blob = new Blob([JSON.stringify(employees, null, 2)], { type: 'application/json' });
+  saveAs(blob, `backup_${dateStamp()}.json`);
+  markBackup();
+  toast('Backup JSON criado.');
+}
+
+function importJson(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error('Formato inválido');
+      if (!confirm(`Importar ${data.length} funcionário(s)?\n\n⚠️ ATENÇÃO: isto SUBSTITUI todos os dados actuais (${employees.length} registo(s)). Faça backup antes de continuar.`)) return;
+      employees = data;
+      save();
+      render();
+      updateLastUpdate();
+      toast(`${data.length} funcionário(s) importado(s).`);
+    } catch (err) {
+      toast('Erro ao importar: ficheiro JSON inválido.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   Backup banner
+   ============================================================ */
+function markBackup() {
+  localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+  checkBackupBanner();
+}
+function checkBackupBanner() {
+  const banner = document.getElementById('backupBanner');
+  const dismissed = localStorage.getItem(DISMISS_KEY);
+  if (dismissed === todayKey()) { banner.style.display = 'none'; return; }
+  const last = localStorage.getItem(BACKUP_KEY);
+  let show = false;
+  if (!last) {
+    show = true;
+  } else {
+    const days = (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24);
+    show = days > 7;
+  }
+  banner.style.display = show ? 'flex' : 'none';
+}
+
+/* ============================================================
+   Last update timestamp
+   ============================================================ */
+function updateLastUpdate() {
+  const iso = localStorage.getItem('gf_last_update');
+  const el = document.getElementById('lastUpdate');
+  if (!iso) { el.textContent = '—'; return; }
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  el.textContent = `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ============================================================
+   Event wiring
+   ============================================================ */
+function bindEvents() {
+  document.getElementById('btnNew').addEventListener('click', () => openForm(null));
+  document.getElementById('btnPdfAll').addEventListener('click', generateAllPdf);
+  document.getElementById('btnZipAll').addEventListener('click', () => buildZip(employees, 'Completo'));
+  document.getElementById('btnBackup').addEventListener('click', downloadBackup);
+  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', e => {
+    if (e.target.files[0]) importJson(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  document.getElementById('searchInput').addEventListener('input', render);
+
+  // Form modal
+  document.getElementById('formClose').addEventListener('click', () => closeModal('formModal'));
+  document.getElementById('formCancel').addEventListener('click', () => closeModal('formModal'));
+  document.getElementById('formSave').addEventListener('click', saveForm);
+  document.getElementById('empForm').addEventListener('submit', e => { e.preventDefault(); saveForm(); });
+
+  // Detail modal
+  document.getElementById('detailClose').addEventListener('click', () => closeModal('detailModal'));
+  document.getElementById('detailEdit').addEventListener('click', function () {
+    const id = this.dataset.id;
+    closeModal('detailModal');
+    openForm(employees.find(e => e.id === id));
+  });
+  document.getElementById('detailDelete').addEventListener('click', function () {
+    deleteEmployee(this.dataset.id);
+  });
+  document.getElementById('detailPdf').addEventListener('click', function () {
+    generateSinglePdf(this.dataset.id);
+  });
+
+  // Backdrop click closes
+  document.querySelectorAll('.modal-backdrop').forEach(bd => {
+    bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); });
+  });
+
+  // ESC closes modals
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllModals(); });
+
+  // Banner
+  document.getElementById('bannerBackupBtn').addEventListener('click', downloadBackup);
+  document.getElementById('bannerDismissBtn').addEventListener('click', () => {
+    localStorage.setItem(DISMISS_KEY, todayKey());
+    checkBackupBanner();
+  });
+
+  // Delegated table actions
+  document.getElementById('groupsWrap').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.classList.contains('act-view')) viewDetail(btn.dataset.id);
+    else if (btn.classList.contains('act-pdf')) generateSinglePdf(btn.dataset.id);
+    else if (btn.classList.contains('act-group-pdf')) generateGroupPdf(btn.dataset.group);
+    else if (btn.classList.contains('act-group-zip')) buildZip(employees.filter(x => getGroup(x) === btn.dataset.group), btn.dataset.group);
+  });
+}
+
+/* ---------- Init ---------- */
+function init() {
+  load();
+  bindEvents();
+  render();
+  checkBackupBanner();
+  updateLastUpdate();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

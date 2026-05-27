@@ -1,0 +1,18 @@
+# Backups locais
+backup_*.json
+backup_*.zip
+*.local.html
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporários
+*.tmp
+*.bak
+~$*
+*.log
