@@ -2,6 +2,28 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [2.0.0] — 2026-05-27
+
+### MUDANÇAS DISRUPTIVAS
+- Sistema migrado de localStorage para Firebase
+- Agora requer internet e login
+- Sincronização em tempo real entre utilizadores
+
+### Adicionado
+- Autenticação Firebase (email + password)
+- 3 níveis de permissões: admin/editor/viewer
+- Auditoria automática
+- Modal gestão de utilizadores (só admin)
+- Modal logs auditoria (só admin)
+- Recuperação password via email
+- Setup inicial (setup.html para criar perfis)
+- Regras de segurança Firestore (firestore.rules) e índices
+
+### Removido
+- Modo offline
+- localStorage como fonte de dados
+- Funcionário de exemplo (seed) — os dados vivem agora no Firestore
+
 ## [1.2.0] — 2026-05-27
 
 ### Adicionado

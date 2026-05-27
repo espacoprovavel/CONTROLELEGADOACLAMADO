@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup — Legado RH (utilizar uma vez)</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+:root{--accent:#003366;--gold:#D4AF37;--gold-soft:#b89530;--ink:#002244;--ink-soft:#4B4B4B;--line:#c8d3e0;--bg:#f5f7fa;--green:#2e7d32;--red:#AC3838;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Poppins',sans-serif;background:var(--accent);background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,0.05) 1px,transparent 0);background-size:24px 24px;color:var(--ink);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;}
+.card{background:#fff;border-radius:16px;width:100%;max-width:560px;padding:34px;box-shadow:0 24px 70px rgba(0,0,0,0.35);border-top:4px solid var(--gold);}
+h1{font-family:'Montserrat';font-weight:800;color:var(--gold);font-size:22px;}
+h1 .deep{color:var(--accent);display:block;font-size:12px;letter-spacing:2px;font-weight:700;margin-top:2px;}
+.sub{color:var(--ink-soft);font-size:13px;margin:6px 0 20px;}
+.warn{background:#fff8e1;border:1px solid var(--gold);border-left:4px solid var(--gold);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
+label{display:block;font-size:12px;font-weight:500;color:var(--ink-soft);margin:12px 0 5px;}
+input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-family:'Poppins';font-size:14px;}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,51,102,0.08);}
+button{font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;border:none;border-radius:9px;padding:12px 16px;margin-top:16px;width:100%;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;}
+.btn-gold{background:var(--gold);color:var(--accent);}
+.profiles{margin-top:18px;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:none;}
+.profiles.show{display:block;}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+.prow:last-child{border-bottom:none;}
+.prow .mono{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-soft);}
+.tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;}
+.ok{background:rgba(46,125,50,0.12);color:var(--green);}
+.fail{background:rgba(172,56,56,0.12);color:var(--red);}
+.pending{background:#eee;color:#888;}
+.msg{margin-top:16px;font-size:13px;padding:11px 13px;border-radius:9px;display:none;}
+.msg.show{display:block;}
+.msg.success{background:rgba(46,125,50,0.1);color:var(--green);border:1px solid rgba(46,125,50,0.3);}
+.msg.error{background:rgba(172,56,56,0.1);color:var(--red);border:1px solid rgba(172,56,56,0.3);}
+.done-note{margin-top:18px;font-size:13px;color:var(--ink-soft);background:var(--bg);border-radius:9px;padding:13px;display:none;}
+.done-note.show{display:block;}
+code{font-family:'JetBrains Mono';font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>SETUP — LEGADO RH<span class="deep">CRIAÇÃO DE PERFIS · UTILIZAR UMA VEZ</span></h1>
+  <div class="sub">Cria os documentos da coleção <code>users</code> com os roles correctos.</div>
+
+  <div class="warn">
+    ⚠️ <strong>Ordem importante:</strong> se as Firestore Rules já estiverem publicadas, o teu próprio documento de admin tem de existir <em>antes</em> de poderes escrever aqui (as regras só deixam um admin escrever em <code>users</code>). Se for a primeira vez, cria o documento do admin <strong>manualmente</strong> no Firebase Console primeiro, OU corre este setup <strong>antes</strong> de publicar as regras (Firestore em modo de teste). Ver <code>docs/FIREBASE.md</code>.
+  </div>
+
+  <div id="loginArea">
+    <label for="email">Email (admin)</label>
+    <input type="email" id="email" value="espacoprovavel@gmail.com">
+    <label for="pass">Palavra-passe</label>
+    <input type="password" id="pass">
+    <button class="btn-primary" id="loginBtn">Entrar</button>
+  </div>
+
+  <div id="setupArea" style="display:none;">
+    <div class="sub" id="who"></div>
+    <div class="profiles show" id="profiles">
+      <div class="prow">
+        <div><strong>Michelle (Admin)</strong><br><span class="mono">GNrpJCSUv4SweoOYYolWSs2gR2V2</span><br><span class="mono">espacoprovavel@gmail.com · role: admin</span></div>
+        <span class="tag pending" id="statusAdmin">pendente</span>
+      </div>
+      <div class="prow">
+        <div><strong>Assistente</strong><br><span class="mono">ZuCZ2UVgU2N4759Tc4jpwMKEo363</span><br><span class="mono">lorenzoornelas@hotmail.com · role: viewer</span></div>
+        <span class="tag pending" id="statusAssist">pendente</span>
+      </div>
+    </div>
+    <button class="btn-gold" id="runBtn">Criar / actualizar perfis</button>
+    <button class="btn-primary" id="logoutBtn" style="background:#7a8aa0;">Terminar sessão</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div class="done-note" id="doneNote">
+    ✅ <strong>Perfis criados.</strong> Já podes usar a aplicação principal (<code>index.html</code>).
+    Por segurança, <strong>elimina este ficheiro <code>setup.html</code></strong> do repositório depois de concluído — ver <code>docs/FIREBASE.md</code>.
+  </div>
+</div>
+
+<script>
+"use strict";
+const firebaseConfig = {
+  apiKey: "AIzaSyCNMb3CiXCvjvGxOo5Zbvy5Gy2wLCplMVE",
+  authDomain: "controle-legado-aclamado.firebaseapp.com",
+  projectId: "controle-legado-aclamado",
+  storageBucket: "controle-legado-aclamado.firebasestorage.app",
+  messagingSenderId: "238679731860",
+  appId: "1:238679731860:web:16991c0f00a24fdd114e81"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const PROFILES = [
+  { uid: 'GNrpJCSUv4SweoOYYolWSs2gR2V2', email: 'espacoprovavel@gmail.com', nome: 'Michelle', role: 'admin', el: 'statusAdmin' },
+  { uid: 'ZuCZ2UVgU2N4759Tc4jpwMKEo363', email: 'lorenzoornelas@hotmail.com', nome: 'Assistente', role: 'viewer', el: 'statusAssist' }
+];
+
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg show ' + type;
+}
+function friendly(err) {
+  const c = (err && err.code) || '';
+  const map = {
+    'auth/invalid-email':'Email inválido.',
+    'auth/wrong-password':'Email ou palavra-passe incorrectos.',
+    'auth/user-not-found':'Email ou palavra-passe incorrectos.',
+    'auth/invalid-credential':'Email ou palavra-passe incorrectos.',
+    'permission-denied':'Permissão negada pelas Firestore Rules. Cria primeiro o teu documento de admin no Console (ver aviso acima).'
+  };
+  return map[c] || (err && err.message) || 'Erro inesperado.';
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('pass').value;
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (err) {
+    showMsg(friendly(err), 'error');
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  document.getElementById('runBtn').disabled = true;
+  let allOk = true;
+  for (const p of PROFILES) {
+    const tag = document.getElementById(p.el);
+    try {
+      await db.collection('users').doc(p.uid).set({
+        email: p.email, nome: p.nome, role: p.role, created_at: new Date()
+      }, { merge: true });
+      tag.textContent = 'criado ✓'; tag.className = 'tag ok';
+    } catch (err) {
+      allOk = false;
+      tag.textContent = 'falhou'; tag.className = 'tag fail';
+      showMsg('Erro no perfil ' + p.email + ': ' + friendly(err), 'error');
+    }
+  }
+  document.getElementById('runBtn').disabled = false;
+  if (allOk) {
+    showMsg('Todos os perfis foram criados/actualizados com sucesso.', 'success');
+    document.getElementById('doneNote').classList.add('show');
+  }
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('loginArea').style.display = 'none';
+    document.getElementById('setupArea').style.display = 'block';
+    document.getElementById('who').textContent = 'Sessão: ' + user.email;
+    document.getElementById('msg').className = 'msg';
+  } else {
+    document.getElementById('loginArea').style.display = 'block';
+    document.getElementById('setupArea').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
