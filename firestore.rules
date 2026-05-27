@@ -24,6 +24,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /funcionarios/{funcionarioId}/documentos/{docId} {
+      allow read: if isAuth();
+      allow create: if isEditor();
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+
     match /users/{userId} {
       allow read: if isAuth();
       allow write: if isAdmin();
