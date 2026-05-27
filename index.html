@@ -325,6 +325,10 @@ footer strong { color: var(--ink); }
   .doc-actions { width: 100%; }
 }
 
+/* ---------- Sub-secções (Activos/Inactivos) ---------- */
+.subgroup-head { display: flex; align-items: center; gap: 9px; margin: 16px 0 8px; }
+.subgroup-head .subcount { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500; color: var(--accent); }
+
 /* ---------- Documentos ---------- */
 .docs-section { margin-bottom: 8px; }
 .docs-count { color: var(--gold-soft); font-weight: 700; }
@@ -874,25 +878,8 @@ function matchesSearch(emp, q) {
 }
 
 /* ---------- Render ---------- */
-function render() {
-  const q = document.getElementById('searchInput').value.trim();
-  const wrap = document.getElementById('groupsWrap');
-  wrap.innerHTML = '';
-
-  GROUPS.forEach(g => {
-    const list = employees
-      .filter(e => getGroup(e) === g.key)
-      .filter(e => matchesSearch(e, q))
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
-    const totalInGroup = employees.filter(e => getGroup(e) === g.key).length;
-
-    const section = document.createElement('div');
-    section.className = 'group-section';
-    let rows = '';
-    if (list.length === 0) {
-      rows = `<tr class="empty-row"><td colspan="7">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários neste grupo.'}</td></tr>`;
-    } else {
-      rows = list.map(e => `
+function empRowHtml(e) {
+  return `
         <tr data-id="${e.id}">
           <td data-label="Nome"><span class="emp-name">${escapeHtml(e.nome)}</span></td>
           <td data-label="NIF" class="cell-mono">${escapeHtml(e.nif)}</td>
@@ -904,23 +891,60 @@ function render() {
             <button class="btn btn-ghost btn-sm act-view" data-id="${e.id}">Ver</button>
             <button class="btn btn-ghost btn-sm act-pdf" data-id="${e.id}">PDF</button>
           </div></td>
-        </tr>`).join('');
-    }
+        </tr>`;
+}
+
+function subTableHtml(list, q) {
+  const rows = list.length === 0
+    ? `<tr class="empty-row"><td colspan="7">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários.'}</td></tr>`
+    : list.map(empRowHtml).join('');
+  return `<div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.trim();
+  const wrap = document.getElementById('groupsWrap');
+  wrap.innerHTML = '';
+
+  const SUBS = [
+    { estado: 'ativo',  label: 'Activos',   cls: 'badge-on' },
+    { estado: 'inativo', label: 'Inactivos', cls: 'badge-off' }
+  ];
+
+  GROUPS.forEach(g => {
+    const inGroup = employees.filter(e => getGroup(e) === g.key);
+    const matched = inGroup.filter(e => matchesSearch(e, q));
+
+    const section = document.createElement('div');
+    section.className = 'group-section';
+
+    let subHtml = '';
+    SUBS.forEach(s => {
+      const list = matched.filter(e => e.estado === s.estado)
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
+      const totalSub = inGroup.filter(e => e.estado === s.estado).length;
+      subHtml += `
+        <div class="subgroup-head">
+          <span class="badge ${s.cls}">${s.label}</span>
+          <span class="subcount">(${list.length}${q && list.length !== totalSub ? ' / ' + totalSub : ''})</span>
+        </div>
+        ${subTableHtml(list, q)}`;
+    });
 
     section.innerHTML = `
       <div class="group-head">
         <span class="flag">${g.flag}</span>
         <h2>${g.key}</h2>
-        <span class="group-pill">${list.length}${q && list.length !== totalInGroup ? ' / ' + totalInGroup : ''}</span>
+        <span class="group-pill">${matched.length}${q && matched.length !== inGroup.length ? ' / ' + inGroup.length : ''}</span>
         <div class="group-actions">
           <button class="btn btn-ghost btn-sm act-group-pdf" data-group="${g.key}">📄 PDF do Grupo</button>
           <button class="btn btn-ghost btn-sm act-group-zip" data-group="${g.key}">🗜️ ZIP do Grupo</button>
         </div>
       </div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>`;
+      ${subHtml}`;
     wrap.appendChild(section);
   });
   refreshStats();
