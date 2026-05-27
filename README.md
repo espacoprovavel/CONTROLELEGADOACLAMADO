@@ -4,7 +4,7 @@ Sistema interno da **LEGADO ACLAMADO — UNIPESSOAL LDA** para gestão de funcio
 
 🔗 **Aplicação online:** https://espacoprovavel.github.io/CONTROLELEGADOACLAMADO/
 
-> **Versão 2.0** — migrado de localStorage para **Firebase** (Authentication + Firestore). Agora requer **Internet** e **login**.
+> **Versão 2.1** — migrado de localStorage para **Firebase** (Authentication + Firestore) e com **anexação de documentos** (Cloudinary). Agora requer **Internet** e **login**.
 
 ---
 
@@ -19,6 +19,7 @@ Uma aplicação web num **único ficheiro HTML** ligada ao **Firebase**:
 - **Exportação PDF** individual, consolidada e por grupo
 - **Exportação ZIP** (fichas individuais + consolidado + backup JSON + CSV)
 - **Importação JSON** em lote (para migrar dados antigos)
+- **Documentos anexados** por funcionário (JPG/PNG/PDF via Cloudinary): upload, ver, descarregar, ZIP — ver [docs/CLOUDINARY.md](docs/CLOUDINARY.md)
 - **Pesquisa instantânea** por nome, NIF, NISS, função, cliente ou CC
 - **3 secções separadas** por país: 🇧🇪 Bélgica · 🇵🇹 Portugal · 🌐 Outros
 - Identidade visual oficial (azul #003366 + dourado #D4AF37, Montserrat + Poppins)
@@ -43,6 +44,9 @@ Uma aplicação web num **único ficheiro HTML** ligada ao **Firebase**:
 | Exportar PDF / ZIP / CSV | ✅ | ✅ | ✅ |
 | Criar / editar funcionários | ❌ | ✅ | ✅ |
 | Importar JSON | ❌ | ✅ | ✅ |
+| Ver / descarregar documentos | ✅ | ✅ | ✅ |
+| Anexar documentos | ❌ | ✅ | ✅ |
+| Eliminar documentos | ❌ | ❌ | ✅ |
 | Eliminar funcionários | ❌ | ❌ | ✅ |
 | Gerir utilizadores e roles | ❌ | ❌ | ✅ |
 | Ver logs de auditoria | ❌ | ❌ | ✅ |
@@ -86,7 +90,8 @@ CONTROLELEGADOACLAMADO/
     ├── COMO_EDITAR.md      # Guia de edição
     ├── BACKUP.md           # Procedimento de backup
     ├── RGPD.md             # Avisos de proteção de dados
-    └── FIREBASE.md         # Gestão Firebase (utilizadores, roles, logs, custos)
+    ├── FIREBASE.md         # Gestão Firebase (utilizadores, roles, logs, custos)
+    └── CLOUDINARY.md       # Gestão de documentos anexados (Cloudinary)
 ```
 
 ---
@@ -132,6 +137,6 @@ Regra **3-2-1**. Procedimento completo em [docs/BACKUP.md](docs/BACKUP.md).
 
 ---
 
-**Versão actual:** v2.0
+**Versão actual:** v2.1
 
 © 2026 LEGADO ACLAMADO — UNIPESSOAL LDA · Todos os direitos reservados.

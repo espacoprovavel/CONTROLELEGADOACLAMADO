@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 <style>
 :root {
   --bg: #f5f7fa;
@@ -320,7 +321,30 @@ footer strong { color: var(--ink); }
   tbody td { border: none; padding: 7px 10px; display: flex; justify-content: space-between; gap: 12px; }
   tbody td::before { content: attr(data-label); font-family: 'JetBrains Mono'; font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 500; align-self: center; }
   .row-actions { justify-content: flex-end; width: 100%; }
+  .doc-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .doc-actions { width: 100%; }
 }
+
+/* ---------- Documentos ---------- */
+.docs-section { margin-bottom: 8px; }
+.docs-count { color: var(--gold-soft); font-weight: 700; }
+.doc-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.doc-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.doc-empty { color: var(--ink-soft); font-style: italic; font-size: 13px; padding: 10px 2px; }
+.doc-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.doc-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+.doc-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.doc-icon { font-size: 26px; flex-shrink: 0; }
+.doc-name { font-family: 'Montserrat'; font-weight: 700; font-size: 14px; color: var(--ink); word-break: break-word; }
+.doc-meta { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+.doc-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+.docbadge { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent); font-weight: 500; }
+#viewerBody img { max-width: 100%; height: auto; border-radius: 8px; }
+#viewerBody iframe { width: 100%; height: 70vh; border: none; border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -564,7 +588,7 @@ footer strong { color: var(--ink); }
     <div class="modal-body">
       <div class="filters">
         <input type="text" id="logFilterUser" placeholder="Filtrar por utilizador (email)">
-        <select id="logFilterAction"><option value="">Todas as acções</option><option value="create">create</option><option value="update">update</option><option value="delete">delete</option><option value="import">import</option><option value="user_role">user_role</option></select>
+        <select id="logFilterAction"><option value="">Todas as acções</option><option value="create">create</option><option value="update">update</option><option value="delete">delete</option><option value="import">import</option><option value="user_role">user_role</option><option value="document_upload">document_upload</option><option value="document_delete">document_delete</option></select>
         <input type="date" id="logFilterDate">
       </div>
       <table class="mini-table">
@@ -576,6 +600,17 @@ footer strong { color: var(--ink); }
       <button class="btn btn-ghost" id="logsCsvBtn">📄 Exportar CSV</button>
       <button class="btn btn-ghost" id="logsCloseFoot">Fechar</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Visualizador de documento -->
+<div class="modal-backdrop" id="viewerModal">
+  <div class="modal" style="max-width:920px;">
+    <div class="modal-head">
+      <h2 id="viewerTitle">Documento</h2>
+      <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="viewerBody" style="text-align:center;"></div>
   </div>
 </div>
 
@@ -602,10 +637,16 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const CLOUDINARY_CLOUD_NAME = 'dlhbrckt6';
+const CLOUDINARY_UPLOAD_PRESET = 'legado_documentos';
+const CLOUDINARY_FOLDER = 'legado-aclamado/funcionarios';
+
 let employees = [];
 let currentUser = null;
 let currentRole = 'viewer';
 let unsubscribe = null;
+let unsubscribeDocs = null;
+let currentDetailEmp = null;
 let allLogs = [];
 
 /* ---------- Helpers ---------- */
@@ -849,7 +890,7 @@ function render() {
     section.className = 'group-section';
     let rows = '';
     if (list.length === 0) {
-      rows = `<tr class="empty-row"><td colspan="6">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários neste grupo.'}</td></tr>`;
+      rows = `<tr class="empty-row"><td colspan="7">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários neste grupo.'}</td></tr>`;
     } else {
       rows = list.map(e => `
         <tr data-id="${e.id}">
@@ -858,6 +899,7 @@ function render() {
           <td data-label="Função">${escapeHtml(e.funcao)}</td>
           <td data-label="Cliente">${escapeHtml(e.cliente) || '—'}</td>
           <td data-label="Estado">${e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>'}</td>
+          <td data-label="Docs">${e.doc_count ? '<span class="docbadge">📎 ' + e.doc_count + '</span>' : '—'}</td>
           <td data-label="Acções"><div class="row-actions">
             <button class="btn btn-ghost btn-sm act-view" data-id="${e.id}">Ver</button>
             <button class="btn btn-ghost btn-sm act-pdf" data-id="${e.id}">PDF</button>
@@ -876,7 +918,7 @@ function render() {
         </div>
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th style="text-align:right;">Acções</th></tr></thead>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
     wrap.appendChild(section);
@@ -956,6 +998,8 @@ function detailItem(label, val) {
 function viewDetail(id) {
   const e = employees.find(x => x.id === id);
   if (!e) return;
+  currentDetailEmp = e;
+  unsubscribeDocsFn();
   const badge = e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>';
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-head"><span class="dname">${escapeHtml(e.nome)}</span> ${badge}</div>
@@ -983,12 +1027,19 @@ function viewDetail(id) {
     </div></div>
     <div class="detail-section"><div class="form-section-title">8 · Observações</div><div class="detail-grid">
       <div class="detail-item" style="grid-column:1/-1;"><span class="dv">${escapeHtml(e.obs) || '—'}</span></div>
-    </div></div>`;
+    </div></div>
+    <div class="detail-section docs-section">
+      <div class="form-section-title">Documentos Anexados <span class="docs-count" id="docsCount">(0)</span></div>
+      ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">📎 Adicionar documento(s)</button></div>' : ''}
+      <div class="doc-list" id="docsList"><div class="doc-empty">A carregar…</div></div>
+      <button class="btn btn-ghost btn-sm act-doc-zip">📦 Descarregar todos em ZIP</button>
+    </div>`;
   document.getElementById('detailEdit').dataset.id = e.id;
   document.getElementById('detailDelete').dataset.id = e.id;
   document.getElementById('detailPdf').dataset.id = e.id;
   applyRolePermissions();
   openModal('detailModal');
+  subscribeDocs(e.id);
 }
 
 async function deleteEmployee(id) {
@@ -1000,10 +1051,224 @@ async function deleteEmployee(id) {
   try {
     await db.collection('funcionarios').doc(id).delete();
     await logAudit('delete', id, e.nome);
+    unsubscribeDocsFn();
     closeModal('detailModal');
     toast('Funcionário eliminado.');
   } catch (err) {
     toast('Erro ao eliminar: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ============================================================
+   Documentos (Cloudinary + Firestore subcolecção)
+   ============================================================ */
+function unsubscribeDocsFn() { if (unsubscribeDocs) { unsubscribeDocs(); unsubscribeDocs = null; } }
+
+function formatBytes(n) {
+  if (n == null || n === '') return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+function docIcon(format) {
+  const f = (format || '').toLowerCase();
+  if (f === 'pdf') return '📄';
+  if (['jpg','jpeg','png','gif','webp','bmp'].includes(f)) return '🖼';
+  return '📎';
+}
+function isImageFormat(format) {
+  return ['jpg','jpeg','png','gif','webp','bmp'].includes((format || '').toLowerCase());
+}
+function docDateStr(ts) {
+  if (!ts || !ts.toDate) return '—';
+  const d = ts.toDate(); const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} às ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function docFullName(meta) {
+  const base = meta.original_filename || 'documento';
+  return meta.format ? `${base}.${meta.format}` : base;
+}
+function attachmentUrl(url) {
+  if (!url) return url;
+  return url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url;
+}
+
+async function logAuditDoc(action, funcId, funcNome, filename, size) {
+  try {
+    await db.collection('audit_logs').add({
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      user_uid: currentUser ? currentUser.uid : '',
+      user_email: currentUser ? currentUser.email : '',
+      action: action,
+      funcionario_id: funcId || '',
+      funcionario_nome: funcNome || '',
+      document_filename: filename || '',
+      document_size: (size == null ? null : size),
+      doc_id: funcId || '',
+      doc_nome: `${funcNome || ''} · ${filename || ''}`
+    });
+  } catch (err) {
+    console.warn('Falha ao registar auditoria de documento', err);
+  }
+}
+
+function subscribeDocs(funcId) {
+  unsubscribeDocsFn();
+  unsubscribeDocs = db.collection('funcionarios').doc(funcId).collection('documentos')
+    .onSnapshot(snap => {
+      const docs = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      renderDocs(docs);
+    }, err => {
+      const list = document.getElementById('docsList');
+      if (list) list.innerHTML = `<div class="doc-empty">Erro ao carregar documentos: ${escapeHtml(friendlyError(err))}</div>`;
+    });
+}
+
+function renderDocs(docs) {
+  const list = document.getElementById('docsList');
+  const count = document.getElementById('docsCount');
+  if (!list) return;
+  docs.sort((a, b) => {
+    const ta = a.uploaded_at && a.uploaded_at.toMillis ? a.uploaded_at.toMillis() : Infinity;
+    const tb = b.uploaded_at && b.uploaded_at.toMillis ? b.uploaded_at.toMillis() : Infinity;
+    return tb - ta;
+  });
+  if (count) count.textContent = `(${docs.length})`;
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="doc-empty">Sem documentos anexados.</div>';
+    return;
+  }
+  list.innerHTML = docs.map(d => {
+    const name = docFullName(d);
+    const delBtn = isAdmin()
+      ? `<button class="btn btn-danger btn-sm act-doc-del" data-docid="${d.id}" data-filename="${escapeHtml(name)}" data-size="${d.bytes != null ? d.bytes : ''}">🗑 Eliminar</button>`
+      : '';
+    return `<div class="doc-card">
+      <div class="doc-info">
+        <span class="doc-icon">${docIcon(d.format)}</span>
+        <div>
+          <div class="doc-name">${escapeHtml(name)}</div>
+          <div class="doc-meta">Carregado: ${docDateStr(d.uploaded_at)} · Por: ${escapeHtml(d.uploaded_by_email)} · ${formatBytes(d.bytes)}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm act-doc-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">⬇ Descarregar</button>
+        ${delBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openUploadWidget(funcId, funcNome) {
+  if (!isEditor()) { toast('Sem permissões para anexar documentos.', true); return; }
+  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
+  const widget = cloudinary.createUploadWidget({
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    folder: `${CLOUDINARY_FOLDER}/${funcId}`,
+    resourceType: 'auto',
+    clientAllowedFormats: ['jpg','jpeg','png','pdf'],
+    maxFileSize: 10485760,
+    multiple: true,
+    sources: ['local','camera'],
+    language: 'pt',
+    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
+  }, (error, result) => {
+    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
+    if (result && result.event === 'success') {
+      saveDocumentMetadata(funcId, funcNome, result.info);
+    }
+  });
+  widget.open();
+}
+
+async function saveDocumentMetadata(funcId, funcNome, info) {
+  try {
+    await db.collection('funcionarios').doc(funcId).collection('documentos').add({
+      url: info.secure_url,
+      public_id: info.public_id,
+      original_filename: info.original_filename,
+      format: info.format,
+      bytes: info.bytes,
+      resource_type: info.resource_type,
+      uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
+      uploaded_by_uid: currentUser.uid,
+      uploaded_by_email: currentUser.email
+    });
+    await db.collection('funcionarios').doc(funcId).update({
+      doc_count: firebase.firestore.FieldValue.increment(1)
+    });
+    await logAuditDoc('document_upload', funcId, funcNome, `${info.original_filename}.${info.format}`, info.bytes);
+    toast('Documento anexado.');
+  } catch (err) {
+    toast('Erro ao guardar documento: ' + friendlyError(err), true);
+  }
+}
+
+function viewDocument(url, format, filename) {
+  document.getElementById('viewerTitle').textContent = filename || 'Documento';
+  const body = document.getElementById('viewerBody');
+  body.innerHTML = isImageFormat(format)
+    ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(filename)}">`
+    : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
+  openModal('viewerModal');
+}
+
+function downloadDocument(url) {
+  window.open(attachmentUrl(url), '_blank');
+}
+
+async function deleteDocument(funcId, funcNome, docId, filename, size) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar documentos.', true); return; }
+  if (!confirm(`Eliminar o documento "${filename}"?`)) return;
+  if (!confirm('Tem a certeza? Esta acção não pode ser revertida.')) return;
+  showOverlay('A eliminar documento…');
+  try {
+    await db.collection('funcionarios').doc(funcId).collection('documentos').doc(docId).delete();
+    await db.collection('funcionarios').doc(funcId).update({
+      doc_count: firebase.firestore.FieldValue.increment(-1)
+    });
+    await logAuditDoc('document_delete', funcId, funcNome, filename, size);
+    toast('Documento eliminado.');
+  } catch (err) {
+    toast('Erro ao eliminar documento: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+async function downloadAllDocsZip(funcId, funcNome) {
+  showOverlay('A preparar ZIP de documentos…');
+  try {
+    const snap = await db.collection('funcionarios').doc(funcId).collection('documentos').get();
+    if (snap.empty) { toast('Este funcionário não tem documentos.', true); return; }
+    const zip = new JSZip();
+    const used = {};
+    let okCount = 0;
+    for (const d of snap.docs) {
+      const meta = d.data();
+      try {
+        const resp = await fetch(meta.url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const blob = await resp.blob();
+        let name = docFullName(meta);
+        if (used[name]) { const n = ++used[name]; name = name.replace(/(\.[^.]+)?$/, '_' + n + '$1'); }
+        else used[name] = 1;
+        zip.file(name, blob);
+        okCount++;
+      } catch (e) {
+        /* ignora ficheiro que não pôde ser obtido */
+      }
+    }
+    if (okCount === 0) { toast('Não foi possível obter os documentos (verifique a ligação ou as permissões do Cloudinary).', true); return; }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    saveAs(blob, `Documentos_${slug(funcNome)}_${dateStamp()}.zip`);
+    toast(`ZIP com ${okCount} documento(s) gerado.`);
+  } catch (err) {
+    toast('Erro ao gerar ZIP: ' + friendlyError(err), true);
   } finally {
     hideOverlay();
   }
@@ -1335,10 +1600,27 @@ function bind() {
   document.getElementById('empForm').addEventListener('submit', e => { e.preventDefault(); saveForm(); });
 
   // Detail modal
-  document.getElementById('detailClose').addEventListener('click', () => closeModal('detailModal'));
-  document.getElementById('detailEdit').addEventListener('click', function () { const id = this.dataset.id; closeModal('detailModal'); openForm(employees.find(e => e.id === id)); });
+  document.getElementById('detailClose').addEventListener('click', () => { unsubscribeDocsFn(); closeModal('detailModal'); });
+  document.getElementById('detailEdit').addEventListener('click', function () { const id = this.dataset.id; unsubscribeDocsFn(); closeModal('detailModal'); openForm(employees.find(e => e.id === id)); });
   document.getElementById('detailDelete').addEventListener('click', function () { deleteEmployee(this.dataset.id); });
   document.getElementById('detailPdf').addEventListener('click', function () { generateSinglePdf(this.dataset.id); });
+
+  // Documentos (delegação no corpo do detalhe)
+  document.getElementById('detailBody').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn || !currentDetailEmp) return;
+    const fid = currentDetailEmp.id, fnome = currentDetailEmp.nome;
+    if (btn.classList.contains('act-doc-add')) openUploadWidget(fid, fnome);
+    else if (btn.classList.contains('act-doc-zip')) downloadAllDocsZip(fid, fnome);
+    else if (btn.classList.contains('act-doc-view')) viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename);
+    else if (btn.classList.contains('act-doc-dl')) downloadDocument(btn.dataset.url);
+    else if (btn.classList.contains('act-doc-del')) deleteDocument(fid, fnome, btn.dataset.docid, btn.dataset.filename, btn.dataset.size === '' ? null : Number(btn.dataset.size));
+  });
+
+  // Visualizador de documento
+  document.getElementById('viewerClose').addEventListener('click', () => {
+    closeModal('viewerModal');
+    document.getElementById('viewerBody').innerHTML = '';
+  });
 
   // Users modal
   document.getElementById('usersClose').addEventListener('click', () => closeModal('usersModal'));
@@ -1354,8 +1636,8 @@ function bind() {
   document.getElementById('logFilterDate').addEventListener('change', renderLogs);
 
   // Backdrops + ESC
-  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); }));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllModals(); });
+  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => { if (e.target === bd) { if (bd.id === 'detailModal') unsubscribeDocsFn(); bd.classList.remove('open'); } }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { unsubscribeDocsFn(); closeAllModals(); } });
 
   // Delegated table actions
   document.getElementById('groupsWrap').addEventListener('click', e => {
