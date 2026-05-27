@@ -2,6 +2,26 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [2.1.0] — 2026-05-27
+
+### Adicionado
+- Anexar documentos (JPG, PNG, PDF) a cada funcionário via Cloudinary
+- Secção "Documentos Anexados" no modal de detalhe do funcionário
+- Upload com Cloudinary Upload Widget (múltiplos ficheiros, câmara, idioma pt, máx 10 MB)
+- Visualização interna: lightbox para imagens, iframe para PDFs
+- Descarregar documento individual e "Descarregar todos em ZIP" (gerado no browser)
+- Eliminação de documento (só admin, dupla confirmação) — remove metadados do Firestore
+- Coluna "Docs" na tabela com contador rápido (campo `doc_count` por funcionário)
+- Auditoria de documentos: acções `document_upload` e `document_delete`
+- Regras Firestore para a subcolecção `documentos` (read auth, create editor, delete admin, update bloqueado)
+- Carregamento lazy dos documentos (só ao abrir a ficha do funcionário)
+- Documentação `docs/CLOUDINARY.md`
+
+### Notas
+- Os ficheiros são armazenados no Cloudinary (cloud `dlhbrckt6`, preset `legado_documentos`).
+- A eliminação remove apenas os metadados no Firestore; o ficheiro permanece no Cloudinary (gestão manual no painel).
+- A entrega de PDFs requer activar "Allow delivery of PDF and ZIP files" no painel Cloudinary.
+
 ## [2.0.0] — 2026-05-27
 
 ### MUDANÇAS DISRUPTIVAS
