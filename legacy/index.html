@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legado RH — Gestão de Funcionários</title>
+<meta name="description" content="Sistema interno de gestão de funcionários da LEGADO ACLAMADO — UNIPESSOAL LDA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --bg-alt: #e8edf3;
+  --ink: #002244;
+  --ink-soft: #4B4B4B;
+  --line: #c8d3e0;
+  --accent: #003366;
+  --accent-hover: #002244;
+  --accent-deep: #132347;
+  --gold: #D4AF37;
+  --gold-soft: #b89530;
+  --green: #2e7d32;
+  --red: #AC3838;
+  --card: #ffffff;
+  --shadow: 0 1px 3px rgba(0,34,68,0.08), 0 4px 12px rgba(0,34,68,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Poppins', system-ui, sans-serif;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,51,102,0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ---------- Boot splash ---------- */
+#bootLoading {
+  position: fixed; inset: 0; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; z-index: 5000;
+  color: #fff; flex-direction: column; gap: 18px;
+}
+
+/* ---------- Spinner ---------- */
+.spinner {
+  width: 34px; height: 34px; border: 3px solid rgba(255,255,255,0.25);
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.spinner.dark { border-color: rgba(0,51,102,0.18); border-top-color: var(--accent); }
+.spinner.sm { width: 18px; height: 18px; border-width: 2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Login screen ---------- */
+#loginScreen {
+  position: fixed; inset: 0; background: var(--accent);
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+  display: none; align-items: center; justify-content: center; padding: 24px; z-index: 4000;
+}
+.login-card {
+  background: #fff; border-radius: 16px; width: 100%; max-width: 400px;
+  padding: 38px 32px; box-shadow: 0 24px 70px rgba(0,0,0,0.35);
+  border-top: 4px solid var(--gold);
+}
+.login-logo {
+  font-family: 'Montserrat'; font-weight: 800; font-size: 26px; color: var(--gold);
+  text-align: center; letter-spacing: 0.5px;
+}
+.login-logo .deep { color: var(--accent); display: block; font-size: 13px; font-weight: 700; letter-spacing: 2px; margin-top: 2px; }
+.login-sub { text-align: center; color: var(--ink-soft); font-size: 13px; margin: 6px 0 26px; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-soft); margin-bottom: 5px; }
+.login-field input {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px;
+  font-family: 'Poppins'; font-size: 14px; color: var(--ink);
+}
+.login-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,51,102,0.08); }
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 42px; }
+.pass-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 16px; padding: 6px; opacity: 0.65;
+}
+.pass-toggle:hover { opacity: 1; }
+.login-error {
+  background: rgba(172,56,56,0.1); color: var(--red); border: 1px solid rgba(172,56,56,0.3);
+  border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none;
+}
+.login-error.show { display: block; }
+.btn-login {
+  width: 100%; justify-content: center; padding: 12px; font-size: 15px; margin-top: 4px;
+}
+.login-reset {
+  display: block; text-align: center; margin-top: 16px; font-size: 13px;
+  color: var(--accent); cursor: pointer; background: none; border: none; width: 100%;
+}
+.login-reset:hover { text-decoration: underline; }
+
+/* ---------- Header ---------- */
+header {
+  background: var(--accent);
+  border-bottom: 3px solid var(--gold);
+  color: #fff;
+  padding: 16px 24px;
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo {
+  width: 46px; height: 46px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat'; font-weight: 800; font-size: 20px; color: var(--accent-deep);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.brand h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.3px; }
+.brand .sub { font-size: 11px; opacity: 0.85; font-weight: 400; letter-spacing: 0.5px; }
+.header-right { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+.user-box { display: flex; align-items: center; gap: 10px; }
+.user-box .uemail { font-size: 13px; opacity: 0.92; }
+.role-badge {
+  font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 500; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; letter-spacing: 0.5px;
+}
+.role-admin  { background: rgba(172,56,56,0.22); color: #ffd9d9; border: 1px solid rgba(255,150,150,0.5); }
+.role-editor { background: rgba(212,175,55,0.22); color: #ffe9a8; border: 1px solid rgba(212,175,55,0.6); }
+.role-viewer { background: rgba(46,125,50,0.25); color: #c6f0c8; border: 1px solid rgba(120,220,130,0.5); }
+.btn-logout {
+  background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+  padding: 7px 13px; font-size: 12px;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.26); }
+.stats { display: flex; gap: 24px; }
+.stat { text-align: center; }
+.stat .num { font-family: 'Montserrat'; font-weight: 700; font-size: 26px; color: var(--gold); line-height: 1; }
+.stat .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; margin-top: 4px; }
+
+/* ---------- Container ---------- */
+.container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; margin-bottom: 24px; box-shadow: var(--shadow);
+}
+.search-box { flex: 1; min-width: 220px; position: relative; }
+.search-box input {
+  width: 100%; padding: 11px 14px 11px 40px; border: 1px solid var(--line);
+  border-radius: 9px; font-family: 'Poppins'; font-size: 14px; color: var(--ink); background: var(--bg);
+}
+.search-box input:focus { outline: none; border-color: var(--accent); background: #fff; }
+.search-box::before {
+  content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; opacity: 0.6;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: 'Poppins'; font-weight: 600; font-size: 13px; cursor: pointer;
+  border: none; border-radius: 9px; padding: 11px 16px; display: inline-flex;
+  align-items: center; gap: 7px; transition: all 0.15s ease; white-space: nowrap;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-gold { background: var(--gold); color: var(--accent-deep); }
+.btn-gold:hover { background: var(--gold-soft); }
+.btn-ghost { background: var(--bg-alt); color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { background: #dde5ef; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #8f2e2e; }
+.btn-sm { padding: 7px 11px; font-size: 12px; }
+
+/* ---------- Sections ---------- */
+.group-section { margin-bottom: 32px; }
+.group-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.group-head .flag { font-size: 26px; }
+.group-head h2 { font-size: 20px; font-weight: 700; color: var(--ink); }
+.group-pill { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500; background: var(--accent); color: var(--gold); padding: 4px 12px; border-radius: 999px; }
+.group-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* ---------- Table ---------- */
+.table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--bg-alt); text-align: left; padding: 12px 16px;
+  font-family: 'JetBrains Mono'; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--accent); font-weight: 500; border-bottom: 1px solid var(--line);
+}
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.12s; }
+tbody tr:hover { background: var(--bg); }
+.emp-name { font-family: 'Montserrat'; font-weight: 700; color: var(--ink); }
+.cell-mono { font-family: 'JetBrains Mono'; font-size: 13px; color: var(--ink-soft); }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.empty-row td { text-align: center; color: var(--ink-soft); padding: 28px; font-style: italic; }
+
+/* ---------- Badges ---------- */
+.badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge-on { background: rgba(46,125,50,0.12); color: var(--green); }
+.badge-off { background: rgba(172,56,56,0.12); color: var(--red); }
+
+/* ---------- Footer ---------- */
+footer {
+  max-width: 1280px; margin: 32px auto 0; padding: 24px;
+  border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--ink-soft);
+}
+footer .ver { font-family: 'JetBrains Mono'; color: var(--accent); font-weight: 500; }
+footer strong { color: var(--ink); }
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,34,68,0.45);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: none; align-items: flex-start; justify-content: center; z-index: 1000; padding: 30px 16px; overflow-y: auto;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 14px; width: 100%; max-width: 860px;
+  box-shadow: 0 20px 60px rgba(0,34,68,0.3); overflow: hidden; animation: modalIn 0.2s ease;
+}
+.modal.narrow { max-width: 560px; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+.modal-head {
+  background: var(--accent); color: #fff; padding: 18px 24px; border-bottom: 3px solid var(--gold);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-head h2 { font-size: 18px; font-weight: 700; }
+.modal-close { background: rgba(255,255,255,0.15); border: none; color: #fff; cursor: pointer; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; line-height: 1; }
+.modal-close:hover { background: rgba(255,255,255,0.28); }
+.modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
+.modal-foot { padding: 16px 24px; border-top: 1px solid var(--line); background: var(--bg); display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Form ---------- */
+.form-section { margin-bottom: 24px; }
+.form-section-title {
+  font-family: 'JetBrains Mono'; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 500; padding-bottom: 8px; margin-bottom: 14px; border-bottom: 2px solid var(--bg-alt);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 12px; font-weight: 500; color: var(--ink-soft); }
+.field label .req { color: var(--red); }
+.field input, .field select, .field textarea {
+  font-family: 'Poppins'; font-size: 14px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,51,102,0.08); }
+.field textarea { resize: vertical; min-height: 80px; }
+
+/* ---------- Detail view ---------- */
+.detail-section { margin-bottom: 22px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+.detail-item { display: flex; flex-direction: column; gap: 2px; }
+.detail-item .dl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-soft); font-family: 'JetBrains Mono'; }
+.detail-item .dv { font-size: 14px; color: var(--ink); }
+.detail-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+.detail-head .dname { font-family: 'Montserrat'; font-weight: 800; font-size: 24px; }
+.detail-idline { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+
+/* ---------- Users / Logs tables ---------- */
+.mini-table { width: 100%; border-collapse: collapse; }
+.mini-table th { text-align: left; font-family: 'JetBrains Mono'; font-size: 11px; text-transform: uppercase; color: var(--accent); padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.mini-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
+.mini-table select { font-family: 'Poppins'; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; }
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters input, .filters select { font-family: 'Poppins'; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.add-user-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+
+/* ---------- Progress ---------- */
+.progress-wrap { display: none; margin: 14px 0; }
+.progress-wrap.show { display: block; }
+.progress-bar-bg { background: var(--bg-alt); border-radius: 999px; height: 12px; overflow: hidden; }
+.progress-bar { background: var(--gold); height: 100%; width: 0%; transition: width 0.2s; }
+.progress-label { font-size: 12px; color: var(--ink-soft); margin-top: 6px; font-family: 'JetBrains Mono'; }
+
+/* ---------- Toast ---------- */
+#toastWrap { position: fixed; bottom: 24px; right: 24px; z-index: 6000; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: var(--accent); color: #fff; border-left: 4px solid var(--gold); padding: 14px 18px; border-radius: 10px; font-size: 14px; max-width: 340px; box-shadow: 0 8px 24px rgba(0,34,68,0.3); animation: toastIn 0.3s ease; }
+.toast.err { border-left-color: var(--red); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+.toast.out { animation: toastOut 0.3s ease forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+
+/* ---------- Global overlay ---------- */
+#overlay {
+  position: fixed; inset: 0; background: rgba(0,34,68,0.4); backdrop-filter: blur(2px);
+  display: none; align-items: center; justify-content: center; z-index: 7000; flex-direction: column; gap: 14px; color: #fff;
+}
+#overlay.show { display: flex; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .header-right { gap: 14px; width: 100%; justify-content: space-between; }
+  .stats { gap: 18px; }
+  .group-actions { margin-left: 0; width: 100%; }
+  .form-grid, .detail-grid, .add-user-row { grid-template-columns: 1fr; }
+  thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tbody tr { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; padding: 6px; }
+  tbody td { border: none; padding: 7px 10px; display: flex; justify-content: space-between; gap: 12px; }
+  tbody td::before { content: attr(data-label); font-family: 'JetBrains Mono'; font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 500; align-self: center; }
+  .row-actions { justify-content: flex-end; width: 100%; }
+  .doc-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .doc-actions { width: 100%; }
+}
+
+/* ---------- Sub-secções (Activos/Inactivos) ---------- */
+.subgroup-head { display: flex; align-items: center; gap: 9px; margin: 16px 0 8px; }
+.subgroup-head .subcount { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500; color: var(--accent); }
+
+/* ---------- Documentos ---------- */
+.docs-section { margin-bottom: 8px; }
+.docs-count { color: var(--gold-soft); font-weight: 700; }
+.doc-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.doc-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.doc-empty { color: var(--ink-soft); font-style: italic; font-size: 13px; padding: 10px 2px; }
+.doc-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.doc-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+.doc-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.doc-icon { font-size: 26px; flex-shrink: 0; }
+.doc-name { font-family: 'Montserrat'; font-weight: 700; font-size: 14px; color: var(--ink); word-break: break-word; }
+.doc-meta { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+.doc-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+.docbadge { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent); font-weight: 500; }
+#viewerBody img { max-width: 100%; height: auto; border-radius: 8px; }
+#viewerBody iframe { width: 100%; height: 70vh; border: none; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Boot splash -->
+<div id="bootLoading">
+  <div class="spinner"></div>
+  <div style="font-family:'Montserrat';font-weight:700;">A iniciar Legado RH…</div>
+</div>
+
+<!-- Login -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">LEGADO ACLAMADO<span class="deep">UNIPESSOAL LDA</span></div>
+    <div class="login-sub">Sistema de Gestão de Funcionários</div>
+    <div class="login-error" id="loginError"></div>
+    <form id="loginForm">
+      <div class="login-field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="loginPass">Palavra-passe</label>
+        <div class="pass-wrap">
+          <input type="password" id="loginPass" autocomplete="current-password" required>
+          <button type="button" class="pass-toggle" id="passToggle" aria-label="Mostrar palavra-passe">👁</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-login" id="loginBtn">Entrar</button>
+    </form>
+    <button class="login-reset" id="resetBtn">Esqueci a palavra-passe</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appScreen" style="display:none;">
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">LA</div>
+        <div>
+          <h1>Legado RH</h1>
+          <div class="sub">LEGADO ACLAMADO — UNIPESSOAL LDA</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="user-box">
+          <span class="uemail" id="userEmail">—</span>
+          <span class="role-badge role-viewer" id="userRole">viewer</span>
+          <button class="btn btn-logout" id="logoutBtn">Sair</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+          <div class="stat"><div class="num" id="statActivos">0</div><div class="lbl">Activos</div></div>
+          <div class="stat"><div class="num" id="statInactivos">0</div><div class="lbl">Inactivos</div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Pesquisar por nome, NIF, NISS, função, cliente ou CC…" aria-label="Pesquisar funcionários">
+      </div>
+      <button class="btn btn-primary" id="btnNew">＋ Novo Funcionário</button>
+      <button class="btn btn-ghost" id="btnPdfAll">📄 PDF Todos</button>
+      <button class="btn btn-ghost" id="btnZipAll">🗜️ ZIP Completo</button>
+      <button class="btn btn-ghost" id="btnBackup">💾 Backup JSON</button>
+      <button class="btn btn-ghost" id="btnImport">📥 Importar</button>
+      <button class="btn btn-gold" id="btnUsers">👥 Utilizadores</button>
+      <button class="btn btn-gold" id="btnLogs">📋 Logs</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
+    </div>
+
+    <div id="groupsWrap"></div>
+  </div>
+
+  <footer>
+    <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
+    <div style="margin-top:6px;">
+      <span class="ver">v2.1</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+    </div>
+  </footer>
+</div>
+
+<!-- Modal: Formulário -->
+<div class="modal-backdrop" id="formModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="formTitle">Novo Funcionário</h2>
+      <button class="modal-close" id="formClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="empForm">
+        <input type="hidden" id="f_id">
+        <div class="form-section">
+          <div class="form-section-title">1 · Dados Pessoais</div>
+          <div class="form-grid">
+            <div class="field full"><label for="f_nome">Nome completo <span class="req">*</span></label><input type="text" id="f_nome" required></div>
+            <div class="field"><label for="f_nasc">Data de nascimento</label><input type="date" id="f_nasc"></div>
+            <div class="field"><label for="f_nacionalidade">Nacionalidade</label><input type="text" id="f_nacionalidade" value="Portuguesa"></div>
+            <div class="field"><label for="f_naturalidade">Naturalidade</label><input type="text" id="f_naturalidade"></div>
+            <div class="field"><label for="f_estadocivil">Estado civil</label>
+              <select id="f_estadocivil"><option value="">—</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União de Facto</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select>
+            </div>
+            <div class="field"><label for="f_genero">Género</label>
+              <select id="f_genero"><option value="">—</option><option>Masculino</option><option>Feminino</option><option>Outro</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">2 · Documentação</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_cc">CC / BI</label><input type="text" id="f_cc"></div>
+            <div class="field"><label for="f_cc_val">Validade CC</label><input type="date" id="f_cc_val"></div>
+            <div class="field"><label for="f_nif">NIF <span class="req">*</span></label><input type="text" id="f_nif" required inputmode="numeric"></div>
+            <div class="field"><label for="f_niss">NISS</label><input type="text" id="f_niss" inputmode="numeric"></div>
+            <div class="field"><label for="f_passaporte">N.º Passaporte</label><input type="text" id="f_passaporte"></div>
+            <div class="field"><label for="f_pass_val">Validade Passaporte</label><input type="date" id="f_pass_val"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">3 · Contacto e Morada</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_tel">Telemóvel</label><input type="tel" id="f_tel"></div>
+            <div class="field"><label for="f_email">Email</label><input type="email" id="f_email"></div>
+            <div class="field full"><label for="f_morada">Morada</label><input type="text" id="f_morada"></div>
+            <div class="field"><label for="f_cp">Código postal</label><input type="text" id="f_cp"></div>
+            <div class="field"><label for="f_loc">Localidade</label><input type="text" id="f_loc"></div>
+            <div class="field"><label for="f_pais">País</label><input type="text" id="f_pais" value="Portugal"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">4 · Contrato de Trabalho</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_funcao">Função <span class="req">*</span></label><input type="text" id="f_funcao" required></div>
+            <div class="field"><label for="f_categoria">Categoria profissional</label><input type="text" id="f_categoria"></div>
+            <div class="field"><label for="f_tipocontrato">Tipo de contrato</label>
+              <select id="f_tipocontrato"><option value="">—</option><option>Sem termo</option><option>Termo certo</option><option>Termo incerto</option><option>Part-time</option><option>Estágio</option></select>
+            </div>
+            <div class="field"><label for="f_estado">Estado</label>
+              <select id="f_estado"><option value="ativo">Activo</option><option value="inativo">Inactivo</option></select>
+            </div>
+            <div class="field"><label for="f_adm">Data admissão <span class="req">*</span></label><input type="date" id="f_adm" required></div>
+            <div class="field"><label for="f_cess">Data cessação</label><input type="date" id="f_cess"></div>
+            <div class="field"><label for="f_venc">Vencimento base (€)</label><input type="number" id="f_venc" step="0.01" min="0"></div>
+            <div class="field"><label for="f_horario">Horário semanal (h)</label><input type="number" id="f_horario" step="1" min="0" value="40"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">5 · Cliente / Destacamento</div>
+          <div class="form-grid">
+            <div class="field full"><label for="f_cliente">Empresa cliente</label><input type="text" id="f_cliente"></div>
+            <div class="field"><label for="f_cli_pais">País de destacamento</label><input type="text" id="f_cli_pais" value="Bélgica"></div>
+            <div class="field"><label for="f_cli_morada">Morada do local de trabalho</label><input type="text" id="f_cli_morada"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">6 · Conta Bancária</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_banco">Banco</label><input type="text" id="f_banco"></div>
+            <div class="field"><label for="f_iban">IBAN</label><input type="text" id="f_iban"></div>
+            <div class="field"><label for="f_swift">SWIFT / BIC</label><input type="text" id="f_swift"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">7 · Contacto de Emergência</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_emerg_nome">Nome</label><input type="text" id="f_emerg_nome"></div>
+            <div class="field"><label for="f_emerg_rel">Relação</label><input type="text" id="f_emerg_rel"></div>
+            <div class="field"><label for="f_emerg_tel">Telefone</label><input type="tel" id="f_emerg_tel"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">8 · Observações</div>
+          <div class="form-grid">
+            <div class="field full"><label for="f_obs">Observações</label><textarea id="f_obs"></textarea></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="formCancel">Cancelar</button>
+      <button class="btn btn-primary" id="formSave">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhe -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Ficha do Funcionário</h2>
+      <button class="modal-close" id="detailClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="detailPdf">📄 PDF</button>
+      <button class="btn btn-gold" id="detailEdit">✏️ Editar</button>
+      <button class="btn btn-danger" id="detailDelete">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Utilizadores -->
+<div class="modal-backdrop" id="usersModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>👥 Gestão de Utilizadores</h2>
+      <button class="modal-close" id="usersClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <table class="mini-table">
+        <thead><tr><th>Email</th><th>Nome</th><th>Role</th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+      <div class="form-section-title" style="margin-top:24px;">Adicionar perfil de utilizador</div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">A conta de autenticação cria-se no Firebase Console (Authentication → Add user). Aqui define-se o perfil/role. O <strong>UID</strong> obtém-se no Console após criar a conta.</p>
+      <div class="add-user-row">
+        <input type="text" id="newUserUid" placeholder="UID (do Firebase Authentication)">
+        <input type="email" id="newUserEmail" placeholder="Email">
+        <input type="text" id="newUserNome" placeholder="Nome">
+        <select id="newUserRole"><option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option></select>
+      </div>
+      <button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">＋ Adicionar perfil</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="usersCloseFoot">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Logs -->
+<div class="modal-backdrop" id="logsModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📋 Logs de Auditoria</h2>
+      <button class="modal-close" id="logsClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="filters">
+        <input type="text" id="logFilterUser" placeholder="Filtrar por utilizador (email)">
+        <select id="logFilterAction"><option value="">Todas as acções</option><option value="create">create</option><option value="update">update</option><option value="delete">delete</option><option value="import">import</option><option value="user_role">user_role</option><option value="document_upload">document_upload</option><option value="document_delete">document_delete</option></select>
+        <input type="date" id="logFilterDate">
+      </div>
+      <table class="mini-table">
+        <thead><tr><th>Data/Hora</th><th>Utilizador</th><th>Acção</th><th>Funcionário</th></tr></thead>
+        <tbody id="logsBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="logsCsvBtn">📄 Exportar CSV</button>
+      <button class="btn btn-ghost" id="logsCloseFoot">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Visualizador de documento -->
+<div class="modal-backdrop" id="viewerModal">
+  <div class="modal" style="max-width:920px;">
+    <div class="modal-head">
+      <h2 id="viewerTitle">Documento</h2>
+      <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="viewerBody" style="text-align:center;"></div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+<div id="overlay"><div class="spinner"></div><div id="overlayMsg" style="font-family:'Montserrat';font-weight:600;"></div></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   LEGADO RH v2.1 — Firebase (Auth + Firestore) + Cloudinary (documentos)
+   ============================================================ */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNMb3CiXCvjvGxOo5Zbvy5Gy2wLCplMVE",
+  authDomain: "controle-legado-aclamado.firebaseapp.com",
+  projectId: "controle-legado-aclamado",
+  storageBucket: "controle-legado-aclamado.firebasestorage.app",
+  messagingSenderId: "238679731860",
+  appId: "1:238679731860:web:16991c0f00a24fdd114e81"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const CLOUDINARY_CLOUD_NAME = 'dlhbrckt6';
+const CLOUDINARY_UPLOAD_PRESET = 'legado_documentos';
+const CLOUDINARY_FOLDER = 'legado-aclamado/funcionarios';
+
+let employees = [];
+let currentUser = null;
+let currentRole = 'viewer';
+let unsubscribe = null;
+let unsubscribeDocs = null;
+let currentDetailEmp = null;
+let allLogs = [];
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function slug(s) {
+  return (s||'sem_nome').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || 'sem_nome';
+}
+function dateStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function uid() {
+  return 'F' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+function toast(msg, isErr) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 3600);
+}
+function showOverlay(msg) {
+  document.getElementById('overlayMsg').textContent = msg || '';
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+
+function friendlyError(err) {
+  const code = (err && err.code) || '';
+  const map = {
+    'auth/invalid-email': 'Email inválido.',
+    'auth/user-disabled': 'Esta conta foi desactivada.',
+    'auth/user-not-found': 'Email ou palavra-passe incorrectos.',
+    'auth/wrong-password': 'Email ou palavra-passe incorrectos.',
+    'auth/invalid-credential': 'Email ou palavra-passe incorrectos.',
+    'auth/too-many-requests': 'Demasiadas tentativas. Tente novamente mais tarde.',
+    'auth/network-request-failed': 'Sem ligação à Internet. Verifique a rede.',
+    'permission-denied': 'Sem permissões para esta operação.',
+    'unavailable': 'Serviço indisponível. Verifique a ligação à Internet.'
+  };
+  return map[code] || (err && err.message) || 'Ocorreu um erro inesperado.';
+}
+
+/* ---------- Group resolver ---------- */
+function getGroup(emp) {
+  const p = (emp.cli_pais || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (p === 'belgica' || p.includes('belg')) return 'Bélgica';
+  if (p === 'portugal') return 'Portugal';
+  return 'Outros';
+}
+const GROUPS = [
+  { key: 'Bélgica',  flag: '🇧🇪' },
+  { key: 'Portugal', flag: '🇵🇹' },
+  { key: 'Outros',   flag: '🌐' }
+];
+
+/* ---------- Permissions ---------- */
+function isAdmin() { return currentRole === 'admin'; }
+function isEditor() { return currentRole === 'admin' || currentRole === 'editor'; }
+
+function applyRolePermissions() {
+  const show = (id, cond) => { const el = document.getElementById(id); if (el) el.style.display = cond ? '' : 'none'; };
+  show('btnNew', isEditor());
+  show('btnImport', isEditor());
+  show('btnUsers', isAdmin());
+  show('btnLogs', isAdmin());
+  show('detailEdit', isEditor());
+  show('detailDelete', isAdmin());
+}
+
+/* ============================================================
+   Auth
+   ============================================================ */
+function showLogin() {
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('bootLoading').style.display = 'none';
+}
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('bootLoading').style.display = 'none';
+}
+
+function setLoginLoading(on) {
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spinner sm"></span> A entrar…' : 'Entrar';
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  setLoginLoading(true);
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged trata do resto
+  } catch (err) {
+    errEl.textContent = friendlyError(err);
+    errEl.classList.add('show');
+  } finally {
+    setLoginLoading(false);
+  }
+}
+
+async function doReset() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginError');
+  if (!email) {
+    errEl.textContent = 'Escreva o seu email no campo acima e volte a clicar em "Esqueci a palavra-passe".';
+    errEl.classList.add('show');
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    errEl.classList.remove('show');
+    toast('Email de recuperação enviado para ' + email);
+  } catch (err) {
+    errEl.textContent = friendlyError(err);
+    errEl.classList.add('show');
+  }
+}
+
+function doLogout() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  auth.signOut();
+}
+
+async function loadRole(user) {
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data().role) {
+      currentRole = doc.data().role;
+    } else {
+      currentRole = 'viewer';
+      toast('Conta sem perfil definido. Acesso só de leitura — contacte o administrador.', true);
+    }
+  } catch (err) {
+    currentRole = 'viewer';
+    toast('Não foi possível carregar as permissões: ' + friendlyError(err), true);
+  }
+}
+
+function paintUserBox() {
+  document.getElementById('userEmail').textContent = currentUser.email;
+  document.getElementById('footerUser').textContent = currentUser.email;
+  const badge = document.getElementById('userRole');
+  badge.textContent = currentRole;
+  badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : currentRole === 'editor' ? 'role-editor' : 'role-viewer');
+}
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    currentUser = user;
+    await loadRole(user);
+    paintUserBox();
+    applyRolePermissions();
+    subscribeFuncionarios();
+    showApp();
+  } else {
+    currentUser = null;
+    currentRole = 'viewer';
+    employees = [];
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    showLogin();
+  }
+});
+
+/* ============================================================
+   Firestore — funcionarios (real-time)
+   ============================================================ */
+function subscribeFuncionarios() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = db.collection('funcionarios').onSnapshot(snap => {
+    employees = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    render();
+  }, err => {
+    toast('Erro de sincronização: ' + friendlyError(err), true);
+  });
+}
+
+async function logAudit(action, docId, nome) {
+  try {
+    await db.collection('audit_logs').add({
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      user_uid: currentUser ? currentUser.uid : '',
+      user_email: currentUser ? currentUser.email : '',
+      action: action,
+      doc_id: docId || '',
+      doc_nome: nome || ''
+    });
+  } catch (err) {
+    /* auditoria não deve bloquear a operação principal */
+    console.warn('Falha ao registar auditoria', err);
+  }
+}
+
+/* ---------- Stats ---------- */
+function refreshStats() {
+  const total = employees.length;
+  const activos = employees.filter(e => e.estado === 'ativo').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statActivos').textContent = activos;
+  document.getElementById('statInactivos').textContent = total - activos;
+}
+
+function matchesSearch(emp, q) {
+  if (!q) return true;
+  const hay = [emp.nome, emp.nif, emp.niss, emp.funcao, emp.cliente, emp.cc]
+    .map(x => (x || '').toString().toLowerCase()).join(' ');
+  return hay.includes(q.toLowerCase());
+}
+
+/* ---------- Render ---------- */
+function empRowHtml(e) {
+  return `
+        <tr data-id="${e.id}">
+          <td data-label="Nome"><span class="emp-name">${escapeHtml(e.nome)}</span></td>
+          <td data-label="NIF" class="cell-mono">${escapeHtml(e.nif)}</td>
+          <td data-label="Função">${escapeHtml(e.funcao)}</td>
+          <td data-label="Cliente">${escapeHtml(e.cliente) || '—'}</td>
+          <td data-label="Estado">${e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>'}</td>
+          <td data-label="Docs">${e.doc_count ? '<span class="docbadge">📎 ' + e.doc_count + '</span>' : '—'}</td>
+          <td data-label="Acções"><div class="row-actions">
+            <button class="btn btn-ghost btn-sm act-view" data-id="${e.id}">Ver</button>
+            <button class="btn btn-ghost btn-sm act-pdf" data-id="${e.id}">PDF</button>
+          </div></td>
+        </tr>`;
+}
+
+function subTableHtml(list, q) {
+  const rows = list.length === 0
+    ? `<tr class="empty-row"><td colspan="7">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem funcionários.'}</td></tr>`
+    : list.map(empRowHtml).join('');
+  return `<div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.trim();
+  const wrap = document.getElementById('groupsWrap');
+  wrap.innerHTML = '';
+
+  const SUBS = [
+    { estado: 'ativo',  label: 'Activos',   cls: 'badge-on' },
+    { estado: 'inativo', label: 'Inactivos', cls: 'badge-off' }
+  ];
+
+  GROUPS.forEach(g => {
+    const inGroup = employees.filter(e => getGroup(e) === g.key);
+    const matched = inGroup.filter(e => matchesSearch(e, q));
+
+    const section = document.createElement('div');
+    section.className = 'group-section';
+
+    let subHtml = '';
+    SUBS.forEach(s => {
+      const list = matched.filter(e => e.estado === s.estado)
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
+      const totalSub = inGroup.filter(e => e.estado === s.estado).length;
+      subHtml += `
+        <div class="subgroup-head">
+          <span class="badge ${s.cls}">${s.label}</span>
+          <span class="subcount">(${list.length}${q && list.length !== totalSub ? ' / ' + totalSub : ''})</span>
+        </div>
+        ${subTableHtml(list, q)}`;
+    });
+
+    section.innerHTML = `
+      <div class="group-head">
+        <span class="flag">${g.flag}</span>
+        <h2>${g.key}</h2>
+        <span class="group-pill">${matched.length}${q && matched.length !== inGroup.length ? ' / ' + inGroup.length : ''}</span>
+        <div class="group-actions">
+          <button class="btn btn-ghost btn-sm act-group-pdf" data-group="${g.key}">📄 PDF do Grupo</button>
+          <button class="btn btn-ghost btn-sm act-group-zip" data-group="${g.key}">🗜️ ZIP do Grupo</button>
+        </div>
+      </div>
+      ${subHtml}`;
+    wrap.appendChild(section);
+  });
+  refreshStats();
+}
+
+/* ---------- Modal helpers ---------- */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeAllModals() { document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open')); }
+
+const FIELDS = ['nome','nasc','nacionalidade','naturalidade','estadocivil','genero',
+  'cc','cc_val','nif','niss','passaporte','pass_val',
+  'tel','email','morada','cp','loc','pais',
+  'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario',
+  'cliente','cli_pais','cli_morada','banco','iban','swift',
+  'emerg_nome','emerg_rel','emerg_tel','obs'];
+
+function openForm(emp) {
+  if (!isEditor()) { toast('Sem permissões para criar/editar.', true); return; }
+  document.getElementById('empForm').reset();
+  document.getElementById('formTitle').textContent = emp ? 'Editar Funcionário' : 'Novo Funcionário';
+  document.getElementById('f_id').value = emp ? emp.id : '';
+  if (emp) {
+    FIELDS.forEach(f => { const el = document.getElementById('f_' + f); if (el) el.value = emp[f] != null ? emp[f] : ''; });
+  } else {
+    document.getElementById('f_nacionalidade').value = 'Portuguesa';
+    document.getElementById('f_pais').value = 'Portugal';
+    document.getElementById('f_cli_pais').value = 'Bélgica';
+    document.getElementById('f_horario').value = 40;
+    document.getElementById('f_estado').value = 'ativo';
+  }
+  openModal('formModal');
+  setTimeout(() => document.getElementById('f_nome').focus(), 50);
+}
+
+async function saveForm() {
+  if (!isEditor()) { toast('Sem permissões para guardar.', true); return; }
+  const nome = document.getElementById('f_nome').value.trim();
+  const nif = document.getElementById('f_nif').value.trim();
+  const funcao = document.getElementById('f_funcao').value.trim();
+  const adm = document.getElementById('f_adm').value;
+  if (!nome || !nif || !funcao || !adm) {
+    toast('Preencha os campos obrigatórios: Nome, NIF, Função e Data de admissão.', true);
+    return;
+  }
+  const existingId = document.getElementById('f_id').value;
+  const id = existingId || uid();
+  const data = {};
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f_' + f);
+    if (!el) return;
+    let v = el.value;
+    if (f === 'venc') v = v === '' ? '' : parseFloat(v);
+    if (f === 'horario') v = v === '' ? '' : parseFloat(v);
+    data[f] = v;
+  });
+
+  showOverlay('A guardar…');
+  try {
+    await db.collection('funcionarios').doc(id).set(data, { merge: true });
+    await logAudit(existingId ? 'update' : 'create', id, nome);
+    closeModal('formModal');
+    toast(existingId ? 'Funcionário actualizado.' : 'Funcionário criado.');
+  } catch (err) {
+    toast('Erro ao guardar: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ---------- Detail ---------- */
+function detailItem(label, val) {
+  return `<div class="detail-item"><span class="dl">${label}</span><span class="dv">${escapeHtml(val) || '—'}</span></div>`;
+}
+function viewDetail(id) {
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  currentDetailEmp = e;
+  unsubscribeDocsFn();
+  const badge = e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>';
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-head"><span class="dname">${escapeHtml(e.nome)}</span> ${badge}</div>
+    <div class="detail-idline">ID: ${escapeHtml(e.id)} · ${escapeHtml(getGroup(e))} · NIF: ${escapeHtml(e.nif)}</div>
+    <div class="detail-section"><div class="form-section-title">1 · Dados Pessoais</div><div class="detail-grid">
+      ${detailItem('Data de nascimento', formatDate(e.nasc))}${detailItem('Nacionalidade', e.nacionalidade)}${detailItem('Naturalidade', e.naturalidade)}${detailItem('Estado civil', e.estadocivil)}${detailItem('Género', e.genero)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">2 · Documentação</div><div class="detail-grid">
+      ${detailItem('CC / BI', e.cc)}${detailItem('Validade CC', formatDate(e.cc_val))}${detailItem('NIF', e.nif)}${detailItem('NISS', e.niss)}${detailItem('N.º Passaporte', e.passaporte)}${detailItem('Validade Passaporte', formatDate(e.pass_val))}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">3 · Contacto e Morada</div><div class="detail-grid">
+      ${detailItem('Telemóvel', e.tel)}${detailItem('Email', e.email)}${detailItem('Morada', e.morada)}${detailItem('Código postal', e.cp)}${detailItem('Localidade', e.loc)}${detailItem('País', e.pais)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">4 · Contrato de Trabalho</div><div class="detail-grid">
+      ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
+      ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">6 · Conta Bancária</div><div class="detail-grid">
+      ${detailItem('Banco', e.banco)}${detailItem('IBAN', e.iban)}${detailItem('SWIFT / BIC', e.swift)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">7 · Contacto de Emergência</div><div class="detail-grid">
+      ${detailItem('Nome', e.emerg_nome)}${detailItem('Relação', e.emerg_rel)}${detailItem('Telefone', e.emerg_tel)}
+    </div></div>
+    <div class="detail-section"><div class="form-section-title">8 · Observações</div><div class="detail-grid">
+      <div class="detail-item" style="grid-column:1/-1;"><span class="dv">${escapeHtml(e.obs) || '—'}</span></div>
+    </div></div>
+    <div class="detail-section docs-section">
+      <div class="form-section-title">Documentos Anexados <span class="docs-count" id="docsCount">(0)</span></div>
+      ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">📎 Adicionar documento(s)</button></div>' : ''}
+      <div class="doc-list" id="docsList"><div class="doc-empty">A carregar…</div></div>
+      <button class="btn btn-ghost btn-sm act-doc-zip">📦 Descarregar todos em ZIP</button>
+    </div>`;
+  document.getElementById('detailEdit').dataset.id = e.id;
+  document.getElementById('detailDelete').dataset.id = e.id;
+  document.getElementById('detailPdf').dataset.id = e.id;
+  applyRolePermissions();
+  openModal('detailModal');
+  subscribeDocs(e.id);
+}
+
+async function deleteEmployee(id) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar.', true); return; }
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  if (!confirm(`Eliminar definitivamente o funcionário "${e.nome}"?\n\nEsta acção não pode ser anulada.`)) return;
+  showOverlay('A eliminar…');
+  try {
+    await db.collection('funcionarios').doc(id).delete();
+    await logAudit('delete', id, e.nome);
+    unsubscribeDocsFn();
+    closeModal('detailModal');
+    toast('Funcionário eliminado.');
+  } catch (err) {
+    toast('Erro ao eliminar: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ============================================================
+   Documentos (Cloudinary + Firestore subcolecção)
+   ============================================================ */
+function unsubscribeDocsFn() { if (unsubscribeDocs) { unsubscribeDocs(); unsubscribeDocs = null; } }
+
+function formatBytes(n) {
+  if (n == null || n === '') return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+function docIcon(format) {
+  const f = (format || '').toLowerCase();
+  if (f === 'pdf') return '📄';
+  if (['jpg','jpeg','png','gif','webp','bmp'].includes(f)) return '🖼';
+  return '📎';
+}
+function isImageFormat(format) {
+  return ['jpg','jpeg','png','gif','webp','bmp'].includes((format || '').toLowerCase());
+}
+function docDateStr(ts) {
+  if (!ts || !ts.toDate) return '—';
+  const d = ts.toDate(); const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} às ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function docFullName(meta) {
+  const base = meta.original_filename || 'documento';
+  return meta.format ? `${base}.${meta.format}` : base;
+}
+function attachmentUrl(url) {
+  if (!url) return url;
+  return url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url;
+}
+
+async function logAuditDoc(action, funcId, funcNome, filename, size) {
+  try {
+    await db.collection('audit_logs').add({
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      user_uid: currentUser ? currentUser.uid : '',
+      user_email: currentUser ? currentUser.email : '',
+      action: action,
+      funcionario_id: funcId || '',
+      funcionario_nome: funcNome || '',
+      document_filename: filename || '',
+      document_size: (size == null ? null : size),
+      doc_id: funcId || '',
+      doc_nome: `${funcNome || ''} · ${filename || ''}`
+    });
+  } catch (err) {
+    console.warn('Falha ao registar auditoria de documento', err);
+  }
+}
+
+function subscribeDocs(funcId) {
+  unsubscribeDocsFn();
+  unsubscribeDocs = db.collection('funcionarios').doc(funcId).collection('documentos')
+    .onSnapshot(snap => {
+      const docs = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      renderDocs(docs);
+    }, err => {
+      const list = document.getElementById('docsList');
+      if (list) list.innerHTML = `<div class="doc-empty">Erro ao carregar documentos: ${escapeHtml(friendlyError(err))}</div>`;
+    });
+}
+
+function renderDocs(docs) {
+  const list = document.getElementById('docsList');
+  const count = document.getElementById('docsCount');
+  if (!list) return;
+  docs.sort((a, b) => {
+    const ta = a.uploaded_at && a.uploaded_at.toMillis ? a.uploaded_at.toMillis() : Infinity;
+    const tb = b.uploaded_at && b.uploaded_at.toMillis ? b.uploaded_at.toMillis() : Infinity;
+    return tb - ta;
+  });
+  if (count) count.textContent = `(${docs.length})`;
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="doc-empty">Sem documentos anexados.</div>';
+    return;
+  }
+  list.innerHTML = docs.map(d => {
+    const name = docFullName(d);
+    const delBtn = isAdmin()
+      ? `<button class="btn btn-danger btn-sm act-doc-del" data-docid="${d.id}" data-filename="${escapeHtml(name)}" data-size="${d.bytes != null ? d.bytes : ''}">🗑 Eliminar</button>`
+      : '';
+    return `<div class="doc-card">
+      <div class="doc-info">
+        <span class="doc-icon">${docIcon(d.format)}</span>
+        <div>
+          <div class="doc-name">${escapeHtml(name)}</div>
+          <div class="doc-meta">Carregado: ${docDateStr(d.uploaded_at)} · Por: ${escapeHtml(d.uploaded_by_email)} · ${formatBytes(d.bytes)}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm act-doc-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">⬇ Descarregar</button>
+        ${delBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openUploadWidget(funcId, funcNome) {
+  if (!isEditor()) { toast('Sem permissões para anexar documentos.', true); return; }
+  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
+  const widget = cloudinary.createUploadWidget({
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    folder: `${CLOUDINARY_FOLDER}/${funcId}`,
+    resourceType: 'auto',
+    clientAllowedFormats: ['jpg','jpeg','png','pdf'],
+    maxFileSize: 10485760,
+    multiple: true,
+    sources: ['local','camera'],
+    language: 'pt',
+    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
+  }, (error, result) => {
+    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
+    if (result && result.event === 'success') {
+      saveDocumentMetadata(funcId, funcNome, result.info);
+    }
+  });
+  widget.open();
+}
+
+async function saveDocumentMetadata(funcId, funcNome, info) {
+  try {
+    await db.collection('funcionarios').doc(funcId).collection('documentos').add({
+      url: info.secure_url,
+      public_id: info.public_id,
+      original_filename: info.original_filename,
+      format: info.format,
+      bytes: info.bytes,
+      resource_type: info.resource_type,
+      uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
+      uploaded_by_uid: currentUser.uid,
+      uploaded_by_email: currentUser.email
+    });
+    await db.collection('funcionarios').doc(funcId).update({
+      doc_count: firebase.firestore.FieldValue.increment(1)
+    });
+    await logAuditDoc('document_upload', funcId, funcNome, `${info.original_filename}.${info.format}`, info.bytes);
+    toast('Documento anexado.');
+  } catch (err) {
+    toast('Erro ao guardar documento: ' + friendlyError(err), true);
+  }
+}
+
+function viewDocument(url, format, filename) {
+  document.getElementById('viewerTitle').textContent = filename || 'Documento';
+  const body = document.getElementById('viewerBody');
+  body.innerHTML = isImageFormat(format)
+    ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(filename)}">`
+    : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
+  openModal('viewerModal');
+}
+
+function downloadDocument(url) {
+  window.open(attachmentUrl(url), '_blank');
+}
+
+async function deleteDocument(funcId, funcNome, docId, filename, size) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar documentos.', true); return; }
+  if (!confirm(`Eliminar o documento "${filename}"?`)) return;
+  if (!confirm('Tem a certeza? Esta acção não pode ser revertida.')) return;
+  showOverlay('A eliminar documento…');
+  try {
+    await db.collection('funcionarios').doc(funcId).collection('documentos').doc(docId).delete();
+    await db.collection('funcionarios').doc(funcId).update({
+      doc_count: firebase.firestore.FieldValue.increment(-1)
+    });
+    await logAuditDoc('document_delete', funcId, funcNome, filename, size);
+    toast('Documento eliminado.');
+  } catch (err) {
+    toast('Erro ao eliminar documento: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+async function downloadAllDocsZip(funcId, funcNome) {
+  showOverlay('A preparar ZIP de documentos…');
+  try {
+    const snap = await db.collection('funcionarios').doc(funcId).collection('documentos').get();
+    if (snap.empty) { toast('Este funcionário não tem documentos.', true); return; }
+    const zip = new JSZip();
+    const used = {};
+    let okCount = 0;
+    for (const d of snap.docs) {
+      const meta = d.data();
+      try {
+        const resp = await fetch(meta.url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const blob = await resp.blob();
+        let name = docFullName(meta);
+        if (used[name]) { const n = ++used[name]; name = name.replace(/(\.[^.]+)?$/, '_' + n + '$1'); }
+        else used[name] = 1;
+        zip.file(name, blob);
+        okCount++;
+      } catch (e) {
+        /* ignora ficheiro que não pôde ser obtido */
+      }
+    }
+    if (okCount === 0) { toast('Não foi possível obter os documentos (verifique a ligação ou as permissões do Cloudinary).', true); return; }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    saveAs(blob, `Documentos_${slug(funcNome)}_${dateStamp()}.zip`);
+    toast(`ZIP com ${okCount} documento(s) gerado.`);
+  } catch (err) {
+    toast('Erro ao gerar ZIP: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ============================================================
+   PDF (jsPDF)
+   ============================================================ */
+const { jsPDF } = window.jspdf;
+const C = { navy:[0,51,102], gold:[212,175,55], text:[0,34,68], gray:[120,120,120], bgalt:[232,237,243] };
+
+function nowStamp() {
+  const d = new Date(); const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function pdfFooter(doc, pageW, pageH) {
+  const total = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.gray);
+    doc.text(`Gerado a ${nowStamp()}`, 15, pageH - 8);
+    doc.text(`Página ${i}/${total}`, pageW - 15, pageH - 8, { align: 'right' });
+  }
+}
+function drawEmployeePdf(doc, e) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const colW = (pageW - margin * 2) / 2;
+  doc.setFillColor(...C.navy); doc.rect(0, 0, pageW, 28, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+  doc.text('FICHA DE FUNCIONÁRIO', margin, 13);
+  doc.setFontSize(9); doc.setTextColor(...C.gold);
+  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','normal');
+  doc.text('Documento confidencial · Uso interno', margin, 24.5);
+  let y = 40;
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C.text);
+  doc.text(e.nome || '—', margin, y); y += 7;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C.gray);
+  const estado = e.estado === 'ativo' ? 'Activo' : 'Inactivo';
+  doc.text(`ID: ${e.id} · NIF: ${e.nif || '—'} · Função: ${e.funcao || '—'} · Estado: ${estado}`, margin, y); y += 8;
+
+  const sections = [
+    ['1 · DADOS PESSOAIS', [['Data de nascimento', formatDate(e.nasc)],['Nacionalidade', e.nacionalidade],['Naturalidade', e.naturalidade],['Estado civil', e.estadocivil],['Género', e.genero]]],
+    ['2 · DOCUMENTAÇÃO', [['CC / BI', e.cc],['Validade CC', formatDate(e.cc_val)],['NIF', e.nif],['NISS', e.niss],['N.º Passaporte', e.passaporte],['Validade Passaporte', formatDate(e.pass_val)]]],
+    ['3 · CONTACTO E MORADA', [['Telemóvel', e.tel],['Email', e.email],['Morada', e.morada],['Código postal', e.cp],['Localidade', e.loc],['País', e.pais]]],
+    ['4 · CONTRATO DE TRABALHO', [['Função', e.funcao],['Categoria profissional', e.categoria],['Tipo de contrato', e.tipocontrato],['Estado', estado],['Data admissão', formatDate(e.adm)],['Data cessação', formatDate(e.cess)],['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],['Horário semanal (h)', e.horario]]],
+    ['5 · CLIENTE / DESTACAMENTO', [['Empresa cliente', e.cliente],['País de destacamento', e.cli_pais],['Morada do local de trabalho', e.cli_morada]]],
+    ['6 · CONTA BANCÁRIA', [['Banco', e.banco],['IBAN', e.iban],['SWIFT / BIC', e.swift]]],
+    ['7 · CONTACTO DE EMERGÊNCIA', [['Nome', e.emerg_nome],['Relação', e.emerg_rel],['Telefone', e.emerg_tel]]],
+    ['8 · OBSERVAÇÕES', [['', e.obs]]]
+  ];
+  sections.forEach(([title, items]) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setFillColor(...C.bgalt); doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F');
+    doc.setFont('courier','bold'); doc.setFontSize(9); doc.setTextColor(...C.navy);
+    doc.text(title, margin + 2, y + 0.8); y += 9;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    const filled = items.filter(([l, v]) => (v != null && v !== ''));
+    if (filled.length === 0) { doc.setTextColor(...C.gray); doc.text('—', margin + 2, y); y += 7; return; }
+    let col = 0; let rowMaxY = y;
+    filled.forEach(([label, val]) => {
+      if (y > 275) { doc.addPage(); y = 20; rowMaxY = y; col = 0; }
+      const x = margin + col * colW;
+      const lines = doc.splitTextToSize(String(val), colW - 6);
+      doc.setTextColor(...C.gray); doc.setFontSize(7.5); doc.setFont('courier','normal');
+      if (label) doc.text(label.toUpperCase(), x + 2, y);
+      doc.setTextColor(...C.text); doc.setFontSize(10); doc.setFont('helvetica','normal');
+      doc.text(lines, x + 2, y + (label ? 4.5 : 0));
+      const blockH = (label ? 4.5 : 0) + lines.length * 4.5 + 3;
+      if (y + blockH > rowMaxY) rowMaxY = y + blockH;
+      col++; if (col >= 2) { col = 0; y = rowMaxY; }
+    });
+    if (col !== 0) y = rowMaxY;
+    y += 3;
+  });
+}
+function generateSinglePdf(id) {
+  const e = employees.find(x => x.id === id); if (!e) return;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  drawEmployeePdf(doc, e);
+  pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+  doc.save(`Ficha_${slug(e.nome)}_${dateStamp()}.pdf`);
+  toast('PDF gerado.');
+}
+function buildConsolidatedPdf(list) {
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  list.forEach((e, i) => { if (i > 0) doc.addPage(); drawEmployeePdf(doc, e); });
+  pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+  return doc;
+}
+function generateAllPdf() {
+  if (employees.length === 0) { toast('Sem funcionários para exportar.', true); return; }
+  buildConsolidatedPdf(employees).save(`Fichas_Consolidado_${dateStamp()}.pdf`);
+  toast('PDF consolidado gerado.');
+}
+function generateGroupPdf(group) {
+  const list = employees.filter(e => getGroup(e) === group);
+  if (list.length === 0) { toast(`Sem funcionários no grupo ${group}.`, true); return; }
+  buildConsolidatedPdf(list).save(`Fichas_${slug(group)}_${dateStamp()}.pdf`);
+  toast(`PDF do grupo ${group} gerado.`);
+}
+
+/* ---------- CSV ---------- */
+function buildCsv(list) {
+  const cols = ['id','nome','nif','niss','cc','funcao','estado','adm','cess','tel','email','morada','loc','cliente','cli_pais','venc','iban'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const rows = list.map(e => cols.map(c => c === 'estado' ? esc(e.estado === 'ativo' ? 'Activo' : 'Inactivo') : esc(e[c])).join(';'));
+  return '﻿' + cols.join(';') + '\r\n' + rows.join('\r\n');
+}
+
+/* ---------- ZIP ---------- */
+async function buildZip(list, label) {
+  if (list.length === 0) { toast('Sem funcionários para exportar.', true); return; }
+  showOverlay('A gerar ZIP…');
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder('Fichas_Individuais');
+    list.forEach(e => {
+      const doc = new jsPDF({ unit:'mm', format:'a4' });
+      drawEmployeePdf(doc, e);
+      pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+      folder.file(`Ficha_${slug(e.nome)}.pdf`, doc.output('blob'));
+    });
+    zip.file(`Fichas_Consolidado_${label === 'Completo' ? 'Todos' : slug(label)}.pdf`, buildConsolidatedPdf(list).output('blob'));
+    zip.file('backup.json', JSON.stringify(list, null, 2));
+    zip.file('funcionarios.csv', buildCsv(list));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    saveAs(blob, label === 'Completo' ? `Legado_RH_Completo_${dateStamp()}.zip` : `Legado_RH_${slug(label)}_${dateStamp()}.zip`);
+    toast('ZIP gerado.');
+  } catch (err) {
+    toast('Erro ao gerar ZIP: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ---------- JSON backup / import ---------- */
+function downloadBackup() {
+  const blob = new Blob([JSON.stringify(employees.map(e => { const c = Object.assign({}, e); return c; }), null, 2)], { type: 'application/json' });
+  saveAs(blob, `backup_${dateStamp()}.json`);
+  toast('Backup JSON criado.');
+}
+
+async function importJson(file) {
+  if (!isEditor()) { toast('Sem permissões para importar.', true); return; }
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); } catch (e) { toast('Ficheiro JSON inválido.', true); return; }
+  if (!Array.isArray(data)) { toast('Formato inválido: esperado um array de funcionários.', true); return; }
+  if (!confirm(`Importar ${data.length} funcionário(s) para a base de dados?\n\nOs registos serão adicionados/actualizados no Firestore.`)) return;
+
+  showOverlay('A importar 0/' + data.length + '…');
+  let done = 0;
+  try {
+    const chunkSize = 400;
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const batch = db.batch();
+      const slice = data.slice(i, i + chunkSize);
+      slice.forEach(emp => {
+        const id = emp.id || uid();
+        const clean = Object.assign({}, emp); delete clean.id;
+        batch.set(db.collection('funcionarios').doc(id), clean, { merge: true });
+      });
+      await batch.commit();
+      done += slice.length;
+      document.getElementById('overlayMsg').textContent = `A importar ${done}/${data.length}…`;
+    }
+    await logAudit('import', '', `${data.length} registos importados`);
+    toast(`${data.length} funcionário(s) importado(s).`);
+  } catch (err) {
+    toast('Erro na importação: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ============================================================
+   Utilizadores (admin)
+   ============================================================ */
+async function openUsers() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  openModal('usersModal');
+  await renderUsers();
+}
+async function renderUsers() {
+  const body = document.getElementById('usersBody');
+  body.innerHTML = '<tr><td colspan="3">A carregar…</td></tr>';
+  try {
+    const snap = await db.collection('users').get();
+    if (snap.empty) { body.innerHTML = '<tr><td colspan="3">Sem utilizadores.</td></tr>'; return; }
+    body.innerHTML = snap.docs.map(d => {
+      const u = d.data();
+      const isSelf = currentUser && d.id === currentUser.uid;
+      const sel = ['admin','editor','viewer'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('');
+      return `<tr>
+        <td>${escapeHtml(u.email)}${isSelf ? ' <strong>(você)</strong>' : ''}</td>
+        <td>${escapeHtml(u.nome)}</td>
+        <td>${isSelf ? `<span class="role-badge role-admin">${escapeHtml(u.role)}</span>` : `<select data-uid="${d.id}" data-email="${escapeHtml(u.email)}" class="role-select">${sel}</select>`}</td>
+      </tr>`;
+    }).join('');
+    body.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', e => changeRole(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="3">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+  }
+}
+async function changeRole(uidVal, role, email) {
+  showOverlay('A actualizar perfil…');
+  try {
+    await db.collection('users').doc(uidVal).update({ role: role });
+    await logAudit('user_role', uidVal, `${email} → ${role}`);
+    toast('Role actualizado para ' + role + '.');
+    if (currentUser && uidVal === currentUser.uid) { currentRole = role; paintUserBox(); applyRolePermissions(); }
+  } catch (err) {
+    toast('Erro ao actualizar role: ' + friendlyError(err), true);
+    await renderUsers();
+  } finally {
+    hideOverlay();
+  }
+}
+async function addUser() {
+  const uidVal = document.getElementById('newUserUid').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim();
+  const nome = document.getElementById('newUserNome').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  if (!uidVal || !email) { toast('Indique pelo menos o UID e o email.', true); return; }
+  showOverlay('A criar perfil…');
+  try {
+    await db.collection('users').doc(uidVal).set({ email, nome, role, created_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    await logAudit('user_role', uidVal, `perfil criado: ${email} (${role})`);
+    document.getElementById('newUserUid').value = '';
+    document.getElementById('newUserEmail').value = '';
+    document.getElementById('newUserNome').value = '';
+    document.getElementById('newUserRole').value = 'viewer';
+    toast('Perfil de utilizador criado.');
+    await renderUsers();
+  } catch (err) {
+    toast('Erro ao criar perfil: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+/* ============================================================
+   Logs (admin)
+   ============================================================ */
+async function openLogs() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  openModal('logsModal');
+  const body = document.getElementById('logsBody');
+  body.innerHTML = '<tr><td colspan="4">A carregar…</td></tr>';
+  try {
+    const snap = await db.collection('audit_logs').orderBy('timestamp', 'desc').limit(100).get();
+    allLogs = snap.docs.map(d => d.data());
+    renderLogs();
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="4">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+  }
+}
+function logDateStr(ts) {
+  if (!ts || !ts.toDate) return '—';
+  const d = ts.toDate(); const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function filteredLogs() {
+  const fu = document.getElementById('logFilterUser').value.trim().toLowerCase();
+  const fa = document.getElementById('logFilterAction').value;
+  const fd = document.getElementById('logFilterDate').value;
+  return allLogs.filter(l => {
+    if (fu && !(l.user_email || '').toLowerCase().includes(fu)) return false;
+    if (fa && l.action !== fa) return false;
+    if (fd && l.timestamp && l.timestamp.toDate) {
+      const d = l.timestamp.toDate();
+      const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (iso !== fd) return false;
+    }
+    return true;
+  });
+}
+function renderLogs() {
+  const body = document.getElementById('logsBody');
+  const list = filteredLogs();
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="4">Sem registos.</td></tr>'; return; }
+  body.innerHTML = list.map(l => `<tr>
+    <td class="cell-mono">${logDateStr(l.timestamp)}</td>
+    <td>${escapeHtml(l.user_email)}</td>
+    <td>${escapeHtml(l.action)}</td>
+    <td>${escapeHtml(l.doc_nome)}</td>
+  </tr>`).join('');
+}
+function exportLogsCsv() {
+  const list = filteredLogs();
+  if (list.length === 0) { toast('Sem registos para exportar.', true); return; }
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const rows = list.map(l => [logDateStr(l.timestamp), l.user_email, l.action, l.doc_id, l.doc_nome].map(esc).join(';'));
+  const csv = '﻿' + ['data_hora','utilizador','accao','doc_id','funcionario'].join(';') + '\r\n' + rows.join('\r\n');
+  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `audit_logs_${dateStamp()}.csv`);
+  toast('CSV de logs exportado.');
+}
+
+/* ============================================================
+   Event wiring
+   ============================================================ */
+function bind() {
+  // Login
+  document.getElementById('loginForm').addEventListener('submit', doLogin);
+  document.getElementById('resetBtn').addEventListener('click', doReset);
+  document.getElementById('passToggle').addEventListener('click', () => {
+    const inp = document.getElementById('loginPass');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+  document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+  // Toolbar
+  document.getElementById('btnNew').addEventListener('click', () => openForm(null));
+  document.getElementById('btnPdfAll').addEventListener('click', generateAllPdf);
+  document.getElementById('btnZipAll').addEventListener('click', () => buildZip(employees, 'Completo'));
+  document.getElementById('btnBackup').addEventListener('click', downloadBackup);
+  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', e => { if (e.target.files[0]) importJson(e.target.files[0]); e.target.value = ''; });
+  document.getElementById('btnUsers').addEventListener('click', openUsers);
+  document.getElementById('btnLogs').addEventListener('click', openLogs);
+  document.getElementById('searchInput').addEventListener('input', render);
+
+  // Form modal
+  document.getElementById('formClose').addEventListener('click', () => closeModal('formModal'));
+  document.getElementById('formCancel').addEventListener('click', () => closeModal('formModal'));
+  document.getElementById('formSave').addEventListener('click', saveForm);
+  document.getElementById('empForm').addEventListener('submit', e => { e.preventDefault(); saveForm(); });
+
+  // Detail modal
+  document.getElementById('detailClose').addEventListener('click', () => { unsubscribeDocsFn(); closeModal('detailModal'); });
+  document.getElementById('detailEdit').addEventListener('click', function () { const id = this.dataset.id; unsubscribeDocsFn(); closeModal('detailModal'); openForm(employees.find(e => e.id === id)); });
+  document.getElementById('detailDelete').addEventListener('click', function () { deleteEmployee(this.dataset.id); });
+  document.getElementById('detailPdf').addEventListener('click', function () { generateSinglePdf(this.dataset.id); });
+
+  // Documentos (delegação no corpo do detalhe)
+  document.getElementById('detailBody').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn || !currentDetailEmp) return;
+    const fid = currentDetailEmp.id, fnome = currentDetailEmp.nome;
+    if (btn.classList.contains('act-doc-add')) openUploadWidget(fid, fnome);
+    else if (btn.classList.contains('act-doc-zip')) downloadAllDocsZip(fid, fnome);
+    else if (btn.classList.contains('act-doc-view')) viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename);
+    else if (btn.classList.contains('act-doc-dl')) downloadDocument(btn.dataset.url);
+    else if (btn.classList.contains('act-doc-del')) deleteDocument(fid, fnome, btn.dataset.docid, btn.dataset.filename, btn.dataset.size === '' ? null : Number(btn.dataset.size));
+  });
+
+  // Visualizador de documento
+  document.getElementById('viewerClose').addEventListener('click', () => {
+    closeModal('viewerModal');
+    document.getElementById('viewerBody').innerHTML = '';
+  });
+
+  // Users modal
+  document.getElementById('usersClose').addEventListener('click', () => closeModal('usersModal'));
+  document.getElementById('usersCloseFoot').addEventListener('click', () => closeModal('usersModal'));
+  document.getElementById('addUserBtn').addEventListener('click', addUser);
+
+  // Logs modal
+  document.getElementById('logsClose').addEventListener('click', () => closeModal('logsModal'));
+  document.getElementById('logsCloseFoot').addEventListener('click', () => closeModal('logsModal'));
+  document.getElementById('logsCsvBtn').addEventListener('click', exportLogsCsv);
+  document.getElementById('logFilterUser').addEventListener('input', renderLogs);
+  document.getElementById('logFilterAction').addEventListener('change', renderLogs);
+  document.getElementById('logFilterDate').addEventListener('change', renderLogs);
+
+  // Backdrops + ESC
+  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => { if (e.target === bd) { if (bd.id === 'detailModal') unsubscribeDocsFn(); bd.classList.remove('open'); } }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { unsubscribeDocsFn(); closeAllModals(); } });
+
+  // Delegated table actions
+  document.getElementById('groupsWrap').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    if (btn.classList.contains('act-view')) viewDetail(btn.dataset.id);
+    else if (btn.classList.contains('act-pdf')) generateSinglePdf(btn.dataset.id);
+    else if (btn.classList.contains('act-group-pdf')) generateGroupPdf(btn.dataset.group);
+    else if (btn.classList.contains('act-group-zip')) buildZip(employees.filter(x => getGroup(x) === btn.dataset.group), btn.dataset.group);
+  });
+}
+
+bind();
+</script>
+</body>
+</html>
