@@ -2,6 +2,29 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [3.0.0] — 2026-05-29
+
+### Adicionado — Gestão Fiscal e Salarial (fase 1, sem IA)
+- Navegação em duas áreas: **👥 Funcionários** e **🏢 Empresa**
+- **Processamento de salários** por trabalhador (modo mês ou horas), com SS trabalhador/entidade, parte tributável do subsídio de refeição, base de IRS, retenção pela tabela, líquido e custo total para a empresa. Cada parcela mostra fórmula e taxa
+- Histórico mensal de recibos por trabalhador (subcolecção `recibos`), com *snapshot* dos parâmetros usados (não recalcula retroativamente)
+- Recibos PDF: **completo** (auditoria) e **simples** (contabilista)
+- **Faltas e baixas médicas** (subcolecção `faltas`): justificada/injustificada/baixa (CIT), dias ou horas; injustificada desconta 1/30 e remove subsídio; complemento CCT opcional na baixa; alimenta automaticamente o salário do mês
+- **Destacamento A1 e contratos**: estado/validade do A1, base de SS em Portugal, validação de renovações e duração do termo certo
+- **Dashboard da empresa**: custo de pessoal do mês, A1 a expirar, contratos a terminar, parâmetros em vigor
+- **Configurações** totalmente editáveis (colecção `config`): SS, IAS, RMMG, subsídios, taxas de IVA (adicionáveis), IRC/PME e limite, derrama, mínimo de existência de IRS, dias úteis e horas/dia, e a **tabela de retenção de IRS vazia e editável** (não inventa valores)
+- Histórico de alterações de configuração (`config_history`), data de vigência e botão "Repor valores 2026 de origem"
+- Validações de configuração (percentagens 0–100, valores não negativos, avisos para valores fora do normal)
+- Botão **Exportar todos os dados** (JSON + CSV em ZIP)
+- Aviso legal transversal em toda a app e nos PDF
+- Novas regras Firestore para `recibos`, `faltas`, `config` e `config_history`
+- Documentação `docs/FISCAL.md`
+
+### Notas
+- Módulos de IVA, IRC e pró-formas internos estão preparados na interface e entram na **fase 2**
+- Tudo determinístico; **nenhuma funcionalidade usa inteligência artificial**
+- Mantém-se 100 % gratuito (plano Spark do Firebase + Cloudinary)
+
 ## [2.1.0] — 2026-05-27
 
 ### Adicionado
