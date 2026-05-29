@@ -153,6 +153,6 @@ Regra **3-2-1**. Procedimento completo em [docs/BACKUP.md](docs/BACKUP.md).
 
 ---
 
-**Versão actual:** v3.0
+**Versão actual:** v3.1
 
 © 2026 LEGADO ACLAMADO — UNIPESSOAL LDA · Todos os direitos reservados.

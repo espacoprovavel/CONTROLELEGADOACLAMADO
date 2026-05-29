@@ -2,6 +2,26 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [3.1.0] — 2026-05-29
+
+### Adicionado — Ferramentas de cálculo e fase 2
+- **Valor/hora de referência**: salário base ÷ horas/mês (173,33 por omissão, editável). Ex.: 920 ÷ 173,33 = 5,31 €/h. Usado em todos os cálculos por hora.
+- **Três ferramentas independentes na área Funcionários:**
+  - **Calculadora de Horas**: horas × valor/hora (ou salário base ÷ 173,33). Mostra a fórmula.
+  - **Cálculo Simplificado**: salário base menos faltas (dias 1/30 ou horas), sem impostos, para conferência interna.
+  - **Cálculo Completo "como o contabilista"**: rubricas com código — Cód 1 Vencimento (horas × valor/hora), Cód 30 Subs. Alimentação (isento até limite), Cód 38/40 Ajudas de Custo (isentas de IRS e SS, somam ao líquido fora da base), Cód 20/21 Subs. Férias/Natal em duodécimos (base ÷ 12, incidem em SS), desconto SS 11% sobre vencimento+subsídios, retenção de IRS pela tabela. Valor ilíquido, descontos, líquido e custo total. Recibo PDF.
+- **Faltas — três tipos**: justificada, injustificada (1/30 + sem subsídio) e **"por admissão"** (entrou a meio do mês; vencimento proporcional, não desconta).
+- **Relatório para o Contabilista** por trabalhador e mês (nome, NIF, faltas por tipo, vencimento, subsídios, ajudas, base SS, SS, IRS, líquido). Exportável em PDF e Excel/CSV.
+- **Fase 2 — área Empresa operacional:**
+  - **Estimador de IVA trimestral**: faturas emitidas/recebidas por taxa, apuramento a entregar/recuperar, prazo da declaração periódica trimestral; guardado por trimestre (colecção `iva`).
+  - **Estimador de IRC**: lucro tributável, 19% (ou PME 16% nos primeiros 50.000 €), derrama e pagamentos por conta.
+  - **Pró-formas internos**: documento "SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA", exportável em PDF.
+- Parâmetro **horas/mês** editável nas Configurações; nova regra Firestore para `iva`.
+
+### Notas
+- Cálculos validados por testes unitários, incluindo o valor/hora 920 ÷ 173,33 = 5,31 € e o tratamento de cada código. **Verificação contra os recibos reais de abril/2026 fica pendente** (ficheiros não acessíveis nesta sessão).
+- Continua determinístico e **sem inteligência artificial**.
+
 ## [3.0.0] — 2026-05-29
 
 ### Adicionado — Gestão Fiscal e Salarial (fase 1, sem IA)

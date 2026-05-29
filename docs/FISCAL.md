@@ -105,6 +105,41 @@ Permissões (Firestore Rules): leitura para autenticados; criação/edição par
 
 ---
 
-## Fase 2 (preparada na interface)
+## Valor/hora de referência (v3.1)
 
-Os módulos **Estimador de IVA**, **Estimador de IRC** e **Pró-formas internos** já têm separador na área Empresa e entram na fase seguinte. O núcleo (Configurações, Salários, Faltas/Baixas, A1/Contratos e Dashboard) está operacional.
+`valor/hora = salário base ÷ horas/mês` (173,33 por omissão, editável em Configurações). Ex.: `920 ÷ 173,33 = 5,31 €`. É usado em **todos** os cálculos por hora.
+
+## Três ferramentas de cálculo (área Funcionários, v3.1)
+
+São independentes e abrem-se na barra "Ferramentas de cálculo":
+
+1. **🕐 Calculadora de Horas** — `horas × valor/hora`. Pode introduzir o valor/hora diretamente ou um salário base (a app calcula `÷ 173,33`). Mostra a fórmula.
+2. **➖ Cálculo Simplificado** — salário base menos faltas (dias a 1/30 ou horas ao valor/hora). Sem impostos. Para conferência interna.
+3. **📑 Cálculo Completo "como o contabilista"** — replica os recibos reais, com rubricas por código:
+   - **Cód 1 Vencimento** — `horas × valor/hora`.
+   - **Cód 30 Subs. Alimentação** — `dias × valor/dia`, isento até 6,15 €/dia (dinheiro) ou 10,46 €/dia (cartão); não conta para SS nem IRS dentro do limite.
+   - **Cód 38 / 40 Ajudas de Custo (e Estrangeiro)** — isentas de IRS e SS: somam ao líquido mas **ficam fora** da base de SS e da incidência de IRS. (A app replica o tratamento do contabilista; não valida limites legais.)
+   - **Cód 20 / 21 Subs. Férias / Natal** — em duodécimos (`base ÷ 12`); entram na base de SS, podem não entrar no IRS (opção).
+   - **Desconto SS** — 11 % sobre `vencimento + subs. férias/Natal` (não sobre ajudas de custo nem alimentação).
+   - **Retenção de IRS** — pela tabela das Configurações. Se a tabela **não estiver carregada**, a app avisa "tabela de IRS não carregada" e **não assume** retenção (0,00, nunca inventa).
+   - Valor ilíquido, descontos, líquido a receber e custo total para a empresa. Recibo PDF.
+
+   Também acessível por trabalhador em **Ficha → 📑 Cálculo Contabilista** (pré-preenche o salário base).
+
+## Faltas — três tipos (v3.1)
+
+- **Justificada** — segundo a config (remunerada ou não).
+- **Injustificada** — desconta 1/30 por dia + remove subsídio de alimentação desses dias.
+- **Por admissão** — entrou a meio do mês: **não** é falta a descontar; o vencimento é proporcional aos dias/horas trabalhados (usar o modo por horas).
+
+## Relatório para o Contabilista (v3.1)
+
+Em **Funcionários → 📤 Relatório p/ Contabilista**, escolhe-se o mês e gera-se uma tabela por trabalhador (nome, NIF, faltas por tipo J/I/B/A, vencimento, subsídios, ajudas de custo, base de SS, desconto SS, IRS, líquido), a partir dos recibos guardados. Exportável em **PDF** e **Excel/CSV**.
+
+## Fase 2 — área Empresa (v3.1, operacional)
+
+- **🧾 Estimador de IVA trimestral** — faturas emitidas (IVA liquidado) e recebidas (IVA dedutível) por taxa (23/13/6 %); apura IVA a entregar/recuperar por trimestre e mostra o prazo da declaração periódica trimestral. Guardado por trimestre (colecção `iva`).
+- **🏛️ Estimador de IRC** — lucro tributável, 19 % (ou PME 16 % nos primeiros 50.000 €), derrama e pagamentos por conta (estimativa).
+- **📄 Pró-formas internos** — documento marcado "DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA", com linhas (qtd × preço + IVA) e exportação PDF. Não simula faturas certificadas nem numeração da AT.
+
+> ⚠️ **Validação pendente:** os cálculos foram testados com testes unitários (incluindo 920 ÷ 173,33 = 5,31 € e o tratamento de cada código), mas a conferência contra os **recibos reais de abril/2026** ainda não foi feita — os ficheiros não estavam acessíveis na sessão de desenvolvimento.

@@ -539,6 +539,14 @@ footer strong { color: var(--ink); }
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
+    <div class="toolbar" style="margin-top:-12px;">
+      <span style="font-family:'JetBrains Mono';font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);">Ferramentas de cálculo:</span>
+      <button class="btn btn-ghost" id="btnToolHoras">🕐 Calculadora de Horas</button>
+      <button class="btn btn-ghost" id="btnToolSimples">➖ Cálculo Simplificado</button>
+      <button class="btn btn-ghost" id="btnToolContab">📑 Cálculo Completo (Contabilista)</button>
+      <button class="btn btn-ghost" id="btnRelContab" style="margin-left:auto;">📤 Relatório p/ Contabilista</button>
+    </div>
+
     <div id="groupsWrap"></div>
   </div>
 
@@ -558,7 +566,7 @@ footer strong { color: var(--ink); }
   <footer>
     <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
-      <span class="ver">v3.0</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+      <span class="ver">v3.1</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
   </footer>
 </div>
@@ -677,6 +685,7 @@ footer strong { color: var(--ink); }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="detailPdf">📄 PDF</button>
       <button class="btn btn-primary" id="detailSalary">💶 Processar Salário</button>
+      <button class="btn btn-primary" id="detailContab">📑 Cálculo Contabilista</button>
       <button class="btn btn-primary" id="detailFaltas">🗓️ Faltas / Baixas</button>
       <button class="btn btn-primary" id="detailA1">🌍 A1 / Contrato</button>
       <button class="btn btn-gold" id="detailEdit">✏️ Editar</button>
@@ -791,6 +800,79 @@ footer strong { color: var(--ink); }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="a1Cancel">Cancelar</button>
       <button class="btn btn-primary" id="a1Save">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ferramenta 1 — Calculadora de Horas -->
+<div class="modal-backdrop" id="toolHorasModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>🕐 Calculadora de Horas</h2>
+      <button class="modal-close" id="toolHorasClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="es-sub" style="margin-bottom:14px;">Ferramenta independente. Valor/hora de referência = salário base ÷ <span id="th_horasmes">173,33</span>.</div>
+      <div class="calc-input-grid">
+        <div class="cfg-field"><label>Horas trabalhadas</label><input type="number" step="any" id="th_horas" value="0"></div>
+        <div class="cfg-field"><label>Valor/hora (€) <span class="hint">deixe vazio p/ calcular</span></label><input type="number" step="any" id="th_vh" placeholder="auto"></div>
+        <div class="cfg-field"><label>Salário base (€) <span class="hint">se valor/hora vazio</span></label><input type="number" step="any" id="th_base" value="920"></div>
+      </div>
+      <button class="btn btn-primary" id="th_calc">🧮 Calcular</button>
+      <div id="th_result" style="margin-top:16px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" id="toolHorasCloseFoot">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Ferramenta 2 — Cálculo Simplificado -->
+<div class="modal-backdrop" id="toolSimplesModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>➖ Cálculo Simplificado (salário − faltas)</h2>
+      <button class="modal-close" id="toolSimplesClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="es-sub" style="margin-bottom:14px;">Rápido, sem impostos. Para conferência interna. Faltas em dias (1/30) ou horas (valor/hora de referência).</div>
+      <div class="calc-input-grid">
+        <div class="cfg-field"><label>Salário base (€)</label><input type="number" step="any" id="ts_base" value="920"></div>
+        <div class="cfg-field"><label>Faltas (dias)</label><input type="number" step="any" id="ts_dias" value="0"></div>
+        <div class="cfg-field"><label>Faltas (horas)</label><input type="number" step="any" id="ts_horas" value="0"></div>
+      </div>
+      <button class="btn btn-primary" id="ts_calc">🧮 Calcular</button>
+      <div id="ts_result" style="margin-top:16px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" id="toolSimplesCloseFoot">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Ferramenta 3 — Cálculo Completo (Contabilista) -->
+<div class="modal-backdrop" id="toolContabModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="toolContabTitle">📑 Cálculo Completo (Contabilista)</h2>
+      <button class="modal-close" id="toolContabClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="toolContabBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="toolContabCloseFoot">Fechar</button>
+      <button class="btn btn-ghost" id="toolContabPdf">📄 Recibo PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Relatório para o Contabilista -->
+<div class="modal-backdrop" id="relContabModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📤 Relatório para o Contabilista</h2>
+      <button class="modal-close" id="relContabClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="relContabBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="relContabCloseFoot">Fechar</button>
+      <button class="btn btn-ghost" id="relContabExcel">📊 Exportar Excel/CSV</button>
+      <button class="btn btn-primary" id="relContabPdf">📄 Exportar PDF</button>
     </div>
   </div>
 </div>
@@ -1898,6 +1980,7 @@ function defaultConfig() {
     irs_minimo_existencia: 12880,
     dias_uteis: 22,
     horas_dia: 8,
+    horas_mes: 173.33,
     alerta_dias: 30,
     irs_tabela: [],   // VAZIA por opção — a utilizadora cola a tabela oficial
     vigente_desde: new Date().toISOString().slice(0, 10)
@@ -1961,17 +2044,20 @@ function lookupIRS(tabela, situacao, dependentes, baseTributavel) {
    Devolve dias/horas e valor de desconto + dias sem subsídio. */
 function resumoFaltasMes(faltas, periodo, cfg, salarioBase) {
   const horasDia = num(cfg.horas_dia, 8);
-  let diasDesconto = 0, diasSemSubsidio = 0, complemento = 0;
+  let diasDesconto = 0, diasSemSubsidio = 0, complemento = 0, diasAdmissao = 0;
   const detalhe = [];
   (faltas || []).filter(f => f.periodo === periodo).forEach(f => {
     const q = num(f.quantidade, 0);
     const diasEq = f.unidade === 'horas' ? (horasDia > 0 ? q / horasDia : 0) : q;
+    // "Por admissão": NÃO é falta a descontar — entrou a meio do mês; o vencimento
+    // é proporcional aos dias/horas trabalhados (tratado no modo horas). Apenas informativo.
+    if (f.tipo === 'admissao') { diasAdmissao += diasEq; detalhe.push({ tipo: f.tipo, diasEq, descontaSalario: false, data: f.data_inicio }); return; }
     let descontaSalario = false;
     if (f.tipo === 'injustificada') descontaSalario = true;
     else if (f.tipo === 'baixa') descontaSalario = true;
     else if (f.tipo === 'justificada' && !f.remunerada) descontaSalario = true;
-    // qualquer dia de ausência efetiva remove subsídio de refeição
-    diasSemSubsidio += diasEq;
+    // injustificada remove subsídio de refeição desses dias
+    if (f.tipo === 'injustificada') diasSemSubsidio += diasEq;
     if (descontaSalario) diasDesconto += diasEq;
     if (f.tipo === 'baixa' && f.complemento_cct) {
       complemento += (salarioBase / 30) * diasEq * (num(f.complemento_pct, 0) / 100);
@@ -1979,7 +2065,103 @@ function resumoFaltasMes(faltas, periodo, cfg, salarioBase) {
     detalhe.push({ tipo: f.tipo, diasEq, descontaSalario, data: f.data_inicio });
   });
   const valorDesconto = (salarioBase / 30) * diasDesconto;
-  return { diasDesconto, diasSemSubsidio, valorDesconto, complemento, detalhe };
+  return { diasDesconto, diasSemSubsidio, valorDesconto, complemento, diasAdmissao, detalhe };
+}
+
+/* ============================================================
+   v3.1 — Valor/hora de referência e três ferramentas
+   ============================================================ */
+
+/* Valor/hora de referência: salário base ÷ horas/mês (173,33 por omissão).
+   Ex.: 920 ÷ 173,33 = 5,31 €. Usado em TODOS os cálculos por hora. */
+function valorHoraRef(salarioBase, cfg) {
+  const hm = num(cfg && cfg.horas_mes, 173.33);
+  return hm > 0 ? salarioBase / hm : 0;
+}
+
+/* FERRAMENTA 1 — Calculadora de horas (independente). */
+function calcCalculadoraHoras(horas, valorHora) {
+  const total = horas * valorHora;
+  return {
+    total,
+    formula: `${horas.toLocaleString('pt-PT', { maximumFractionDigits: 2 })} h × ${eur(valorHora)} = ${eur(total)}`
+  };
+}
+
+/* FERRAMENTA 2 — Cálculo simplificado (salário menos faltas, sem impostos).
+   Desconta faltas em dias (1/30) ou horas (valor/hora de referência). */
+function calcSimplificado(salarioBase, faltaDias, faltaHoras, cfg) {
+  const descDias = (salarioBase / 30) * faltaDias;
+  const vh = valorHoraRef(salarioBase, cfg);
+  const descHoras = vh * faltaHoras;
+  const totalDesc = descDias + descHoras;
+  const resultado = salarioBase - totalDesc;
+  return {
+    salarioBase, descDias, descHoras, totalDesc, resultado,
+    formulaDias: faltaDias > 0 ? `(${eur(salarioBase)} ÷ 30) × ${faltaDias} dia(s) = ${eur(descDias)}` : '',
+    formulaHoras: faltaHoras > 0 ? `${eur(vh)}/h × ${faltaHoras} h = ${eur(descHoras)}` : ''
+  };
+}
+
+/* FERRAMENTA 3 — Cálculo completo "como o contabilista" (rubricas com código).
+   Trata cada código conforme os recibos reais:
+   - Cód 1  Vencimento (horas × valor/hora)
+   - Cód 30 Subs. Alimentação (isento até limite; não incide SS/IRS dentro do limite)
+   - Cód 38/40 Ajudas de Custo (isentas IRS+SS: somam ao líquido, fora da base)
+   - Cód 20/21 Subs. Férias/Natal em duodécimos (base ÷ 12): incidem em SS, opção IRS
+   - SS 11% sobre vencimento + subs. férias/natal
+   - IRS pela tabela das Configurações (nunca inventa) */
+function calcContabilista(inp, cfg) {
+  const txSSt = num(cfg.ss_trabalhador, 11);
+  const txSSe = num(cfg.ss_entidade, 23.75);
+  const rubricas = [];
+
+  // Cód 1 — Vencimento (por horas)
+  const valorHora = inp.valorHora != null ? inp.valorHora : valorHoraRef(inp.salarioBase, cfg);
+  const vencimento = inp.horas * valorHora;
+  rubricas.push({ cod: '1', label: 'Vencimento', formula: `${inp.horas.toLocaleString('pt-PT', { maximumFractionDigits: 2 })} h × ${eur(valorHora)}`, value: vencimento, kind: 'add' });
+
+  // Cód 30 — Subsídio de Alimentação (S/IRS e SS dentro do limite)
+  const limiteUnit = inp.subModo === 'cartao' ? num(cfg.sub_refeicao_cartao, 10.46) : num(cfg.sub_refeicao_dinheiro, 6.15);
+  const totalSub = inp.subValor * inp.diasSub;
+  const limiteIsento = limiteUnit * inp.diasSub;
+  const subExcedente = Math.max(0, totalSub - limiteIsento);
+  if (totalSub > 0) {
+    rubricas.push({ cod: '30', label: 'Subs. Alimentação S/IRS e SS', formula: `${eur(inp.subValor)} × ${inp.diasSub} dia(s) (${inp.subModo}, isento até ${eur(limiteUnit)}/dia)`, value: totalSub, kind: 'add' });
+  }
+
+  // Cód 38/40 — Ajudas de Custo (isentas de IRS e SS)
+  if (inp.ajudasCusto > 0) rubricas.push({ cod: '38', label: 'Ajudas de Custo', formula: 'Isenta de IRS e SS (fora da base)', value: inp.ajudasCusto, kind: 'add' });
+  if (inp.ajudasCustoEstr > 0) rubricas.push({ cod: '40', label: 'Aj. Custo Estrangeiro', formula: 'Isenta de IRS e SS (fora da base)', value: inp.ajudasCustoEstr, kind: 'add' });
+
+  // Cód 20/21 — Subsídios de Férias/Natal (duodécimos)
+  const subFerias = inp.duodecimoFerias ? inp.salarioBase / 12 : 0;
+  const subNatal = inp.duodecimoNatal ? inp.salarioBase / 12 : 0;
+  if (subFerias > 0) rubricas.push({ cod: '20', label: 'Subs. de Férias (duodécimo)', formula: `${eur(inp.salarioBase)} ÷ 12`, value: subFerias, kind: 'add' });
+  if (subNatal > 0) rubricas.push({ cod: '21', label: 'Subs. de Natal (duodécimo)', formula: `${eur(inp.salarioBase)} ÷ 12`, value: subNatal, kind: 'add' });
+
+  // Base de SS = vencimento + subs férias/natal (NÃO ajudas de custo nem alimentação)
+  const baseSS = vencimento + subFerias + subNatal;
+  const ssTrab = baseSS * txSSt / 100;
+  const ssEnt = baseSS * txSSe / 100;
+
+  // Incidência de IRS = vencimento + (subs férias/natal se opção) + excedente do sub. alimentação
+  const baseIRS = vencimento + (inp.subsidiosNoIRS ? (subFerias + subNatal) : 0) + subExcedente;
+  const irsRes = lookupIRS(cfg.irs_tabela, inp.situacao, inp.dependentes, baseIRS);
+  const irs = irsRes.vazia ? 0 : baseIRS * irsRes.taxa / 100;
+
+  // Totais
+  const iliquido = vencimento + totalSub + inp.ajudasCusto + inp.ajudasCustoEstr + subFerias + subNatal;
+  const descontos = ssTrab + irs;
+  const liquido = iliquido - descontos;
+  const custoEmpresa = iliquido + ssEnt;
+
+  return {
+    rubricas, valorHora, vencimento, totalSub, subExcedente, subFerias, subNatal,
+    baseSS, ssTrab, ssEnt, baseIRS, irs, irsTaxa: irsRes.taxa, irsVazia: irsRes.vazia,
+    ajudasCusto: inp.ajudasCusto, ajudasCustoEstr: inp.ajudasCustoEstr,
+    iliquido, descontos, liquido, custoEmpresa
+  };
 }
 
 /* Núcleo do processamento de salário. Devolve linhas auditáveis + totais. */
@@ -1993,9 +2175,9 @@ function calcularSalario(inp, cfg) {
   // 1 · Vencimento base efetivo
   let vencEfetivo, formulaVenc;
   if (inp.modo === 'horas') {
-    const valorHora = diasUteis * horasDia > 0 ? inp.salarioBase / (diasUteis * horasDia) : 0;
+    const valorHora = valorHoraRef(inp.salarioBase, cfg);
     vencEfetivo = valorHora * inp.horasTrabalhadas;
-    formulaVenc = `${eur(inp.salarioBase)} ÷ (${diasUteis}d × ${horasDia}h) = ${eur(valorHora)}/h × ${inp.horasTrabalhadas}h`;
+    formulaVenc = `${eur(inp.salarioBase)} ÷ ${num(cfg.horas_mes, 173.33)}h = ${eur(valorHora)}/h × ${inp.horasTrabalhadas}h`;
   } else {
     vencEfetivo = inp.salarioBase;
     formulaVenc = `Vencimento mensal: ${eur(inp.salarioBase)}`;
@@ -2122,17 +2304,9 @@ function renderEmpContent() {
   if (!appConfig) { c.innerHTML = '<div class="empresa-section">A carregar configuração…</div>'; return; }
   if (currentEmpTab === 'dashboard') c.innerHTML = renderDashboard();
   else if (currentEmpTab === 'config') { c.innerHTML = renderConfig(); wireConfig(); }
-  else if (currentEmpTab === 'iva') c.innerHTML = renderFase2('Estimador de IVA', 'Registo de faturas emitidas/recebidas por taxa, apuramento mensal/trimestral e prazos da declaração periódica.');
-  else if (currentEmpTab === 'irc') c.innerHTML = renderFase2('Estimador de IRC', 'Lucro tributável, taxa 19 % (ou PME 16 % nos primeiros 50.000 €), derrama e pagamentos por conta.');
-  else if (currentEmpTab === 'proforma') c.innerHTML = renderFase2('Pró-formas internos', 'Documentos “SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA”, exportáveis em PDF.');
-}
-
-function renderFase2(titulo, desc) {
-  return `<div class="empresa-section">
-    <h2>${titulo}</h2>
-    <div class="es-sub">${desc}</div>
-    <div class="calc-warn-box">Este módulo entra na <strong>fase 2</strong>. O núcleo (Configurações, Salários, Faltas/Baixas, A1/Contratos e Dashboard) já está operacional.</div>
-  </div>`;
+  else if (currentEmpTab === 'iva') { c.innerHTML = renderIva(); wireIva(); }
+  else if (currentEmpTab === 'irc') { c.innerHTML = renderIrc(); wireIrc(); }
+  else if (currentEmpTab === 'proforma') { c.innerHTML = renderProforma(); wireProforma(); }
 }
 
 function renderDashboard() {
@@ -2212,6 +2386,268 @@ function cfgField(id, label, value, hint, type) {
   </div>`;
 }
 
+/* ============================================================
+   FASE 2 — Cálculos puros (IVA, IRC, Pró-forma)
+   ============================================================ */
+function apurarIva(emitidas, recebidas) {
+  const liquidado = (emitidas || []).reduce((s, f) => s + num(f.iva, 0), 0);
+  const dedutivel = (recebidas || []).reduce((s, f) => s + num(f.iva, 0), 0);
+  const saldo = liquidado - dedutivel;
+  return { liquidado, dedutivel, saldo, aEntregar: saldo > 0 ? saldo : 0, aRecuperar: saldo < 0 ? -saldo : 0 };
+}
+function calcIrc(lucro, cfg) {
+  const limite = num(cfg.irc_pme_limite, 50000);
+  let coleta;
+  if (cfg.irc_pme_ativo && lucro > 0) {
+    const ate = Math.min(lucro, limite);
+    const acima = Math.max(0, lucro - limite);
+    coleta = ate * num(cfg.irc_pme_taxa, 16) / 100 + acima * num(cfg.irc_taxa, 19) / 100;
+  } else {
+    coleta = Math.max(0, lucro) * num(cfg.irc_taxa, 19) / 100;
+  }
+  const derrama = Math.max(0, lucro) * num(cfg.derrama, 0) / 100;
+  return { coleta, derrama, total: coleta + derrama };
+}
+function proformaTotais(linhas) {
+  let base = 0, iva = 0;
+  (linhas || []).forEach(l => { const sub = num(l.qtd, 0) * num(l.preco, 0); base += sub; iva += sub * num(l.taxa, 0) / 100; });
+  return { base, iva, total: base + iva };
+}
+
+/* Prazo da declaração periódica trimestral de IVA (regime trimestral):
+   entrega até dia 20 do 2.º mês seguinte ao fim do trimestre. */
+function prazoIvaTrimestre(ano, trimestre) {
+  const fimMes = trimestre * 3;          // 3,6,9,12
+  const entregaMes = fimMes + 2;         // 5,8,11,14
+  let y = ano, m = entregaMes;
+  if (m > 12) { m -= 12; y += 1; }
+  const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  return `até 20 de ${nomes[m - 1]} de ${y}`;
+}
+
+/* ---------- IVA (estado em memória; persistido no Firestore) ---------- */
+let ivaState = { ano: new Date().getFullYear(), trimestre: Math.floor(new Date().getMonth() / 3) + 1, emitidas: [], recebidas: [], loaded: false };
+
+function ivaDocId() { return `${ivaState.ano}-T${ivaState.trimestre}`; }
+
+async function loadIva() {
+  try {
+    const d = await db.collection('iva').doc(ivaDocId()).get();
+    if (d.exists) { const data = d.data(); ivaState.emitidas = data.emitidas || []; ivaState.recebidas = data.recebidas || []; }
+    else { ivaState.emitidas = []; ivaState.recebidas = []; }
+  } catch (e) { ivaState.emitidas = []; ivaState.recebidas = []; }
+  ivaState.loaded = true;
+  if (currentEmpTab === 'iva') renderEmpContent();
+}
+
+function renderIva() {
+  const taxas = (appConfig.iva_taxas || []);
+  const taxaOpts = taxas.map(t => `${t.valor}`).join(',');
+  const r = apurarIva(ivaState.emitidas, ivaState.recebidas);
+  const linhasFatura = (arr, kind) => arr.length === 0
+    ? `<div class="es-sub">Sem faturas registadas.</div>`
+    : `<div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Base (€)</th><th>Taxa</th><th>IVA (€)</th><th></th></tr></thead><tbody>${arr.map((f, i) => `<tr>
+        <td>${escapeHtml(f.desc || '—')}</td><td>${eur(num(f.base, 0))}</td><td>${pct(num(f.taxa, 0))}</td><td>${eur(num(f.iva, 0))}</td>
+        <td>${isEditor() ? `<button class="cfg-del-btn" data-del-${kind}="${i}">×</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  const novaLinha = kind => isEditor() ? `
+    <div class="cfg-dyn-row" style="grid-template-columns:2fr 1fr 1fr 1fr auto;">
+      <input type="text" id="${kind}_desc" placeholder="Descrição">
+      <input type="number" step="any" id="${kind}_base" placeholder="Base €">
+      <input type="number" step="any" id="${kind}_taxa" placeholder="Taxa %" list="ivaTaxasList">
+      <input type="number" step="any" id="${kind}_iva" placeholder="IVA € (auto)">
+      <button class="btn btn-primary btn-sm" data-add-${kind}="1">＋</button>
+    </div>` : '';
+  return `
+  <div class="empresa-section">
+    <h2>🧾 Estimador de IVA (trimestral)</h2>
+    <div class="es-sub">Registo de faturas emitidas (IVA liquidado) e recebidas (IVA dedutível), por taxa. Apuramento por trimestre. Carregamento de ficheiros: a app extrai texto e a utilizadora confirma os valores (sem IA — opcional/fase seguinte).</div>
+    <datalist id="ivaTaxasList">${taxas.map(t => `<option value="${t.valor}">${escapeHtml(t.nome)}</option>`).join('')}</datalist>
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Ano</label><input type="number" id="iva_ano" value="${ivaState.ano}"></div>
+      <div class="cfg-field"><label>Trimestre</label><select id="iva_trim">
+        ${[1, 2, 3, 4].map(t => `<option value="${t}" ${ivaState.trimestre === t ? 'selected' : ''}>${t}.º trimestre</option>`).join('')}
+      </select></div>
+    </div>
+
+    <div class="cfg-group">
+      <div class="cfg-group-title">Faturas emitidas (IVA liquidado)</div>
+      ${novaLinha('emit')}
+      ${linhasFatura(ivaState.emitidas, 'emit')}
+    </div>
+    <div class="cfg-group">
+      <div class="cfg-group-title">Faturas recebidas (IVA dedutível)</div>
+      ${novaLinha('receb')}
+      ${linhasFatura(ivaState.recebidas, 'receb')}
+    </div>
+
+    <div class="calc-result">
+      <div class="calc-line add"><span class="cl-label">IVA liquidado</span><span class="cl-formula">Soma do IVA das faturas emitidas</span><span class="cl-value">${eur(r.liquidado)}</span></div>
+      <div class="calc-line subtract"><span class="cl-label">IVA dedutível</span><span class="cl-formula">Soma do IVA das faturas recebidas</span><span class="cl-value">-${eur(r.dedutivel)}</span></div>
+      <div class="calc-line total"><span class="cl-label">${r.saldo >= 0 ? 'IVA A ENTREGAR' : 'IVA A RECUPERAR'}</span><span class="cl-formula">Liquidado − dedutível</span><span class="cl-value">${eur(r.saldo >= 0 ? r.aEntregar : r.aRecuperar)}</span></div>
+    </div>
+    <div class="calc-warn-box" style="margin-top:12px;">Declaração periódica do ${ivaState.trimestre}.º trimestre de ${ivaState.ano}: <strong>${prazoIvaTrimestre(ivaState.ano, ivaState.trimestre)}</strong> (regime trimestral; o pagamento segue habitualmente até ao dia 25).</div>
+    ${isEditor() ? '<div class="calc-actions"><button class="btn btn-primary" id="iva_save">💾 Guardar trimestre</button></div>' : ''}
+  </div>`;
+}
+
+function wireIva() {
+  if (!ivaState.loaded) { loadIva(); }
+  const anoEl = document.getElementById('iva_ano'), trimEl = document.getElementById('iva_trim');
+  if (anoEl) anoEl.addEventListener('change', () => { ivaState.ano = num(anoEl.value, ivaState.ano); ivaState.loaded = false; loadIva(); });
+  if (trimEl) trimEl.addEventListener('change', () => { ivaState.trimestre = num(trimEl.value, ivaState.trimestre); ivaState.loaded = false; loadIva(); });
+  const addFatura = kind => {
+    const arr = kind === 'emit' ? ivaState.emitidas : ivaState.recebidas;
+    const base = num(document.getElementById(`${kind}_base`).value, 0);
+    const taxa = num(document.getElementById(`${kind}_taxa`).value, 0);
+    const ivaRaw = document.getElementById(`${kind}_iva`).value.trim();
+    const iva = ivaRaw === '' ? base * taxa / 100 : num(ivaRaw, 0);
+    arr.push({ desc: document.getElementById(`${kind}_desc`).value.trim(), base, taxa, iva });
+    renderEmpContent();
+  };
+  const eb = document.querySelector('[data-add-emit]'); if (eb) eb.addEventListener('click', () => addFatura('emit'));
+  const rb = document.querySelector('[data-add-receb]'); if (rb) rb.addEventListener('click', () => addFatura('receb'));
+  document.querySelectorAll('[data-del-emit]').forEach(b => b.addEventListener('click', () => { ivaState.emitidas.splice(num(b.dataset.delEmit), 1); renderEmpContent(); }));
+  document.querySelectorAll('[data-del-receb]').forEach(b => b.addEventListener('click', () => { ivaState.recebidas.splice(num(b.dataset.delReceb), 1); renderEmpContent(); }));
+  const save = document.getElementById('iva_save');
+  if (save) save.addEventListener('click', async () => {
+    showOverlay('A guardar IVA…');
+    try {
+      await db.collection('iva').doc(ivaDocId()).set({ ano: ivaState.ano, trimestre: ivaState.trimestre, emitidas: ivaState.emitidas, recebidas: ivaState.recebidas, updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by: currentUser ? currentUser.email : '' });
+      await logAudit('iva_save', ivaDocId(), `IVA ${ivaDocId()}`);
+      toast('Trimestre de IVA guardado.');
+    } catch (err) { toast('Erro ao guardar IVA: ' + friendlyError(err), true); } finally { hideOverlay(); }
+  });
+}
+
+/* ---------- IRC ---------- */
+function renderIrc() {
+  return `
+  <div class="empresa-section">
+    <h2>🏛️ Estimador de IRC</h2>
+    <div class="es-sub">Lucro tributável, taxa ${pct(appConfig.irc_taxa)} (ou PME ${pct(appConfig.irc_pme_taxa)} nos primeiros ${eur(appConfig.irc_pme_limite)}), derrama e pagamentos por conta.</div>
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Rendimentos (€)</label><input type="number" step="any" id="irc_rend" value="0"></div>
+      <div class="cfg-field"><label>Gastos dedutíveis (€)</label><input type="number" step="any" id="irc_gastos" value="0"></div>
+      <div class="cfg-field"><label>Aplicar taxa PME?</label><select id="irc_pme"><option value="sim" ${appConfig.irc_pme_ativo ? 'selected' : ''}>Sim</option><option value="nao" ${!appConfig.irc_pme_ativo ? 'selected' : ''}>Não</option></select></div>
+    </div>
+    <button class="btn btn-primary" id="irc_calc">🧮 Calcular</button>
+    <div id="irc_result" style="margin-top:16px;"></div>
+  </div>`;
+}
+function wireIrc() {
+  const btn = document.getElementById('irc_calc');
+  if (btn) btn.addEventListener('click', () => {
+    const lucro = num(document.getElementById('irc_rend').value, 0) - num(document.getElementById('irc_gastos').value, 0);
+    const cfg = Object.assign({}, appConfig, { irc_pme_ativo: document.getElementById('irc_pme').value === 'sim' });
+    const r = calcIrc(lucro, cfg);
+    const pme = cfg.irc_pme_ativo && lucro > 0;
+    const limite = num(cfg.irc_pme_limite, 50000);
+    const ate = Math.min(Math.max(0, lucro), limite), acima = Math.max(0, lucro - limite);
+    document.getElementById('irc_result').innerHTML = `
+      <div class="calc-result">
+        <div class="calc-line ${lucro >= 0 ? 'add' : 'subtract'}"><span class="cl-label">Lucro tributável</span><span class="cl-formula">Rendimentos − gastos dedutíveis</span><span class="cl-value">${eur(lucro)}</span></div>
+        ${pme
+        ? `<div class="calc-line"><span class="cl-label">Coleta — taxa PME</span><span class="cl-formula">${eur(ate)} × ${pct(cfg.irc_pme_taxa)}</span><span class="cl-value">${eur(ate * cfg.irc_pme_taxa / 100)}</span></div>
+           ${acima > 0 ? `<div class="calc-line"><span class="cl-label">Coleta — taxa normal</span><span class="cl-formula">${eur(acima)} × ${pct(cfg.irc_taxa)}</span><span class="cl-value">${eur(acima * cfg.irc_taxa / 100)}</span></div>` : ''}`
+        : `<div class="calc-line"><span class="cl-label">Coleta</span><span class="cl-formula">${eur(Math.max(0, lucro))} × ${pct(cfg.irc_taxa)}</span><span class="cl-value">${eur(r.coleta)}</span></div>`}
+        <div class="calc-line"><span class="cl-label">Derrama municipal</span><span class="cl-formula">${eur(Math.max(0, lucro))} × ${pct(cfg.derrama)}</span><span class="cl-value">${eur(r.derrama)}</span></div>
+        <div class="calc-line total"><span class="cl-label">IRC ESTIMADO</span><span class="cl-formula">Coleta + derrama</span><span class="cl-value">${eur(r.total)}</span></div>
+        <div class="calc-line"><span class="cl-label">Pagamentos por conta (estimativa)</span><span class="cl-formula">≈ IRC ÷ 3 (3 prestações: julho, setembro, dezembro)</span><span class="cl-value">${eur(r.total / 3)}</span></div>
+      </div>
+      <div class="calc-warn-box" style="margin-top:12px;">Estimativa. Os pagamentos por conta dependem da coleta do ano anterior e de regras específicas — confirme com a contabilidade.</div>`;
+  });
+}
+
+/* ---------- Pró-formas internos ---------- */
+let proformaLinhas = [];
+function renderProforma() {
+  const t = proformaTotais(proformaLinhas);
+  const taxas = (appConfig.iva_taxas || []);
+  return `
+  <div class="empresa-section">
+    <h2>📄 Pró-formas internos</h2>
+    <div class="es-sub">Documento de gestão interna e negociação. Não simula faturas certificadas nem numeração da AT.</div>
+    <div class="calc-warn-box" style="background:#fff3cd;border-color:#e0c060;color:#7a5c00;font-weight:600;text-align:center;">DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA</div>
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Cliente</label><input type="text" id="pf_cliente" placeholder="Nome do cliente"></div>
+      <div class="cfg-field"><label>Nº pró-forma (interno)</label><input type="text" id="pf_num" placeholder="ex.: PF-2026-001"></div>
+      <div class="cfg-field"><label>Data</label><input type="date" id="pf_data" value="${new Date().toISOString().slice(0, 10)}"></div>
+    </div>
+    <datalist id="pfTaxasList">${taxas.map(t => `<option value="${t.valor}">${escapeHtml(t.nome)}</option>`).join('')}</datalist>
+    <div class="cfg-group">
+      <div class="cfg-group-title">Linhas</div>
+      <div class="cfg-dyn-row" style="grid-template-columns:2fr 1fr 1fr 1fr auto;">
+        <input type="text" id="pf_desc" placeholder="Descrição">
+        <input type="number" step="any" id="pf_qtd" placeholder="Qtd" value="1">
+        <input type="number" step="any" id="pf_preco" placeholder="Preço unit. €">
+        <input type="number" step="any" id="pf_taxa" placeholder="IVA %" list="pfTaxasList" value="23">
+        <button class="btn btn-primary btn-sm" id="pf_add">＋</button>
+      </div>
+      ${proformaLinhas.length === 0 ? '<div class="es-sub">Sem linhas.</div>' : `<div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Qtd</th><th>Preço</th><th>IVA</th><th>Subtotal</th><th></th></tr></thead><tbody>${proformaLinhas.map((l, i) => `<tr><td>${escapeHtml(l.desc)}</td><td>${num(l.qtd, 0)}</td><td>${eur(num(l.preco, 0))}</td><td>${pct(num(l.taxa, 0))}</td><td>${eur(num(l.qtd, 0) * num(l.preco, 0))}</td><td><button class="cfg-del-btn" data-del-pf="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`}
+    </div>
+    <div class="calc-result">
+      <div class="calc-line"><span class="cl-label">Base</span><span class="cl-formula">Soma dos subtotais</span><span class="cl-value">${eur(t.base)}</span></div>
+      <div class="calc-line"><span class="cl-label">IVA</span><span class="cl-formula">Por linha</span><span class="cl-value">${eur(t.iva)}</span></div>
+      <div class="calc-line total"><span class="cl-label">TOTAL</span><span class="cl-formula">Base + IVA</span><span class="cl-value">${eur(t.total)}</span></div>
+    </div>
+    <div class="calc-actions"><button class="btn btn-primary" id="pf_pdf">📄 Exportar pró-forma PDF</button></div>
+  </div>`;
+}
+function wireProforma() {
+  const add = document.getElementById('pf_add');
+  if (add) add.addEventListener('click', () => {
+    const desc = document.getElementById('pf_desc').value.trim();
+    if (!desc) { toast('Indique a descrição da linha.', true); return; }
+    proformaLinhas.push({ desc, qtd: num(document.getElementById('pf_qtd').value, 1), preco: num(document.getElementById('pf_preco').value, 0), taxa: num(document.getElementById('pf_taxa').value, 0) });
+    const cli = document.getElementById('pf_cliente').value, n = document.getElementById('pf_num').value, dt = document.getElementById('pf_data').value;
+    renderEmpContent();
+    document.getElementById('pf_cliente').value = cli; document.getElementById('pf_num').value = n; document.getElementById('pf_data').value = dt;
+  });
+  document.querySelectorAll('[data-del-pf]').forEach(b => b.addEventListener('click', () => { proformaLinhas.splice(num(b.dataset.delPf), 1); renderEmpContent(); }));
+  const pdf = document.getElementById('pf_pdf');
+  if (pdf) pdf.addEventListener('click', () => {
+    if (proformaLinhas.length === 0) { toast('Adicione pelo menos uma linha.', true); return; }
+    const cliente = document.getElementById('pf_cliente').value.trim() || '—';
+    const numpf = document.getElementById('pf_num').value.trim() || '—';
+    const data = document.getElementById('pf_data').value;
+    const t = proformaTotais(proformaLinhas);
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth(); const margin = 15;
+    doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 26, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+    doc.text('PRÓ-FORMA (INTERNO)', margin, 12);
+    doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+    doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 18.5);
+    doc.setFillColor(224, 192, 96); doc.rect(0, 26, pageW, 8, 'F');
+    doc.setTextColor(122, 92, 0); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    doc.text('DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA', pageW / 2, 31.5, { align: 'center' });
+    let y = 44;
+    doc.setTextColor(0, 34, 68); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(`Cliente: ${cliente}`, margin, y); doc.text(`Nº: ${numpf}`, pageW - margin, y, { align: 'right' }); y += 6;
+    doc.text(`Data: ${formatDate(data)}`, margin, y); y += 10;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0, 51, 102);
+    doc.text('Descrição', margin, y); doc.text('Qtd', margin + 95, y); doc.text('Preço', margin + 115, y); doc.text('IVA', margin + 140, y); doc.text('Subtotal', pageW - margin, y, { align: 'right' });
+    y += 2; doc.line(margin, y, pageW - margin, y); y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 34, 68);
+    proformaLinhas.forEach(l => {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.text(String(l.desc).slice(0, 50), margin, y); doc.text(String(num(l.qtd, 0)), margin + 95, y);
+      doc.text(eur(num(l.preco, 0)), margin + 115, y); doc.text(pct(num(l.taxa, 0)), margin + 140, y);
+      doc.text(eur(num(l.qtd, 0) * num(l.preco, 0)), pageW - margin, y, { align: 'right' }); y += 6;
+    });
+    y += 2; doc.line(margin, y, pageW - margin, y); y += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Base:', pageW - margin - 40, y); doc.text(eur(t.base), pageW - margin, y, { align: 'right' }); y += 6;
+    doc.text('IVA:', pageW - margin - 40, y); doc.text(eur(t.iva), pageW - margin, y, { align: 'right' }); y += 6;
+    doc.setFontSize(11); doc.text('TOTAL:', pageW - margin - 40, y); doc.text(eur(t.total), pageW - margin, y, { align: 'right' }); y += 12;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+    doc.text(doc.splitTextToSize('Documento sem valor fiscal. Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software de faturação certificado pela AT.', pageW - margin * 2), margin, y);
+    pdfFooter(doc, pageW, doc.internal.pageSize.getHeight());
+    doc.save(`Proforma_${slug(cliente)}_${dateStamp()}.pdf`);
+    toast('Pró-forma PDF gerada.');
+  });
+}
+
 function renderConfig() {
   const c = appConfig;
   const ivaRows = (c.iva_taxas || []).map((t, i) => `
@@ -2264,6 +2700,7 @@ function renderConfig() {
       <div class="cfg-grid">
         ${cfgField('cfg_dias_uteis', 'Dias úteis / mês', c.dias_uteis)}
         ${cfgField('cfg_horas_dia', 'Horas de trabalho / dia', c.horas_dia)}
+        ${cfgField('cfg_horas_mes', 'Horas / mês (valor-hora)', c.horas_mes, 'Ex.: 173,33 → 920 ÷ 173,33 = 5,31 €/h')}
         ${cfgField('cfg_alerta_dias', 'Antecedência de alertas (dias)', c.alerta_dias, 'A1 e contratos a expirar')}
       </div>
     </div>
@@ -2347,6 +2784,7 @@ function harvestConfigUI() {
   appConfig.sub_refeicao_cartao = num(g('cfg_sub_cartao').value, appConfig.sub_refeicao_cartao);
   appConfig.dias_uteis = num(g('cfg_dias_uteis').value, appConfig.dias_uteis);
   appConfig.horas_dia = num(g('cfg_horas_dia').value, appConfig.horas_dia);
+  appConfig.horas_mes = num(g('cfg_horas_mes').value, appConfig.horas_mes);
   appConfig.alerta_dias = num(g('cfg_alerta_dias').value, appConfig.alerta_dias);
   appConfig.irc_taxa = num(g('cfg_irc_taxa').value, appConfig.irc_taxa);
   appConfig.irc_pme_taxa = num(g('cfg_irc_pme_taxa').value, appConfig.irc_pme_taxa);
@@ -2401,7 +2839,7 @@ async function saveConfig() {
 }
 
 async function registarHistoricoConfig(antigo, novo) {
-  const campos = ['ss_trabalhador', 'ss_entidade', 'ias', 'rmmg', 'rmmg_meses', 'sub_refeicao_dinheiro', 'sub_refeicao_cartao', 'irc_taxa', 'irc_pme_taxa', 'irc_pme_limite', 'derrama', 'irs_minimo_existencia', 'dias_uteis', 'horas_dia', 'alerta_dias'];
+  const campos = ['ss_trabalhador', 'ss_entidade', 'ias', 'rmmg', 'rmmg_meses', 'sub_refeicao_dinheiro', 'sub_refeicao_cartao', 'irc_taxa', 'irc_pme_taxa', 'irc_pme_limite', 'derrama', 'irs_minimo_existencia', 'dias_uteis', 'horas_dia', 'horas_mes', 'alerta_dias'];
   const mudancas = [];
   campos.forEach(k => { if (String(antigo[k]) !== String(novo[k])) mudancas.push({ campo: k, antigo: antigo[k] != null ? antigo[k] : null, novo: novo[k] != null ? novo[k] : null }); });
   if (JSON.stringify(antigo.iva_taxas) !== JSON.stringify(novo.iva_taxas)) mudancas.push({ campo: 'iva_taxas', antigo: 'tabela anterior', novo: 'tabela actualizada' });
@@ -2673,6 +3111,7 @@ async function openFaltas(emp) {
           <option value="justificada">Justificada</option>
           <option value="injustificada">Injustificada</option>
           <option value="baixa">Baixa médica (CIT)</option>
+          <option value="admissao">Por admissão (entrou a meio do mês)</option>
         </select></div>
         <div class="cfg-field"><label>Unidade</label><select id="fa_unidade"><option value="dias">Dias</option><option value="horas">Horas</option></select></div>
         <div class="cfg-field"><label>Quantidade</label><input type="number" step="any" id="fa_qtd" value="1"></div>
@@ -2714,8 +3153,8 @@ function renderFaltasList() {
   if (!el) return;
   const list = faltasCacheEmp.list.slice().sort((a, b) => (b.data_inicio || '').localeCompare(a.data_inicio || ''));
   if (list.length === 0) { el.innerHTML = '<div class="es-sub" style="margin-top:14px;">Sem faltas registadas.</div>'; return; }
-  const tagCls = t => t === 'injustificada' ? 'injust' : (t === 'baixa' ? 'baixa' : 'just');
-  const tagTxt = t => t === 'injustificada' ? 'Injustificada' : (t === 'baixa' ? 'Baixa médica' : 'Justificada');
+  const tagCls = t => t === 'injustificada' ? 'injust' : (t === 'baixa' ? 'baixa' : (t === 'admissao' ? 'baixa' : 'just'));
+  const tagTxt = t => t === 'injustificada' ? 'Injustificada' : (t === 'baixa' ? 'Baixa médica' : (t === 'admissao' ? 'Por admissão' : 'Justificada'));
   el.innerHTML = `<div class="cfg-group-title" style="margin-top:16px;">Faltas registadas</div>
     <div class="falta-row falta-head"><span>Data</span><span>Tipo</span><span>Período</span><span>Qtd.</span><span>Notas</span><span></span></div>
     ${list.map(f => `<div class="falta-row">
@@ -2723,7 +3162,7 @@ function renderFaltasList() {
       <span><span class="falta-tag ${tagCls(f.tipo)}">${tagTxt(f.tipo)}</span></span>
       <span>${escapeHtml(periodoLabel(f.periodo))}</span>
       <span>${num(f.quantidade, 0)} ${escapeHtml(f.unidade || 'dias')}</span>
-      <span>${f.tipo === 'justificada' ? (f.remunerada ? 'Remunerada' : 'Não remunerada') : (f.tipo === 'baixa' ? (f.complemento_cct ? 'Compl. CCT ' + num(f.complemento_pct, 0) + '%' : 'SS paga subsídio doença') : '1/30 por dia + sem sub.')}</span>
+      <span>${f.tipo === 'justificada' ? (f.remunerada ? 'Remunerada' : 'Não remunerada') : (f.tipo === 'baixa' ? (f.complemento_cct ? 'Compl. CCT ' + num(f.complemento_pct, 0) + '%' : 'SS paga subsídio doença') : (f.tipo === 'admissao' ? 'Proporcional (não desconta)' : '1/30 por dia + sem sub.'))}</span>
       <span>${isAdmin() ? `<button class="cfg-del-btn" data-del-falta="${f.id}" title="Eliminar">×</button>` : ''}</span>
     </div>`).join('')}
     <div class="calc-warn-box" style="margin-top:14px;">Na baixa médica o subsídio de doença é pago pela <strong>Segurança Social</strong> (55 % a 75 % da remuneração de referência), não pela empresa. A app apenas informa; o complemento por CCT, se existir, é opção acima.</div>`;
@@ -2902,6 +3341,286 @@ async function exportarTudo() {
 /* ============================================================
    WIRING v3.0
    ============================================================ */
+/* ============================================================
+   FERRAMENTA 1 — Calculadora de Horas
+   ============================================================ */
+function openToolHoras() {
+  if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
+  document.getElementById('th_horasmes').textContent = num(appConfig.horas_mes, 173.33).toLocaleString('pt-PT', { maximumFractionDigits: 2 });
+  document.getElementById('th_result').innerHTML = '';
+  openModal('toolHorasModal');
+}
+function runToolHoras() {
+  const horas = num(document.getElementById('th_horas').value, 0);
+  let vh = document.getElementById('th_vh').value.trim();
+  let valorHora, origem;
+  if (vh !== '') { valorHora = num(vh, 0); origem = `valor/hora introduzido: ${eur(valorHora)}`; }
+  else {
+    const base = num(document.getElementById('th_base').value, 0);
+    valorHora = valorHoraRef(base, appConfig);
+    origem = `${eur(base)} ÷ ${num(appConfig.horas_mes, 173.33)} h = ${eur(valorHora)}/h`;
+  }
+  const r = calcCalculadoraHoras(horas, valorHora);
+  document.getElementById('th_result').innerHTML = `
+    <div class="calc-result">
+      <div class="calc-line"><span class="cl-label">Valor/hora</span><span class="cl-formula">${escapeHtml(origem)}</span><span class="cl-value">${eur(valorHora)}</span></div>
+      <div class="calc-line total"><span class="cl-label">Vencimento das horas</span><span class="cl-formula">${escapeHtml(r.formula)}</span><span class="cl-value">${eur(r.total)}</span></div>
+    </div>`;
+}
+
+/* ============================================================
+   FERRAMENTA 2 — Cálculo Simplificado
+   ============================================================ */
+function openToolSimples() {
+  if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
+  document.getElementById('ts_result').innerHTML = '';
+  openModal('toolSimplesModal');
+}
+function runToolSimples() {
+  const base = num(document.getElementById('ts_base').value, 0);
+  const dias = num(document.getElementById('ts_dias').value, 0);
+  const horas = num(document.getElementById('ts_horas').value, 0);
+  const r = calcSimplificado(base, dias, horas, appConfig);
+  const linhas = [];
+  linhas.push(`<div class="calc-line add"><span class="cl-label">Salário base</span><span class="cl-formula">Valor introduzido</span><span class="cl-value">${eur(base)}</span></div>`);
+  if (dias > 0) linhas.push(`<div class="calc-line subtract"><span class="cl-label">Desconto faltas (dias)</span><span class="cl-formula">${escapeHtml(r.formulaDias)}</span><span class="cl-value">-${eur(r.descDias)}</span></div>`);
+  if (horas > 0) linhas.push(`<div class="calc-line subtract"><span class="cl-label">Desconto faltas (horas)</span><span class="cl-formula">${escapeHtml(r.formulaHoras)}</span><span class="cl-value">-${eur(r.descHoras)}</span></div>`);
+  linhas.push(`<div class="calc-line subtotal"><span class="cl-label">Total descontado</span><span class="cl-formula"></span><span class="cl-value">-${eur(r.totalDesc)}</span></div>`);
+  linhas.push(`<div class="calc-line total"><span class="cl-label">Valor resultante</span><span class="cl-formula">Salário base − faltas (sem impostos)</span><span class="cl-value">${eur(r.resultado)}</span></div>`);
+  document.getElementById('ts_result').innerHTML = `<div class="calc-result">${linhas.join('')}</div><div class="calc-warn-box" style="margin-top:12px;">Cálculo de conferência sem impostos nem subsídios. Para o recibo completo use “Cálculo Completo (Contabilista)”.</div>`;
+}
+
+/* ============================================================
+   FERRAMENTA 3 — Cálculo Completo (Contabilista)
+   ============================================================ */
+let contabCtx = null;
+function openToolContab(emp) {
+  if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
+  contabCtx = { emp: emp || null };
+  const base = emp ? num(emp.venc, 920) : 920;
+  const hm = num(appConfig.horas_mes, 173.33);
+  document.getElementById('toolContabTitle').textContent = emp ? `📑 Cálculo Completo — ${emp.nome}` : '📑 Cálculo Completo (Contabilista)';
+  document.getElementById('toolContabBody').innerHTML = `
+    <div class="es-sub" style="margin-bottom:14px;">Replica o formato dos recibos reais (rubricas com código). Cada parcela mostra fórmula e taxa. Parâmetros vigentes desde ${escapeHtml(appConfig.vigente_desde || '—')}.</div>
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Salário base (€)</label><input type="number" step="any" id="tc_base" value="${base}"></div>
+      <div class="cfg-field"><label>Horas trabalhadas</label><input type="number" step="any" id="tc_horas" value="${hm}"></div>
+      <div class="cfg-field"><label>Valor/hora (€) <span class="hint">vazio = base ÷ ${hm}</span></label><input type="number" step="any" id="tc_vh" placeholder="auto"></div>
+      <div class="cfg-field"><label>Cód 30 · Sub. alimentação (€/dia)</label><input type="number" step="any" id="tc_sub" value="${emp ? num(emp.sub_refeicao, appConfig.sub_refeicao_dinheiro) : appConfig.sub_refeicao_dinheiro}"></div>
+      <div class="cfg-field"><label>Dias de sub. alimentação</label><input type="number" step="any" id="tc_diassub" value="0"></div>
+      <div class="cfg-field"><label>Modo do subsídio</label><select id="tc_submodo"><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option></select></div>
+      <div class="cfg-field"><label>Cód 38 · Ajudas de Custo (€)</label><input type="number" step="any" id="tc_aj" value="0"></div>
+      <div class="cfg-field"><label>Cód 40 · Aj. Custo Estrangeiro (€)</label><input type="number" step="any" id="tc_ajestr" value="0"></div>
+      <div class="cfg-field"><label>Situação familiar</label><select id="tc_sit">
+        <option value="nao_casado">Não casado</option>
+        <option value="casado_1">Casado 1 titular</option>
+        <option value="casado_2">Casado 2 titulares</option>
+      </select></div>
+      <div class="cfg-field"><label>Nº de dependentes</label><input type="number" id="tc_dep" value="0"></div>
+      <div class="cfg-field"><label>Cód 20 · Duodécimo Férias?</label><select id="tc_ferias"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div class="cfg-field"><label>Cód 21 · Duodécimo Natal?</label><select id="tc_natal"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div class="cfg-field"><label>Subsídios férias/Natal no IRS?</label><select id="tc_subirs"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    </div>
+    <button class="btn btn-primary" id="tc_calc">🧮 Calcular</button>
+    <div id="tc_result" style="margin-top:16px;"></div>`;
+  if (emp) document.getElementById('tc_sit').value = situacaoFromEmp(emp);
+  document.getElementById('tc_calc').addEventListener('click', runToolContab);
+  document.getElementById('toolContabPdf').dataset.ready = '';
+  openModal('toolContabModal');
+}
+
+function gatherContabInput() {
+  const vhRaw = document.getElementById('tc_vh').value.trim();
+  return {
+    salarioBase: num(document.getElementById('tc_base').value, 0),
+    horas: num(document.getElementById('tc_horas').value, 0),
+    valorHora: vhRaw === '' ? null : num(vhRaw, 0),
+    subValor: num(document.getElementById('tc_sub').value, 0),
+    diasSub: num(document.getElementById('tc_diassub').value, 0),
+    subModo: document.getElementById('tc_submodo').value,
+    ajudasCusto: num(document.getElementById('tc_aj').value, 0),
+    ajudasCustoEstr: num(document.getElementById('tc_ajestr').value, 0),
+    situacao: document.getElementById('tc_sit').value,
+    dependentes: num(document.getElementById('tc_dep').value, 0),
+    duodecimoFerias: document.getElementById('tc_ferias').value === 'sim',
+    duodecimoNatal: document.getElementById('tc_natal').value === 'sim',
+    subsidiosNoIRS: document.getElementById('tc_subirs').value === 'sim'
+  };
+}
+
+function runToolContab() {
+  const inp = gatherContabInput();
+  const r = calcContabilista(inp, appConfig);
+  contabCtx.input = inp;
+  contabCtx.resultado = r;
+  const rub = r.rubricas.map(x => `
+    <div class="calc-line ${x.kind}">
+      <span class="cl-label"><span class="mono" style="color:var(--accent);">Cód ${x.cod}</span> ${escapeHtml(x.label)}</span>
+      <span class="cl-formula">${escapeHtml(x.formula)}</span>
+      <span class="cl-value">${eur(x.value)}</span>
+    </div>`).join('');
+  document.getElementById('tc_result').innerHTML = `
+    ${r.irsVazia ? '<div class="calc-warn-box">⚠️ <strong>Tabela de IRS não carregada</strong> — a retenção NÃO é assumida (0,00). Carregue a tabela oficial em 🏢 Empresa → ⚙️ Configurações.</div>' : ''}
+    <div class="calc-result">
+      ${rub}
+      <div class="calc-line subtotal"><span class="cl-label">Valor ilíquido</span><span class="cl-formula">Soma das rubricas</span><span class="cl-value">${eur(r.iliquido)}</span></div>
+      <div class="calc-line"><span class="cl-label">Base de incidência SS</span><span class="cl-formula">Vencimento + subs. férias/Natal (sem ajudas de custo nem alimentação)</span><span class="cl-value">${eur(r.baseSS)}</span></div>
+      <div class="calc-line subtract"><span class="cl-label">Desconto SS (trabalhador)</span><span class="cl-formula">${eur(r.baseSS)} × ${pct(appConfig.ss_trabalhador)}</span><span class="cl-value">-${eur(r.ssTrab)}</span></div>
+      <div class="calc-line subtract"><span class="cl-label">Retenção IRS</span><span class="cl-formula">${r.irsVazia ? 'tabela não carregada → não assumido' : eur(r.baseIRS) + ' × ' + pct(r.irsTaxa)}</span><span class="cl-value">-${eur(r.irs)}</span></div>
+      <div class="calc-line subtotal"><span class="cl-label">Total de descontos</span><span class="cl-formula">SS + IRS</span><span class="cl-value">-${eur(r.descontos)}</span></div>
+      <div class="calc-line total"><span class="cl-label">VALOR LÍQUIDO A RECEBER</span><span class="cl-formula">Ilíquido − descontos (ajudas de custo isentas incluídas)</span><span class="cl-value">${eur(r.liquido)}</span></div>
+      <div class="calc-line"><span class="cl-label">SS entidade empregadora</span><span class="cl-formula">${eur(r.baseSS)} × ${pct(appConfig.ss_entidade)}</span><span class="cl-value">${eur(r.ssEnt)}</span></div>
+      <div class="calc-line total"><span class="cl-label">CUSTO TOTAL P/ EMPRESA</span><span class="cl-formula">Ilíquido + SS entidade</span><span class="cl-value">${eur(r.custoEmpresa)}</span></div>
+    </div>
+    <div class="calc-warn-box" style="margin-top:12px;">Ajudas de custo (cód 38/40) são isentas de IRS e SS: somam ao líquido mas ficam fora da base. Subsídio de alimentação (cód 30) isento até ${eur(appConfig.sub_refeicao_dinheiro)}/dia (dinheiro) ou ${eur(appConfig.sub_refeicao_cartao)}/dia (cartão). A app replica o tratamento do contabilista; não valida limites legais.</div>`;
+  document.getElementById('toolContabPdf').dataset.ready = '1';
+}
+
+function gerarReciboContabPdf() {
+  if (!contabCtx || !contabCtx.resultado) { toast('Calcule primeiro.', true); return; }
+  const r = contabCtx.resultado, emp = contabCtx.emp;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth(); const margin = 15;
+  doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 28, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+  doc.text('RECIBO DE VENCIMENTO', margin, 13);
+  doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
+  doc.text('Formato contabilista (rubricas com código)', margin, 24.5);
+  let y = 40;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(0, 34, 68);
+  doc.text(emp ? (emp.nome || '—') : 'Cálculo avulso', margin, y); y += 6;
+  if (emp) { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text(`NIF: ${emp.nif || '—'} · NISS: ${emp.niss || '—'} · ${emp.funcao || '—'}`, margin, y); y += 7; }
+  const rows = [];
+  r.rubricas.forEach(x => rows.push([`Cód ${x.cod} ${x.label}`, eur(x.value)]));
+  rows.push(['Valor ilíquido', eur(r.iliquido)]);
+  rows.push(['Base SS', eur(r.baseSS)]);
+  rows.push(['Desconto SS (11%)', '-' + eur(r.ssTrab)]);
+  rows.push([r.irsVazia ? 'Retenção IRS (tabela não carregada)' : 'Retenção IRS', '-' + eur(r.irs)]);
+  rows.push(['VALOR LÍQUIDO A RECEBER', eur(r.liquido)]);
+  rows.push(['Custo total p/ empresa', eur(r.custoEmpresa)]);
+  rows.forEach(([l, v]) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const tot = l.startsWith('VALOR LÍQUIDO');
+    if (tot) { doc.setFillColor(0, 51, 102); doc.rect(margin, y - 4, pageW - margin * 2, 8, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); }
+    else { doc.setTextColor(0, 34, 68); doc.setFont('helvetica', 'normal'); }
+    doc.setFontSize(10); doc.text(l, margin + 2, y); doc.text(v, pageW - margin - 2, y, { align: 'right' }); y += tot ? 10 : 7;
+  });
+  y += 4; doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+  doc.text(doc.splitTextToSize('Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software de faturação certificado pela AT.', pageW - margin * 2), margin, y);
+  pdfFooter(doc, pageW, doc.internal.pageSize.getHeight());
+  doc.save(`Recibo_contabilista_${slug(emp ? emp.nome : 'avulso')}_${dateStamp()}.pdf`);
+  toast('Recibo PDF gerado.');
+}
+
+/* ============================================================
+   RELATÓRIO PARA O CONTABILISTA (por trabalhador e mês)
+   ============================================================ */
+let relContabRows = [];
+async function openRelContab() {
+  const periodo = currentPeriodo();
+  document.getElementById('relContabBody').innerHTML = `
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Período</label><input type="month" id="rc_periodo" value="${periodo}"></div>
+    </div>
+    <button class="btn btn-primary" id="rc_gerar">🔄 Gerar relatório</button>
+    <div id="rc_tabela" style="margin-top:16px;"><div class="es-sub">Escolha o período e clique em “Gerar relatório”. Inclui os recibos guardados desse mês.</div></div>`;
+  document.getElementById('rc_gerar').addEventListener('click', gerarRelContab);
+  openModal('relContabModal');
+}
+
+async function gerarRelContab() {
+  const periodo = document.getElementById('rc_periodo').value;
+  showOverlay('A reunir recibos do período…');
+  relContabRows = [];
+  try {
+    for (const e of employees) {
+      let recibo = null;
+      try { const d = await db.collection('funcionarios').doc(e.id).collection('recibos').doc(periodo).get(); if (d.exists) recibo = d.data(); } catch (err) { /* segue */ }
+      // faltas por tipo no período
+      let faltas = [];
+      try { const fs = await db.collection('funcionarios').doc(e.id).collection('faltas').where('periodo', '==', periodo).get(); faltas = fs.docs.map(x => x.data()); } catch (err) { /* segue */ }
+      const fcount = t => faltas.filter(f => f.tipo === t).reduce((s, f) => s + num(f.quantidade, 0), 0);
+      const t = recibo ? recibo.totais : null;
+      relContabRows.push({
+        nome: e.nome || '', nif: e.nif || '', niss: e.niss || '', categoria: e.categoria || e.funcao || '',
+        faltaJust: fcount('justificada'), faltaInjust: fcount('injustificada'), faltaBaixa: fcount('baixa'), faltaAdm: fcount('admissao'),
+        vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
+        ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
+        baseSS: t ? t.baseIncidencia : null, ssTrab: t ? t.ssTrab : null, irs: t ? t.irs : null, liquido: t ? t.liquido : null,
+        temRecibo: !!recibo
+      });
+    }
+    const comRecibo = relContabRows.filter(r => r.temRecibo).length;
+    document.getElementById('rc_tabela').innerHTML = `
+      <div class="es-sub" style="margin-bottom:8px;">${periodoLabel(periodo)} · ${comRecibo} recibo(s) guardado(s) de ${relContabRows.length} trabalhador(es). Linhas sem recibo mostram “—”.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Faltas (J/I/B/A)</th><th>Vencimento</th><th>Subsídios</th><th>Aj. custo</th><th>Base SS</th><th>SS</th><th>IRS</th><th>Líquido</th></tr></thead>
+        <tbody>${relContabRows.map(r => `<tr>
+          <td>${escapeHtml(r.nome)}</td>
+          <td class="cell-mono">${escapeHtml(r.nif)}</td>
+          <td class="cell-mono">${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}</td>
+          <td>${r.vencimento != null ? eur(r.vencimento) : '—'}</td>
+          <td>${r.subsidios != null ? eur(r.subsidios) : '—'}</td>
+          <td>${r.ajudas != null ? eur(r.ajudas) : '—'}</td>
+          <td>${r.baseSS != null ? eur(r.baseSS) : '—'}</td>
+          <td>${r.ssTrab != null ? eur(r.ssTrab) : '—'}</td>
+          <td>${r.irs != null ? eur(r.irs) : '—'}</td>
+          <td>${r.liquido != null ? eur(r.liquido) : '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    document.getElementById('relContabModal').dataset.periodo = periodo;
+  } catch (err) {
+    toast('Erro ao gerar relatório: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+function relContabCsv() {
+  if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
+  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
+  const cols = ['nome', 'nif', 'niss', 'categoria', 'faltaJust', 'faltaInjust', 'faltaBaixa', 'faltaAdm', 'vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'];
+  const head = ['Nome', 'NIF', 'Nº SS', 'Categoria', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão', 'Vencimento', 'Subsídios', 'Ajudas custo', 'Base SS', 'Desconto SS', 'IRS', 'Líquido'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const fmt = (r, c) => (['vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'].includes(c) && r[c] != null) ? Number(r[c]).toFixed(2) : r[c];
+  const csv = '﻿' + head.join(';') + '\r\n' + relContabRows.map(r => cols.map(c => esc(fmt(r, c))).join(';')).join('\r\n');
+  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Relatorio_contabilista_${periodo}.csv`);
+  toast('CSV exportado.');
+}
+
+function relContabPdf() {
+  if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
+  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  const pageW = doc.internal.pageSize.getWidth(); const margin = 12;
+  doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 24, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
+  doc.text('RELATÓRIO PARA O CONTABILISTA', margin, 11);
+  doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+  doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
+  let y = 32;
+  const headers = ['Nome', 'NIF', 'J/I/B/A', 'Vencim.', 'Subsíd.', 'Aj.custo', 'Base SS', 'SS', 'IRS', 'Líquido'];
+  const xs = [margin, margin + 46, margin + 74, margin + 96, margin + 120, margin + 143, margin + 166, margin + 190, margin + 212, margin + 236];
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
+  headers.forEach((h, i) => doc.text(h, xs[i], y)); y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 4;
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 34, 68);
+  relContabRows.forEach(r => {
+    if (y > 195) { doc.addPage(); y = 20; }
+    const cells = [r.nome.slice(0, 26), r.nif, `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`,
+      r.vencimento != null ? eur(r.vencimento) : '—', r.subsidios != null ? eur(r.subsidios) : '—',
+      r.ajudas != null ? eur(r.ajudas) : '—', r.baseSS != null ? eur(r.baseSS) : '—',
+      r.ssTrab != null ? eur(r.ssTrab) : '—', r.irs != null ? eur(r.irs) : '—', r.liquido != null ? eur(r.liquido) : '—'];
+    cells.forEach((c, i) => doc.text(String(c), xs[i], y)); y += 6;
+  });
+  y += 4; doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+  doc.text('Faltas: J=justificada I=injustificada B=baixa A=por admissão. Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software certificado pela AT.', margin, y);
+  pdfFooter(doc, pageW, doc.internal.pageSize.getHeight());
+  doc.save(`Relatorio_contabilista_${periodo}.pdf`);
+  toast('PDF exportado.');
+}
+
 function bindFiscal() {
   document.querySelectorAll('.area-tab').forEach(t => t.addEventListener('click', () => switchArea(t.dataset.area)));
   document.querySelectorAll('[data-emp-tab]').forEach(b => b.addEventListener('click', () => switchEmpTab(b.dataset.empTab)));
@@ -2909,6 +3628,7 @@ function bindFiscal() {
 
   // Botões da ficha do funcionário
   document.getElementById('detailSalary').addEventListener('click', () => { if (currentDetailEmp) openSalary(currentDetailEmp); });
+  document.getElementById('detailContab').addEventListener('click', () => { if (currentDetailEmp) openToolContab(currentDetailEmp); });
   document.getElementById('detailFaltas').addEventListener('click', () => { if (currentDetailEmp) openFaltas(currentDetailEmp); });
   document.getElementById('detailA1').addEventListener('click', () => { if (currentDetailEmp) openA1(currentDetailEmp); });
 
@@ -2927,6 +3647,25 @@ function bindFiscal() {
   document.getElementById('a1Close').addEventListener('click', () => closeModal('a1Modal'));
   document.getElementById('a1Cancel').addEventListener('click', () => closeModal('a1Modal'));
   document.getElementById('a1Save').addEventListener('click', saveA1);
+
+  // Ferramentas de cálculo (área Funcionários)
+  document.getElementById('btnToolHoras').addEventListener('click', openToolHoras);
+  document.getElementById('btnToolSimples').addEventListener('click', openToolSimples);
+  document.getElementById('btnToolContab').addEventListener('click', () => openToolContab(null));
+  document.getElementById('btnRelContab').addEventListener('click', openRelContab);
+  document.getElementById('toolHorasClose').addEventListener('click', () => closeModal('toolHorasModal'));
+  document.getElementById('toolHorasCloseFoot').addEventListener('click', () => closeModal('toolHorasModal'));
+  document.getElementById('th_calc').addEventListener('click', runToolHoras);
+  document.getElementById('toolSimplesClose').addEventListener('click', () => closeModal('toolSimplesModal'));
+  document.getElementById('toolSimplesCloseFoot').addEventListener('click', () => closeModal('toolSimplesModal'));
+  document.getElementById('ts_calc').addEventListener('click', runToolSimples);
+  document.getElementById('toolContabClose').addEventListener('click', () => closeModal('toolContabModal'));
+  document.getElementById('toolContabCloseFoot').addEventListener('click', () => closeModal('toolContabModal'));
+  document.getElementById('toolContabPdf').addEventListener('click', gerarReciboContabPdf);
+  document.getElementById('relContabClose').addEventListener('click', () => closeModal('relContabModal'));
+  document.getElementById('relContabCloseFoot').addEventListener('click', () => closeModal('relContabModal'));
+  document.getElementById('relContabExcel').addEventListener('click', relContabCsv);
+  document.getElementById('relContabPdf').addEventListener('click', relContabPdf);
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {

@@ -59,6 +59,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Apuramento de IVA por trimestre
+    match /iva/{trimestreId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isAuth();
       allow write: if isAdmin();
