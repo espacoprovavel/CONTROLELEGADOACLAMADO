@@ -31,6 +31,41 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Recibos de vencimento (histórico mensal por trabalhador)
+    match /funcionarios/{funcionarioId}/recibos/{reciboId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // Faltas e baixas médicas por trabalhador
+    match /funcionarios/{funcionarioId}/faltas/{faltaId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // Parâmetros fiscais/salariais (documento único editável)
+    match /config/{docId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if false;
+    }
+
+    // Histórico de alterações à configuração (imutável)
+    match /config_history/{logId} {
+      allow read: if isAuth();
+      allow create: if isEditor();
+      allow update, delete: if false;
+    }
+
+    // Apuramento de IVA por trimestre
+    match /iva/{trimestreId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isAuth();
       allow write: if isAdmin();
