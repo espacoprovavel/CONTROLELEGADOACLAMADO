@@ -22,6 +22,11 @@ Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 - Cálculos validados por testes unitários, incluindo o valor/hora 920 ÷ 173,33 = 5,31 € e o tratamento de cada código. **Verificação contra os recibos reais de abril/2026 fica pendente** (ficheiros não acessíveis nesta sessão).
 - Continua determinístico e **sem inteligência artificial**.
 
+### Validação (atualização) — recibos reais de Abril/2026
+- Os 9 recibos reais de Abril/2026 foram reconciliados ao cêntimo (`tests/recibos_abril2026.test.js`).
+- Correção importante: no cálculo "como o contabilista", o **Cód 1 Vencimento** é a remuneração base proporcional por **1/30 por dia de falta** (mês completo = base exacta, ex.: 920,00 €), e não `horas × valor/hora` (que arredondava para 920,38 €). O valor/hora (920 ÷ 173,33 = 5,31 €) passa a ser a **taxa informativa** mostrada em "tempos"; a Calculadora de Horas independente continua a usar `horas × valor/hora`.
+- Confirmado: ajudas de custo (cód 38/40) e subsídio de alimentação (cód 30) ficam **fora da base de SS**; a base de SS = vencimento + duodécimos de férias/Natal; SS 11 %; retenção de IRS 0,00 quando a tabela não está carregada (nunca assumida). Novo campo "dias de falta" no cálculo contabilista (deriva automaticamente as horas).
+
 ## [3.0.0] — 2026-05-29
 
 ### Adicionado — Gestão Fiscal e Salarial (fase 1, sem IA)

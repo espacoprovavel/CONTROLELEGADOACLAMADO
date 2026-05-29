@@ -2116,10 +2116,15 @@ function calcContabilista(inp, cfg) {
   const txSSe = num(cfg.ss_entidade, 23.75);
   const rubricas = [];
 
-  // Cód 1 — Vencimento (por horas)
+  // Cód 1 — Vencimento. Conforme os recibos reais, o vencimento é a remuneração
+  // base proporcional aos dias trabalhados: base − (base/30 × dias de falta).
+  // Mês completo = base exacta. O valor/hora (base ÷ horas/mês) é mostrado como
+  // taxa informativa e usado nas tempos (horas efectivas).
   const valorHora = inp.valorHora != null ? inp.valorHora : valorHoraRef(inp.salarioBase, cfg);
-  const vencimento = inp.horas * valorHora;
-  rubricas.push({ cod: '1', label: 'Vencimento', formula: `${inp.horas.toLocaleString('pt-PT', { maximumFractionDigits: 2 })} h × ${eur(valorHora)}`, value: vencimento, kind: 'add' });
+  const faltaDias = num(inp.faltaDias, 0);
+  const vencimento = faltaDias > 0 ? inp.salarioBase - (inp.salarioBase / 30) * faltaDias : inp.salarioBase;
+  const horasEfetivas = inp.horas != null ? inp.horas : num(cfg.horas_mes, 173.33) * (1 - faltaDias / 30);
+  rubricas.push({ cod: '1', label: 'Vencimento', formula: `${horasEfetivas.toLocaleString('pt-PT', { maximumFractionDigits: 2 })} h × ${eur(valorHora)}${faltaDias > 0 ? ` (base ${eur(inp.salarioBase)} − ${faltaDias} dia(s) × 1/30)` : ''}`, value: vencimento, kind: 'add' });
 
   // Cód 30 — Subsídio de Alimentação (S/IRS e SS dentro do limite)
   const limiteUnit = inp.subModo === 'cartao' ? num(cfg.sub_refeicao_cartao, 10.46) : num(cfg.sub_refeicao_dinheiro, 6.15);
@@ -3404,7 +3409,8 @@ function openToolContab(emp) {
     <div class="es-sub" style="margin-bottom:14px;">Replica o formato dos recibos reais (rubricas com código). Cada parcela mostra fórmula e taxa. Parâmetros vigentes desde ${escapeHtml(appConfig.vigente_desde || '—')}.</div>
     <div class="calc-input-grid">
       <div class="cfg-field"><label>Salário base (€)</label><input type="number" step="any" id="tc_base" value="${base}"></div>
-      <div class="cfg-field"><label>Horas trabalhadas</label><input type="number" step="any" id="tc_horas" value="${hm}"></div>
+      <div class="cfg-field"><label>Dias de falta (1/30)</label><input type="number" step="any" id="tc_faltadias" value="0"></div>
+      <div class="cfg-field"><label>Horas trabalhadas <span class="hint">vazio = ${hm} − faltas</span></label><input type="number" step="any" id="tc_horas" placeholder="auto"></div>
       <div class="cfg-field"><label>Valor/hora (€) <span class="hint">vazio = base ÷ ${hm}</span></label><input type="number" step="any" id="tc_vh" placeholder="auto"></div>
       <div class="cfg-field"><label>Cód 30 · Sub. alimentação (€/dia)</label><input type="number" step="any" id="tc_sub" value="${emp ? num(emp.sub_refeicao, appConfig.sub_refeicao_dinheiro) : appConfig.sub_refeicao_dinheiro}"></div>
       <div class="cfg-field"><label>Dias de sub. alimentação</label><input type="number" step="any" id="tc_diassub" value="0"></div>
@@ -3431,9 +3437,13 @@ function openToolContab(emp) {
 
 function gatherContabInput() {
   const vhRaw = document.getElementById('tc_vh').value.trim();
+  const horasRaw = document.getElementById('tc_horas').value.trim();
+  const faltaDias = num(document.getElementById('tc_faltadias').value, 0);
+  const hm = num(appConfig.horas_mes, 173.33);
   return {
     salarioBase: num(document.getElementById('tc_base').value, 0),
-    horas: num(document.getElementById('tc_horas').value, 0),
+    faltaDias,
+    horas: horasRaw === '' ? hm * (1 - faltaDias / 30) : num(horasRaw, 0),
     valorHora: vhRaw === '' ? null : num(vhRaw, 0),
     subValor: num(document.getElementById('tc_sub').value, 0),
     diasSub: num(document.getElementById('tc_diassub').value, 0),

@@ -142,4 +142,8 @@ Em **Funcionários → 📤 Relatório p/ Contabilista**, escolhe-se o mês e ge
 - **🏛️ Estimador de IRC** — lucro tributável, 19 % (ou PME 16 % nos primeiros 50.000 €), derrama e pagamentos por conta (estimativa).
 - **📄 Pró-formas internos** — documento marcado "DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA", com linhas (qtd × preço + IVA) e exportação PDF. Não simula faturas certificadas nem numeração da AT.
 
-> ⚠️ **Validação pendente:** os cálculos foram testados com testes unitários (incluindo 920 ÷ 173,33 = 5,31 € e o tratamento de cada código), mas a conferência contra os **recibos reais de abril/2026** ainda não foi feita — os ficheiros não estavam acessíveis na sessão de desenvolvimento.
+## Validação contra recibos reais (Abril/2026)
+
+Os 9 recibos reais de Abril/2026 foram **reconciliados ao cêntimo** — ver `tests/recibos_abril2026.test.js` (correr `node tests/recibos_abril2026.test.js`). Casos cobertos: meses completos, faltas justificadas (2 e 7 dias) e ajudas de custo estrangeiras.
+
+Detalhe importante confirmado pelos recibos: no cálculo "como o contabilista", o **Cód 1 Vencimento** é a remuneração base **proporcional por 1/30 por dia de falta** (mês completo = base exacta, ex.: 920,00 €), não `horas × valor/hora`. O valor/hora (920 ÷ 173,33 = 5,31 €) é a **taxa informativa** mostrada em "tempos"; a Calculadora de Horas independente continua a usar `horas × valor/hora`. A base de SS = vencimento + duodécimos de férias/Natal (ajudas de custo e subsídio de alimentação ficam fora). A retenção de IRS é 0,00 quando a tabela não está carregada (nunca assumida).
