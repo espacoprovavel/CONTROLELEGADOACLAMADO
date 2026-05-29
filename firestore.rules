@@ -1,44 +1,42 @@
 rules_version = '2';
+
+// ============================================================
+//  Regras de segurança — Espaço Provável (multi-cliente)
+//
+//  Só utilizadores AUTENTICADOS acedem a seja o que for.
+//  Os 2 utilizadores (gestora e dono) têm acesso total a todas
+//  as empresas. Sem login, ninguém vê nada — mesmo com o link.
+//
+//  Isolamento por empresa: tudo vive sob empresas/{empresaId}/...
+// ============================================================
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function isAuth() {
+    function autenticado() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isAuth() && getRole() == 'admin';
+    // Empresas e TODAS as suas subcoleções (config, funcionarios,
+    // faturas, recibos, proformas, calendario, documentos, faltas…)
+    match /empresas/{empresaId} {
+      allow read, write: if autenticado();
+
+      match /{documento=**} {
+        allow read, write: if autenticado();
+      }
     }
 
-    function isEditor() {
-      return isAuth() && (getRole() == 'admin' || getRole() == 'editor');
-    }
-
-    match /funcionarios/{docId} {
-      allow read: if isAuth();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
-    }
-
-    match /funcionarios/{funcionarioId}/documentos/{docId} {
-      allow read: if isAuth();
-      allow create: if isEditor();
-      allow delete: if isAdmin();
-      allow update: if false;
-    }
-
+    // Perfis dos utilizadores
     match /users/{userId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read: if autenticado();
+      // A criação/gestão dos 2 utilizadores faz-se na consola Firebase.
+      allow write: if autenticado() && request.auth.uid == userId;
     }
 
+    // Registo de acessos / auditoria (RGPD): criar sempre, nunca alterar/apagar
     match /audit_logs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAuth();
+      allow read: if autenticado();
+      allow create: if autenticado();
       allow update, delete: if false;
     }
   }

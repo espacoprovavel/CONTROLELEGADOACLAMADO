@@ -1,142 +1,109 @@
-# Legado RH — Sistema de Gestão de Funcionários
+# Espaço Provável — Gestão RH & Fiscal (multi-cliente)
 
-Sistema interno da **LEGADO ACLAMADO — UNIPESSOAL LDA** para gestão de funcionários, com autenticação, permissões por perfil e sincronização em tempo real. Separação automática por país de destacamento (Bélgica, Portugal e Outros).
+Aplicação web **interna** da Espaço Provável para gerir a **contabilidade e os
+salários de várias empresas clientes**. Tudo em **português de Portugal**.
+Cálculos **determinísticos e auditáveis** (sem IA) — cada resultado mostra a
+fórmula e a taxa. Corre **100% no plano gratuito (Spark)** do Firebase.
 
-🔗 **Aplicação online:** https://espacoprovavel.github.io/CONTROLELEGADOACLAMADO/
-
-> **Versão 2.1** — migrado de localStorage para **Firebase** (Authentication + Firestore) e com **anexação de documentos** (Cloudinary). Agora requer **Internet** e **login**.
-
----
-
-## O que é
-
-Uma aplicação web num **único ficheiro HTML** ligada ao **Firebase**:
-
-- **Login** com email + palavra-passe (Firebase Authentication)
-- **3 níveis de permissões:** `admin` / `editor` / `viewer`
-- **Sincronização em tempo real** entre utilizadores (Firestore `onSnapshot`)
-- **Auditoria automática** de todas as alterações
-- **Exportação PDF** individual, consolidada e por grupo
-- **Exportação ZIP** (fichas individuais + consolidado + backup JSON + CSV)
-- **Importação JSON** em lote (para migrar dados antigos)
-- **Documentos anexados** por funcionário (JPG/PNG/PDF via Cloudinary): upload, ver, descarregar, ZIP — ver [docs/CLOUDINARY.md](docs/CLOUDINARY.md)
-- **Pesquisa instantânea** por nome, NIF, NISS, função, cliente ou CC
-- **3 secções separadas** por país: 🇧🇪 Bélgica · 🇵🇹 Portugal · 🌐 Outros
-- Identidade visual oficial (azul #003366 + dourado #D4AF37, Montserrat + Poppins)
+> ⚠️ **Aviso legal:** Estimativas de apoio à gestão. Não substituem contabilidade
+> certificada nem software de faturação certificado pela Autoridade Tributária.
+> As faturas legais têm de ser emitidas em software certificado.
 
 ---
 
-## Como fazer login pela primeira vez
+## O que faz
 
-1. Abrir o link da aplicação no navegador (Chrome, Edge ou Firefox).
-2. Introduzir **email** e **palavra-passe** da conta criada no Firebase.
-3. Entrar. Os dados aparecem automaticamente e sincronizam em tempo real.
-
-> Antes do primeiro login funcionar com permissões, é preciso o **setup inicial** dos perfis — ver [docs/FIREBASE.md](docs/FIREBASE.md).
-
----
-
-## Roles e permissões
-
-| Acção | viewer | editor | admin |
-|-------|:------:|:------:|:-----:|
-| Ver funcionários e fichas | ✅ | ✅ | ✅ |
-| Exportar PDF / ZIP / CSV | ✅ | ✅ | ✅ |
-| Criar / editar funcionários | ❌ | ✅ | ✅ |
-| Importar JSON | ❌ | ✅ | ✅ |
-| Ver / descarregar documentos | ✅ | ✅ | ✅ |
-| Anexar documentos | ❌ | ✅ | ✅ |
-| Eliminar documentos | ❌ | ❌ | ✅ |
-| Eliminar funcionários | ❌ | ❌ | ✅ |
-| Gerir utilizadores e roles | ❌ | ❌ | ✅ |
-| Ver logs de auditoria | ❌ | ❌ | ✅ |
-
-As permissões são aplicadas **no interface E nas Firestore Rules** (defesa em camadas).
+- **Multi-cliente** — seletor de empresa sempre visível; dados de cada empresa
+  totalmente isolados (`empresas/{empresaId}/...`).
+- **Acesso por login** (Firebase Auth, email + palavra-passe), 2 utilizadores com
+  acesso total. Sem login, ninguém vê nada.
+- **Área RH:**
+  - Calculadora de horas.
+  - Cálculo simplificado (salário − faltas).
+  - Cálculo completo "como o contabilista": Vencimento (cód. 1), subsídios de
+    férias/Natal em duodécimos (20/21), subsídio de alimentação S/IRS e SS (30),
+    ajudas de custo isentas (38/40), desconto de SS (11%), SS entidade (23,75%),
+    retenção de IRS por tabela, faltas (justificada, injustificada, admissão,
+    baixa/CIT), líquido e custo total para a empresa.
+  - Ficha de funcionários, país de destacamento e estado do A1.
+- **Área Fiscal:** estimador de IVA (mensal/trimestral), estimador de IRC (19% /
+  PME 16% + derrama, com custo de pessoal automático), pró-formas/orçamentos
+  ("SEM VALOR FISCAL"), calendário fiscal com alertas.
+- **Configuração por empresa** com os parâmetros legais de 2026 (todos editáveis,
+  com histórico de alterações e botão "repor valores 2026").
 
 ---
 
-## Como recuperar a palavra-passe
+## Stack
 
-No ecrã de login, clicar em **"Esqueci a palavra-passe"** depois de escrever o email. O Firebase envia um email de recuperação. Em alternativa, um admin pode reiniciar a password no Firebase Console → Authentication.
+React + Vite · Firebase (Authentication + Firestore) · Cloudinary (anexos) ·
+jsPDF (PDF) · xlsx (Excel/CSV). Sem backend próprio, sem Cloud Functions, sem
+serviços pagos.
 
----
-
-## Como editar o sistema
-
-O sistema continua a ser um único ficheiro `index.html`. Três formas de editar:
-
-1. **Pelo site do GitHub** — abrir o ficheiro, lápis ✏️, editar, *Commit changes*.
-2. **GitHub Desktop** — clonar, editar, *Commit* + *Push*.
-3. **Linha de comandos (CLI)** — `git clone`, editar, `git add/commit/push`.
-
-Guia detalhado em [docs/COMO_EDITAR.md](docs/COMO_EDITAR.md). Gestão do Firebase em [docs/FIREBASE.md](docs/FIREBASE.md).
+> **Porquê Cloudinary e não Firebase Storage?** Em projetos novos o Cloud Storage
+> do Firebase obriga ao plano pago Blaze. Para manter tudo **100% gratuito**, os
+> anexos usam o Cloudinary (tier gratuito).
 
 ---
 
-## Estrutura do repositório
+## Como pôr ONLINE com login
 
+Ver **[DEPLOY.md](DEPLOY.md)** — resumo:
+
+```bash
+npm install
+cp .env.example .env        # chaves do Firebase
+npm test                    # 13 testes (inclui recibo real Legado abr/2026)
+npm run build
+firebase login && firebase deploy
 ```
-CONTROLELEGADOACLAMADO/
-├── index.html              # Sistema completo (raiz do GitHub Pages)
-├── setup.html              # Setup inicial dos perfis (usar uma vez, depois eliminar)
-├── firestore.rules         # Regras de segurança Firestore
-├── firestore.indexes.json  # Índices Firestore
-├── README.md               # Este ficheiro
-├── CHANGELOG.md            # Histórico de versões
-├── LICENSE                 # Licença privada
-├── .gitignore              # Ignora backups locais
-└── docs/
-    ├── INSTALACAO.md       # Guia de setup inicial
-    ├── COMO_EDITAR.md      # Guia de edição
-    ├── BACKUP.md           # Procedimento de backup
-    ├── RGPD.md             # Avisos de proteção de dados
-    ├── FIREBASE.md         # Gestão Firebase (utilizadores, roles, logs, custos)
-    └── CLOUDINARY.md       # Gestão de documentos anexados (Cloudinary)
+
+Na consola Firebase: ativar **Authentication (Email/Palavra-passe)**, criar os
+**2 utilizadores** e criar a base de dados **Firestore**.
+
+## Correr localmente
+```bash
+npm install
+npm run dev      # http://localhost:5173
 ```
 
 ---
 
-## RGPD — Proteção de Dados
+## Estrutura
 
-Este sistema trata **dados pessoais** de trabalhadores. A empresa é responsável pelo cumprimento do **RGPD**.
-
-- Dados em **Firestore** na região **europe-west** (UE).
-- Acesso protegido por **autenticação** + **regras de segurança** por role.
-- **Auditoria** de todas as alterações.
-- Conservação recomendada: **5 anos** após cessação do contrato.
-
-Aviso completo em [docs/RGPD.md](docs/RGPD.md).
-
----
-
-## Backup (resumo)
-
-Apesar de os dados estarem no Firebase, recomenda-se backup periódico:
-
-| Frequência | O quê | Onde |
-|------------|-------|------|
-| Semanal | Backup JSON (botão na app) | Pasta local segura |
-| Mensal | ZIP completo encriptado | Disco externo / cofre |
-| Trimestral | Export do Firestore (Console) | Off-site |
-
-Regra **3-2-1**. Procedimento completo em [docs/BACKUP.md](docs/BACKUP.md).
+```
+src/
+├── firebase.js                 # init Firebase + Cloudinary
+├── lib/
+│   ├── configDefaults.js       # parâmetros legais 2026
+│   └── calculo/                # MOTOR DE CÁLCULO (puro, testável)
+│       ├── arred.js  irs.js  iva.js  irc.js  salario.js
+│       └── salario.test.js     # 13 testes (vitest)
+├── contexts/                   # AuthContext, EmpresaContext
+├── hooks/useConfig.js
+├── components/                 # Login, Layout, AvisoLegal
+└── pages/                      # Dashboard, Empresas, Funcionarios, CalculoSalario,
+                                #   IVA, IRC, ProFormas, CalendarioFiscal, Configuracao
+firestore.rules                 # isolamento por empresa, só autenticados
+firebase.json / .firebaserc     # config Firebase Hosting
+docs/RELATORIO_HANDOFF.md       # estado, decisões e próximos passos
+legacy/                         # app v2.1 antiga (single-file), preservada
+```
 
 ---
 
-## Resolução de problemas
+## RGPD
 
-| Problema | Causa provável | Solução |
-|----------|----------------|---------|
-| Não consigo entrar | Email/password errados | Usar "Esqueci a palavra-passe" ou pedir reset ao admin |
-| Entro mas não edito | Role `viewer` | Pedir ao admin para mudar o role |
-| "Sem perfil definido" | Falta documento em `users` | Admin cria o perfil (setup.html / modal Utilizadores) |
-| Página não carrega dados | Sem Internet | Verificar ligação à rede |
-| PDF/ZIP não gera | CDN não carregou | Recarregar a página com Internet |
-| Acentos errados no Excel | Codificação | O CSV exportado já inclui BOM UTF-8 |
-| Página não abre online | GitHub Pages / repo privado | Ver [docs/INSTALACAO.md](docs/INSTALACAO.md) |
+A app trata dados pessoais (nomes, NIF, salários) de trabalhadores de empresas
+clientes. É possível apagar definitivamente um funcionário/empresa. **Tratar dados
+de terceiros exige base legal e, possivelmente, contrato de tratamento de dados com
+cada cliente — responsabilidade da Espaço Provável, a validar com jurista/contabilista.**
 
 ---
 
-**Versão actual:** v2.1
+## Estado
 
-© 2026 LEGADO ACLAMADO — UNIPESSOAL LDA · Todos os direitos reservados.
+Fundação + motor de cálculo verificado + UI funcional (login, multi-empresa,
+calculadoras, IVA, IRC, pró-formas, calendário, configuração, painel). Por
+desenvolver: geração de PDF, importação de PDF/Excel/Word, anexos Cloudinary na
+UI, exportações Excel/CSV e backup global. Ver `docs/RELATORIO_HANDOFF.md`.
