@@ -132,9 +132,23 @@ São independentes e abrem-se na barra "Ferramentas de cálculo":
 - **Injustificada** — desconta 1/30 por dia + remove subsídio de alimentação desses dias.
 - **Por admissão** — entrou a meio do mês: **não** é falta a descontar; o vencimento é proporcional aos dias/horas trabalhados (usar o modo por horas).
 
+## Acesso master a salários e cálculos (v3.2)
+
+As funcionalidades de **salários e cálculos** são exclusivas do **administrador master** — para os restantes utilizadores **nem aparecem**: Processar Salário, Cálculo Contabilista (na ficha), e as ferramentas Calculadora de Horas, Cálculo Simplificado, Cálculo Completo e Relatório p/ Contabilista.
+
+- O acesso master define-se em **👥 Utilizadores** (coluna *Master*, só admins) — campo `master: true` no perfil (`users`).
+- As regras Firestore restringem a subcolecção `recibos` a **leitura/escrita exclusiva do master** (`isMaster()`).
+- A exportação geral de dados (ZIP) continua disponível a todos; **os recibos só são incluídos para o master**.
+
 ## Relatório para o Contabilista (v3.1)
 
 Em **Funcionários → 📤 Relatório p/ Contabilista**, escolhe-se o mês e gera-se uma tabela por trabalhador (nome, NIF, faltas por tipo J/I/B/A, vencimento, subsídios, ajudas de custo, base de SS, desconto SS, IRS, líquido), a partir dos recibos guardados. Exportável em **PDF** e **Excel/CSV**.
+
+### PDF Consolidado de pagamentos do mês (v3.2)
+
+No mesmo modal, o botão **📑 PDF Consolidado (pagamentos do mês)** reúne os recibos guardados do período num único PDF: **uma página por funcionário** com o cálculo completo (rubricas, base de SS, descontos, líquido, custo para a empresa) e uma **página final de resumo** com o líquido de cada um e o **total a pagar** — pronto a enviar ao contabilista.
+
+Para alimentar este relatório, o master guarda o cálculo de cada funcionário em **📑 Cálculo Contabilista → 💾 Guardar recibo** (escolhendo o mês), ou via **💶 Processar Salário**.
 
 ## Fase 2 — área Empresa (v3.1, operacional)
 

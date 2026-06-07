@@ -2,6 +2,20 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [3.2.0] — 2026-06-07
+
+### Adicionado — Acesso master e relatório de pagamentos consolidado
+- **Administrador master (perfil)**: novo campo `master` no perfil do utilizador (`users`). As funcionalidades de salários e cálculos passam a ser **exclusivas do master** — para os restantes utilizadores nem aparecem:
+  - Processar Salário, Cálculo Contabilista (na ficha do funcionário)
+  - Calculadora de Horas, Cálculo Simplificado, Cálculo Completo (Contabilista) e Relatório p/ Contabilista (barra de ferramentas)
+- **Gestão do acesso master** na área **👥 Utilizadores** (coluna *Master*, só admins): conceder/remover com um clique.
+- **Guardar recibo no Cálculo Contabilista**: o master escolhe o mês e guarda o cálculo de cada funcionário no histórico (`recibos`), alimentando o relatório consolidado.
+- **PDF Consolidado (pagamentos do mês)** no *Relatório p/ Contabilista*: reúne os recibos guardados do período — **uma página por funcionário** com o cálculo completo — e uma **página final de resumo de pagamentos** com o total a pagar, pronta a enviar ao contabilista.
+- A exportação geral de dados (ZIP) continua disponível a todos; os recibos só são incluídos para o master.
+
+### Segurança
+- Regras Firestore: a subcolecção `recibos` passa a ser de leitura/escrita **exclusiva do master** (`isMaster()`).
+
 ## [3.1.0] — 2026-05-29
 
 ### Adicionado — Ferramentas de cálculo e fase 2

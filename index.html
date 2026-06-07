@@ -143,6 +143,9 @@ header {
 .role-admin  { background: rgba(172,56,56,0.22); color: #ffd9d9; border: 1px solid rgba(255,150,150,0.5); }
 .role-editor { background: rgba(212,175,55,0.22); color: #ffe9a8; border: 1px solid rgba(212,175,55,0.6); }
 .role-viewer { background: rgba(46,125,50,0.25); color: #c6f0c8; border: 1px solid rgba(120,220,130,0.5); }
+.role-master { background: rgba(124,58,237,0.30); color: #ecdbff; border: 1px solid rgba(180,130,255,0.6); margin-left: 6px; }
+/* Funcionalidades de salários/cálculos: visíveis apenas para o administrador master */
+body:not(.is-master) .master-only { display: none !important; }
 .btn-logout {
   background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.25);
   padding: 7px 13px; font-size: 12px;
@@ -539,7 +542,7 @@ footer strong { color: var(--ink); }
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
-    <div class="toolbar" style="margin-top:-12px;">
+    <div class="toolbar master-only" style="margin-top:-12px;">
       <span style="font-family:'JetBrains Mono';font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);">Ferramentas de cálculo:</span>
       <button class="btn btn-ghost" id="btnToolHoras">🕐 Calculadora de Horas</button>
       <button class="btn btn-ghost" id="btnToolSimples">➖ Cálculo Simplificado</button>
@@ -566,7 +569,7 @@ footer strong { color: var(--ink); }
   <footer>
     <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
-      <span class="ver">v3.1</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+      <span class="ver">v3.2</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
   </footer>
 </div>
@@ -684,8 +687,8 @@ footer strong { color: var(--ink); }
     <div class="modal-body" id="detailBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="detailPdf">📄 PDF</button>
-      <button class="btn btn-primary" id="detailSalary">💶 Processar Salário</button>
-      <button class="btn btn-primary" id="detailContab">📑 Cálculo Contabilista</button>
+      <button class="btn btn-primary master-only" id="detailSalary">💶 Processar Salário</button>
+      <button class="btn btn-primary master-only" id="detailContab">📑 Cálculo Contabilista</button>
       <button class="btn btn-primary" id="detailFaltas">🗓️ Faltas / Baixas</button>
       <button class="btn btn-primary" id="detailA1">🌍 A1 / Contrato</button>
       <button class="btn btn-gold" id="detailEdit">✏️ Editar</button>
@@ -703,7 +706,7 @@ footer strong { color: var(--ink); }
     </div>
     <div class="modal-body">
       <table class="mini-table">
-        <thead><tr><th>Email</th><th>Nome</th><th>Role</th></tr></thead>
+        <thead><tr><th>Email</th><th>Nome</th><th>Role</th><th title="Acesso às funcionalidades de salários e cálculos">Master</th></tr></thead>
         <tbody id="usersBody"></tbody>
       </table>
       <div class="form-section-title" style="margin-top:24px;">Adicionar perfil de utilizador</div>
@@ -857,6 +860,7 @@ footer strong { color: var(--ink); }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="toolContabCloseFoot">Fechar</button>
       <button class="btn btn-ghost" id="toolContabPdf">📄 Recibo PDF</button>
+      <button class="btn btn-primary" id="toolContabSave" style="display:none;">💾 Guardar recibo</button>
     </div>
   </div>
 </div>
@@ -872,7 +876,8 @@ footer strong { color: var(--ink); }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="relContabCloseFoot">Fechar</button>
       <button class="btn btn-ghost" id="relContabExcel">📊 Exportar Excel/CSV</button>
-      <button class="btn btn-primary" id="relContabPdf">📄 Exportar PDF</button>
+      <button class="btn btn-ghost" id="relContabPdf">📄 Tabela PDF</button>
+      <button class="btn btn-primary" id="relContabConsolidado">📑 PDF Consolidado (pagamentos do mês)</button>
     </div>
   </div>
 </div>
@@ -907,6 +912,7 @@ const CLOUDINARY_FOLDER = 'legado-aclamado/funcionarios';
 let employees = [];
 let currentUser = null;
 let currentRole = 'viewer';
+let currentIsMaster = false;
 let unsubscribe = null;
 let unsubscribeDocs = null;
 let currentDetailEmp = null;
@@ -979,6 +985,7 @@ const GROUPS = [
 /* ---------- Permissions ---------- */
 function isAdmin() { return currentRole === 'admin'; }
 function isEditor() { return currentRole === 'admin' || currentRole === 'editor'; }
+function isMaster() { return currentIsMaster === true; }
 
 function applyRolePermissions() {
   const show = (id, cond) => { const el = document.getElementById(id); if (el) el.style.display = cond ? '' : 'none'; };
@@ -988,6 +995,12 @@ function applyRolePermissions() {
   show('btnLogs', isAdmin());
   show('detailEdit', isEditor());
   show('detailDelete', isAdmin());
+  applyMasterVisibility();
+}
+
+// Mostra/esconde as funcionalidades de salários e cálculos (marcadas com .master-only)
+function applyMasterVisibility() {
+  document.body.classList.toggle('is-master', isMaster());
 }
 
 /* ============================================================
@@ -1054,6 +1067,7 @@ function doLogout() {
 async function loadRole(user) {
   try {
     const doc = await db.collection('users').doc(user.uid).get();
+    currentIsMaster = !!(doc.exists && doc.data().master === true);
     if (doc.exists && doc.data().role) {
       currentRole = doc.data().role;
     } else {
@@ -1062,6 +1076,7 @@ async function loadRole(user) {
     }
   } catch (err) {
     currentRole = 'viewer';
+    currentIsMaster = false;
     toast('Não foi possível carregar as permissões: ' + friendlyError(err), true);
   }
 }
@@ -1072,6 +1087,11 @@ function paintUserBox() {
   const badge = document.getElementById('userRole');
   badge.textContent = currentRole;
   badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : currentRole === 'editor' ? 'role-editor' : 'role-viewer');
+  let mb = document.getElementById('userMasterBadge');
+  if (currentIsMaster) {
+    if (!mb) { mb = document.createElement('span'); mb.id = 'userMasterBadge'; badge.insertAdjacentElement('afterend', mb); }
+    mb.className = 'role-badge role-master'; mb.textContent = 'master';
+  } else if (mb) { mb.remove(); }
 }
 
 auth.onAuthStateChanged(async user => {
@@ -1085,6 +1105,8 @@ auth.onAuthStateChanged(async user => {
   } else {
     currentUser = null;
     currentRole = 'viewer';
+    currentIsMaster = false;
+    applyMasterVisibility();
     employees = [];
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
     showLogin();
@@ -1739,23 +1761,41 @@ async function openUsers() {
 }
 async function renderUsers() {
   const body = document.getElementById('usersBody');
-  body.innerHTML = '<tr><td colspan="3">A carregar…</td></tr>';
+  body.innerHTML = '<tr><td colspan="4">A carregar…</td></tr>';
   try {
     const snap = await db.collection('users').get();
-    if (snap.empty) { body.innerHTML = '<tr><td colspan="3">Sem utilizadores.</td></tr>'; return; }
+    if (snap.empty) { body.innerHTML = '<tr><td colspan="4">Sem utilizadores.</td></tr>'; return; }
     body.innerHTML = snap.docs.map(d => {
       const u = d.data();
       const isSelf = currentUser && d.id === currentUser.uid;
       const sel = ['admin','editor','viewer'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('');
+      const isM = u.master === true;
       return `<tr>
         <td>${escapeHtml(u.email)}${isSelf ? ' <strong>(você)</strong>' : ''}</td>
         <td>${escapeHtml(u.nome)}</td>
         <td>${isSelf ? `<span class="role-badge role-admin">${escapeHtml(u.role)}</span>` : `<select data-uid="${d.id}" data-email="${escapeHtml(u.email)}" class="role-select">${sel}</select>`}</td>
+        <td style="text-align:center;"><label style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="master-chk" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" ${isM ? 'checked' : ''}> ${isM ? '<span class="role-badge role-master">master</span>' : ''}</label></td>
       </tr>`;
     }).join('');
     body.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', e => changeRole(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
+    body.querySelectorAll('.master-chk').forEach(c => c.addEventListener('change', e => setMaster(e.target.dataset.uid, e.target.checked, e.target.dataset.email)));
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="3">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="4">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+  }
+}
+async function setMaster(uidVal, makeMaster, email) {
+  showOverlay('A actualizar acesso master…');
+  try {
+    await db.collection('users').doc(uidVal).update({ master: makeMaster });
+    await logAudit('user_role', uidVal, `${email} → master ${makeMaster ? 'concedido' : 'removido'}`);
+    toast(`Acesso master ${makeMaster ? 'concedido a' : 'removido de'} ${email}.`);
+    if (currentUser && uidVal === currentUser.uid) { currentIsMaster = makeMaster; paintUserBox(); applyMasterVisibility(); }
+    await renderUsers();
+  } catch (err) {
+    toast('Erro ao actualizar acesso master: ' + friendlyError(err), true);
+    await renderUsers();
+  } finally {
+    hideOverlay();
   }
 }
 async function changeRole(uidVal, role, email) {
@@ -2893,6 +2933,7 @@ function situacaoFromEmp(e) {
 }
 
 async function openSalary(emp) {
+  if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
   salaryCtx = { emp };
   const periodo = currentPeriodo();
@@ -3005,7 +3046,7 @@ function runSalaryCalc() {
 }
 
 async function saveSalary() {
-  if (!isEditor()) { toast('Sem permissões para guardar.', true); return; }
+  if (!isMaster()) { toast('Apenas o administrador master pode guardar recibos.', true); return; }
   if (!salaryCtx || !salaryCtx.resultado) { toast('Calcule o salário primeiro.', true); return; }
   const periodo = salaryCtx.periodo;
   const ref = db.collection('funcionarios').doc(salaryCtx.emp.id).collection('recibos').doc(periodo);
@@ -3317,9 +3358,12 @@ async function exportarTudo() {
     const dump = { exportado_em: new Date().toISOString(), por: currentUser ? currentUser.email : '', config: appConfig, funcionarios: [] };
     for (const e of employees) {
       const rec = Object.assign({}, e);
+      // Recibos: só o administrador master os lê (regras Firestore) — para os restantes ficam de fora.
       try {
         const recibos = await db.collection('funcionarios').doc(e.id).collection('recibos').get();
         rec.recibos = recibos.docs.map(d => d.data());
+      } catch (err) { /* sem acesso aos recibos — segue */ }
+      try {
         const faltas = await db.collection('funcionarios').doc(e.id).collection('faltas').get();
         rec.faltas = faltas.docs.map(d => d.data());
       } catch (err) { /* segue */ }
@@ -3350,6 +3394,7 @@ async function exportarTudo() {
    FERRAMENTA 1 — Calculadora de Horas
    ============================================================ */
 function openToolHoras() {
+  if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
   document.getElementById('th_horasmes').textContent = num(appConfig.horas_mes, 173.33).toLocaleString('pt-PT', { maximumFractionDigits: 2 });
   document.getElementById('th_result').innerHTML = '';
@@ -3377,6 +3422,7 @@ function runToolHoras() {
    FERRAMENTA 2 — Cálculo Simplificado
    ============================================================ */
 function openToolSimples() {
+  if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
   document.getElementById('ts_result').innerHTML = '';
   openModal('toolSimplesModal');
@@ -3400,6 +3446,7 @@ function runToolSimples() {
    ============================================================ */
 let contabCtx = null;
 function openToolContab(emp) {
+  if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
   contabCtx = { emp: emp || null };
   const base = emp ? num(emp.venc, 920) : 920;
@@ -3408,6 +3455,7 @@ function openToolContab(emp) {
   document.getElementById('toolContabBody').innerHTML = `
     <div class="es-sub" style="margin-bottom:14px;">Replica o formato dos recibos reais (rubricas com código). Cada parcela mostra fórmula e taxa. Parâmetros vigentes desde ${escapeHtml(appConfig.vigente_desde || '—')}.</div>
     <div class="calc-input-grid">
+      ${emp ? `<div class="cfg-field"><label>Período (p/ guardar recibo)</label><input type="month" id="tc_periodo" value="${currentPeriodo()}"></div>` : ''}
       <div class="cfg-field"><label>Salário base (€)</label><input type="number" step="any" id="tc_base" value="${base}"></div>
       <div class="cfg-field"><label>Dias de falta (1/30)</label><input type="number" step="any" id="tc_faltadias" value="0"></div>
       <div class="cfg-field"><label>Horas trabalhadas <span class="hint">vazio = ${hm} − faltas</span></label><input type="number" step="any" id="tc_horas" placeholder="auto"></div>
@@ -3432,6 +3480,8 @@ function openToolContab(emp) {
   if (emp) document.getElementById('tc_sit').value = situacaoFromEmp(emp);
   document.getElementById('tc_calc').addEventListener('click', runToolContab);
   document.getElementById('toolContabPdf').dataset.ready = '';
+  // Guardar recibo só faz sentido para um funcionário concreto
+  document.getElementById('toolContabSave').style.display = emp ? '' : 'none';
   openModal('toolContabModal');
 }
 
@@ -3524,11 +3574,56 @@ function gerarReciboContabPdf() {
   toast('Recibo PDF gerado.');
 }
 
+// Guarda o cálculo contabilista como recibo do mês (alimenta o relatório consolidado)
+async function salvarReciboContab() {
+  if (!isMaster()) { toast('Apenas o administrador master pode guardar recibos.', true); return; }
+  if (!contabCtx || !contabCtx.resultado || !contabCtx.emp) { toast('Calcule primeiro o salário do funcionário.', true); return; }
+  const pEl = document.getElementById('tc_periodo');
+  const periodo = pEl ? pEl.value : '';
+  if (!periodo) { toast('Indique o período.', true); return; }
+  const r = contabCtx.resultado, emp = contabCtx.emp;
+  const ref = db.collection('funcionarios').doc(emp.id).collection('recibos').doc(periodo);
+  try {
+    const existing = await ref.get();
+    if (existing.exists && !confirm(`Já existe um recibo para ${periodoLabel(periodo)}. Substituir?\n\n(O recibo anterior será sobreposto.)`)) return;
+  } catch (e) { /* segue */ }
+  showOverlay('A guardar recibo…');
+  try {
+    // Totais no formato lido pelo relatório (compatível com Processar Salário)
+    const totais = {
+      vencEfetivo: r.vencimento, totalSub: r.totalSub,
+      ajudasCusto: r.ajudasCusto, ajudasCustoEstr: r.ajudasCustoEstr,
+      subFerias: r.subFerias, subNatal: r.subNatal,
+      baseIncidencia: r.baseSS, ssTrab: r.ssTrab, ssEnt: r.ssEnt,
+      irs: r.irs, irsTaxa: r.irsTaxa, iliquido: r.iliquido,
+      liquido: r.liquido, custoEmpresa: r.custoEmpresa
+    };
+    await ref.set({
+      periodo, modelo: 'contabilista',
+      input: contabCtx.input, totais, rubricas: r.rubricas,
+      config_snapshot: {
+        ss_trabalhador: appConfig.ss_trabalhador, ss_entidade: appConfig.ss_entidade,
+        sub_refeicao_dinheiro: appConfig.sub_refeicao_dinheiro, sub_refeicao_cartao: appConfig.sub_refeicao_cartao,
+        irs_taxa_aplicada: r.irsTaxa, vigente_desde: appConfig.vigente_desde
+      },
+      created_at: firebase.firestore.FieldValue.serverTimestamp(),
+      created_by: currentUser ? currentUser.email : ''
+    });
+    await logAudit('recibo_save', emp.id, `${emp.nome} · ${periodo} (contabilista)`);
+    toast('Recibo guardado no histórico.');
+  } catch (err) {
+    toast('Erro ao guardar recibo: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
 /* ============================================================
    RELATÓRIO PARA O CONTABILISTA (por trabalhador e mês)
    ============================================================ */
 let relContabRows = [];
 async function openRelContab() {
+  if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   const periodo = currentPeriodo();
   document.getElementById('relContabBody').innerHTML = `
     <div class="calc-input-grid">
@@ -3559,7 +3654,8 @@ async function gerarRelContab() {
         vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
         ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
         baseSS: t ? t.baseIncidencia : null, ssTrab: t ? t.ssTrab : null, irs: t ? t.irs : null, liquido: t ? t.liquido : null,
-        temRecibo: !!recibo
+        custoEmpresa: t ? num(t.custoEmpresa, 0) : null, iliquido: t ? num(t.iliquido, 0) : null,
+        temRecibo: !!recibo, reciboFull: recibo
       });
     }
     const comRecibo = relContabRows.filter(r => r.temRecibo).length;
@@ -3631,6 +3727,94 @@ function relContabPdf() {
   toast('PDF exportado.');
 }
 
+// PDF consolidado: 1 página por funcionário (cálculo completo) + página final de resumo de pagamentos
+function relContabConsolidadoPdf() {
+  if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
+  const comRecibo = relContabRows.filter(r => r.temRecibo);
+  if (comRecibo.length === 0) { toast('Nenhum recibo guardado neste período. Guarde os cálculos primeiro.', true); return; }
+  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 15;
+
+  const header = (sub) => {
+    doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 28, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+    doc.text('RELATÓRIO DE PAGAMENTOS', margin, 13);
+    doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+    doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
+    doc.text(sub, margin, 24.5);
+  };
+
+  // Uma página por funcionário com recibo guardado
+  comRecibo.forEach((r, idx) => {
+    if (idx > 0) doc.addPage();
+    header(`${periodoLabel(periodo)} · Funcionário ${idx + 1}/${comRecibo.length}`);
+    let y = 40;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(0, 34, 68);
+    doc.text(r.nome || '—', margin, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120);
+    doc.text(`NIF: ${r.nif || '—'} · NISS: ${r.niss || '—'} · ${r.categoria || '—'}`, margin, y); y += 4;
+    doc.text(`Faltas J/I/B/A: ${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`, margin, y); y += 8;
+
+    const rows = [];
+    const rub = r.reciboFull && r.reciboFull.rubricas;
+    if (rub && rub.length) {
+      rub.forEach(x => rows.push([`Cód ${x.cod} ${x.label}`, eur(x.value)]));
+    } else {
+      if (r.vencimento != null) rows.push(['Vencimento', eur(r.vencimento)]);
+      if (r.subsidios) rows.push(['Subsídios', eur(r.subsidios)]);
+      if (r.ajudas) rows.push(['Ajudas de custo', eur(r.ajudas)]);
+    }
+    rows.push(['__sep__', '']);
+    if (r.iliquido != null) rows.push(['Valor ilíquido', eur(r.iliquido)]);
+    if (r.baseSS != null) rows.push(['Base de incidência SS', eur(r.baseSS)]);
+    if (r.ssTrab != null) rows.push(['Desconto SS (trabalhador)', '-' + eur(r.ssTrab)]);
+    if (r.irs != null) rows.push(['Retenção IRS', '-' + eur(r.irs)]);
+    rows.push(['VALOR LÍQUIDO A RECEBER', r.liquido != null ? eur(r.liquido) : '—']);
+    if (r.custoEmpresa != null) rows.push(['Custo total p/ empresa', eur(r.custoEmpresa)]);
+
+    rows.forEach(([l, v]) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      if (l === '__sep__') { doc.setDrawColor(210); doc.line(margin, y - 2, pageW - margin, y - 2); y += 3; return; }
+      const tot = l.startsWith('VALOR LÍQUIDO');
+      if (tot) { doc.setFillColor(0, 51, 102); doc.rect(margin, y - 4, pageW - margin * 2, 8, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); }
+      else { doc.setTextColor(0, 34, 68); doc.setFont('helvetica', 'normal'); }
+      doc.setFontSize(10); doc.text(l, margin + 2, y); doc.text(v, pageW - margin - 2, y, { align: 'right' }); y += tot ? 10 : 7;
+    });
+    pdfFooter(doc, pageW, pageH);
+  });
+
+  // Página final: resumo de pagamentos a enviar ao contabilista
+  doc.addPage();
+  header(`${periodoLabel(periodo)} · Resumo de pagamentos`);
+  let y = 40;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0, 51, 102);
+  doc.text('Funcionário', margin, y); doc.text('NIF', margin + 95, y); doc.text('Líquido', pageW - margin, y, { align: 'right' });
+  y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 5;
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 34, 68); doc.setFontSize(9);
+  let total = 0;
+  comRecibo.forEach(r => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    total += num(r.liquido, 0);
+    doc.text((r.nome || '—').slice(0, 48), margin, y);
+    doc.text(String(r.nif || '—'), margin + 95, y);
+    doc.text(r.liquido != null ? eur(r.liquido) : '—', pageW - margin, y, { align: 'right' }); y += 6;
+  });
+  y += 2; doc.setDrawColor(0, 51, 102); doc.line(margin, y, pageW - margin, y); y += 6;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(0, 51, 102);
+  doc.text(`TOTAL A PAGAR (${comRecibo.length} funcionário(s))`, margin, y);
+  doc.text(eur(total), pageW - margin, y, { align: 'right' });
+  y += 10; doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+  doc.text(doc.splitTextToSize('Documento de apoio à gestão para envio ao contabilista. Reúne os recibos guardados do período, um por página, e o total a pagar. Não substitui contabilidade certificada nem software certificado pela AT.', pageW - margin * 2), margin, y);
+  pdfFooter(doc, pageW, pageH);
+
+  doc.save(`Relatorio_pagamentos_${periodo}.pdf`);
+  toast('PDF consolidado gerado.');
+}
+
 function bindFiscal() {
   document.querySelectorAll('.area-tab').forEach(t => t.addEventListener('click', () => switchArea(t.dataset.area)));
   document.querySelectorAll('[data-emp-tab]').forEach(b => b.addEventListener('click', () => switchEmpTab(b.dataset.empTab)));
@@ -3672,10 +3856,12 @@ function bindFiscal() {
   document.getElementById('toolContabClose').addEventListener('click', () => closeModal('toolContabModal'));
   document.getElementById('toolContabCloseFoot').addEventListener('click', () => closeModal('toolContabModal'));
   document.getElementById('toolContabPdf').addEventListener('click', gerarReciboContabPdf);
+  document.getElementById('toolContabSave').addEventListener('click', salvarReciboContab);
   document.getElementById('relContabClose').addEventListener('click', () => closeModal('relContabModal'));
   document.getElementById('relContabCloseFoot').addEventListener('click', () => closeModal('relContabModal'));
   document.getElementById('relContabExcel').addEventListener('click', relContabCsv);
   document.getElementById('relContabPdf').addEventListener('click', relContabPdf);
+  document.getElementById('relContabConsolidado').addEventListener('click', relContabConsolidadoPdf);
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
