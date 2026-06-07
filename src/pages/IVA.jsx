@@ -5,6 +5,8 @@ import { useEmpresa } from '../contexts/EmpresaContext.jsx';
 import { useConfig } from '../hooks/useConfig.js';
 import { apurarIVA, ivaDaLinha, periodosDoRegime } from '../lib/calculo/iva.js';
 import { eur } from '../lib/calculo/arred.js';
+import { pdfIVA } from '../lib/pdf/fiscalPdf.js';
+import { exportarExcel, exportarCSV } from '../lib/export.js';
 
 export default function IVA() {
   const { empresaId, empresa } = useEmpresa();
@@ -89,6 +91,11 @@ export default function IVA() {
         </div>
         <span className="formula">{ap.formula}</span>
         <p className="muted">Prazo: {config.regimeIVA === 'MENSAL' ? config.prazos.ivaMensal : config.prazos.ivaTrimestral}</p>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+          <button onClick={() => pdfIVA({ empresa, periodo: periodoFiltro || 'Todos', apuramento: ap, faturas: doPeriodo }).save(`iva-${periodoFiltro || 'total'}.pdf`)}>📄 PDF</button>
+          <button className="sec" onClick={() => exportarExcel(doPeriodo.map((f) => ({ tipo: f.tipo, data: f.data, nif: f.nif, base: f.base, taxa: f.taxa, iva: f.valor, periodo: f.periodo })), `iva-${periodoFiltro || 'total'}.xlsx`)}>⬇ Excel</button>
+          <button className="sec" onClick={() => exportarCSV(doPeriodo.map((f) => ({ tipo: f.tipo, data: f.data, nif: f.nif, base: f.base, taxa: f.taxa, iva: f.valor, periodo: f.periodo })), `iva-${periodoFiltro || 'total'}.csv`)}>⬇ CSV</button>
+        </div>
       </div>
 
       <div className="card">

@@ -104,6 +104,8 @@ cada cliente — responsabilidade da Espaço Provável, a validar com jurista/co
 ## Estado
 
 Fundação + motor de cálculo verificado + UI funcional (login, multi-empresa,
-calculadoras, IVA, IRC, pró-formas, calendário, configuração, painel). Por
-desenvolver: geração de PDF, importação de PDF/Excel/Word, anexos Cloudinary na
-UI, exportações Excel/CSV e backup global. Ver `docs/RELATORIO_HANDOFF.md`.
+calculadoras, IVA, IRC, pró-formas, calendário, configuração, painel) +
+**geração de PDF** (recibo completo e simples, IVA, IRC) + **exportação
+Excel/CSV** + **gravação de recibos no histórico** (alimenta o IRC). Por
+desenvolver: importação de PDF/Excel/Word, anexos Cloudinary na UI, PDF das
+pró-formas e backup global. Ver `docs/RELATORIO_HANDOFF.md`.

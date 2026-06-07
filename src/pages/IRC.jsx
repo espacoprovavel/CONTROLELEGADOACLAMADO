@@ -5,6 +5,7 @@ import { useEmpresa } from '../contexts/EmpresaContext.jsx';
 import { useConfig } from '../hooks/useConfig.js';
 import { estimarIRC } from '../lib/calculo/irc.js';
 import { eur } from '../lib/calculo/arred.js';
+import { pdfIRC } from '../lib/pdf/fiscalPdf.js';
 
 export default function IRC() {
   const { empresaId, empresa } = useEmpresa();
@@ -56,6 +57,7 @@ export default function IRC() {
           {r.passos.map((p, i) => <span key={i} className="formula">{p}</span>)}
         </div>
         <p className="muted">{config.prazos.pagamentoContaIRC}</p>
+        <button style={{ marginTop: '0.6rem' }} onClick={() => pdfIRC({ empresa, ano: String(new Date().getFullYear()), estimativa: r }).save(`irc-${new Date().getFullYear()}.pdf`)}>📄 PDF</button>
       </div>
     </>
   );

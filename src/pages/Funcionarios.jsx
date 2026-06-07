@@ -3,6 +3,7 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimest
 import { db } from '../firebase.js';
 import { useEmpresa } from '../contexts/EmpresaContext.jsx';
 import { PAISES_DESTACAMENTO } from '../lib/configDefaults.js';
+import { exportarExcel, exportarCSV } from '../lib/export.js';
 
 const VAZIO = { nome: '', nif: '', niss: '', categoria: '', salarioBase: '', tipoContrato: 'Sem termo', paisDestacamento: 'Portugal', a1Estado: '', a1Validade: '', ativo: true };
 
@@ -76,6 +77,12 @@ export default function Funcionarios() {
 
       <div className="card">
         <h2>Funcionários ({lista.length})</h2>
+        {lista.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <button className="sec" onClick={() => exportarExcel(lista.map(({ id, ...x }) => x), `funcionarios-${empresa.nome}.xlsx`)}>⬇ Excel</button>
+            <button className="sec" onClick={() => exportarCSV(lista.map(({ id, ...x }) => x), `funcionarios-${empresa.nome}.csv`)}>⬇ CSV</button>
+          </div>
+        )}
         {lista.length === 0 ? <p className="muted">Sem funcionários nesta empresa.</p> : (
           <table>
             <thead><tr><th>Nome</th><th>NIF</th><th>Categoria</th><th>Base</th><th>Destacamento</th><th>A1</th><th></th></tr></thead>

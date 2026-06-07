@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase.js';
 import { calcularHoras, calcularSimplificado, calcularReciboCompleto, TIPOS_FALTA } from '../lib/calculo/salario.js';
 import { eur } from '../lib/calculo/arred.js';
 import { useConfig } from '../hooks/useConfig.js';
+import { useEmpresa } from '../contexts/EmpresaContext.jsx';
 import { SITUACOES_FAMILIARES } from '../lib/configDefaults.js';
+import { pdfReciboCompleto, pdfReciboSimples } from '../lib/pdf/reciboPdf.js';
 
 export default function CalculoSalario() {
   const { config } = useConfig();
@@ -73,6 +77,11 @@ function Simples({ config }) {
 }
 
 function Completo({ config }) {
+  const { empresaId, empresa } = useEmpresa();
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [funcId, setFuncId] = useState('');
+  const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 7));
+  const [msg, setMsg] = useState('');
   const [f, setF] = useState({
     vencimentoBase: '920', horasTrabalhadas: '', diasAdmissao: '',
     diasSubsidioRefeicao: '', subsidioRefeicaoCartao: false,
@@ -82,6 +91,20 @@ function Completo({ config }) {
     faltaInjust: '', faltaJust: '',
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    if (!empresaId) return;
+    return onSnapshot(collection(db, 'empresas', empresaId, 'funcionarios'), (s) =>
+      setFuncionarios(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  }, [empresaId]);
+
+  const funcionario = funcionarios.find((x) => x.id === funcId) || null;
+  // Preencher o vencimento base a partir do funcionário escolhido
+  function escolherFunc(id) {
+    setFuncId(id);
+    const fn = funcionarios.find((x) => x.id === id);
+    if (fn?.salarioBase) set('vencimentoBase', String(fn.salarioBase));
+  }
 
   const faltas = [];
   if (Number(f.faltaInjust) > 0) faltas.push({ tipo: TIPOS_FALTA.INJUSTIFICADA, dias: Number(f.faltaInjust) });
@@ -103,10 +126,41 @@ function Completo({ config }) {
     dependentes: Number(f.dependentes) || 0,
   });
 
+  async function gravarRecibo() {
+    if (!empresaId) return;
+    await addDoc(collection(db, 'empresas', empresaId, 'recibos'), {
+      periodo,
+      funcionarioId: funcId || null,
+      funcionarioNome: funcionario?.nome || null,
+      entradas: { ...f },
+      custoEmpresa: r.totais.custoEmpresa,
+      liquido: r.totais.liquido,
+      baseSS: r.totais.baseSS,
+      descontoSS: r.totais.descontoSS,
+      irs: r.totais.irs,
+      criado_em: serverTimestamp(),
+    });
+    setMsg('Recibo gravado no histórico. O custo de pessoal já conta para o IRC.');
+    setTimeout(() => setMsg(''), 4000);
+  }
+
+  const ctxPdf = { empresa, periodo, funcionario, recibo: r };
+
   return (
     <>
       <div className="card">
         <h3>3 · Cálculo completo "como o contabilista"</h3>
+        <div className="grid3">
+          <div>
+            <label>Funcionário (opcional)</label>
+            <select value={funcId} onChange={(e) => escolherFunc(e.target.value)}>
+              <option value="">— manual —</option>
+              {funcionarios.map((fn) => <option key={fn.id} value={fn.id}>{fn.nome}</option>)}
+            </select>
+          </div>
+          <div><label>Período (mês)</label><input type="month" value={periodo} onChange={(e) => setPeriodo(e.target.value)} /></div>
+          <div />
+        </div>
         <div className="grid3">
           <div><label>Vencimento base (€)</label><input type="number" value={f.vencimentoBase} onChange={(e) => set('vencimentoBase', e.target.value)} /></div>
           <div><label>Horas trabalhadas (opcional)</label><input type="number" value={f.horasTrabalhadas} onChange={(e) => set('horasTrabalhadas', e.target.value)} placeholder="vazio = mês completo" /></div>
@@ -162,6 +216,13 @@ function Completo({ config }) {
             {r.avisos.map((a, i) => <p key={i} className="erro">⚠️ {a}</p>)}
           </div>
         )}
+
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+          <button onClick={() => pdfReciboCompleto(ctxPdf).save(`recibo-completo-${periodo}.pdf`)}>📄 PDF completo</button>
+          <button className="sec" onClick={() => pdfReciboSimples(ctxPdf).save(`recibo-simples-${periodo}.pdf`)}>📄 PDF simples (contabilista)</button>
+          <button className="sec" onClick={gravarRecibo}>💾 Gravar no histórico</button>
+        </div>
+        {msg && <p className="ok">{msg}</p>}
       </div>
     </>
   );
