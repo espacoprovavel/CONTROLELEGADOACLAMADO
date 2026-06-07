@@ -18,6 +18,11 @@ service cloud.firestore {
       return isAuth() && (getRole() == 'admin' || getRole() == 'editor');
     }
 
+    // Administrador master: único com acesso às funcionalidades de salários/cálculos (recibos)
+    function isMaster() {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.master == true;
+    }
+
     match /funcionarios/{docId} {
       allow read: if isAuth();
       allow create, update: if isEditor();
@@ -29,6 +34,40 @@ service cloud.firestore {
       allow create: if isEditor();
       allow delete: if isAdmin();
       allow update: if false;
+    }
+
+    // Recibos de vencimento (histórico mensal por trabalhador)
+    // Dados salariais — acesso exclusivo do administrador master.
+    match /funcionarios/{funcionarioId}/recibos/{reciboId} {
+      allow read, create, update, delete: if isMaster();
+    }
+
+    // Faltas e baixas médicas por trabalhador
+    match /funcionarios/{funcionarioId}/faltas/{faltaId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // Parâmetros fiscais/salariais (documento único editável)
+    match /config/{docId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if false;
+    }
+
+    // Histórico de alterações à configuração (imutável)
+    match /config_history/{logId} {
+      allow read: if isAuth();
+      allow create: if isEditor();
+      allow update, delete: if false;
+    }
+
+    // Apuramento de IVA por trimestre
+    match /iva/{trimestreId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
     }
 
     match /users/{userId} {

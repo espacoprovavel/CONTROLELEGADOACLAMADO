@@ -4,7 +4,7 @@ Sistema interno da **LEGADO ACLAMADO — UNIPESSOAL LDA** para gestão de funcio
 
 🔗 **Aplicação online:** https://espacoprovavel.github.io/CONTROLELEGADOACLAMADO/
 
-> **Versão 2.1** — migrado de localStorage para **Firebase** (Authentication + Firestore) e com **anexação de documentos** (Cloudinary). Agora requer **Internet** e **login**.
+> **Versão 3.0** — acrescenta **gestão fiscal e salarial** (cálculos exactos e auditáveis, sem IA): processamento de salários, faltas e baixas médicas, destacamento A1/contratos, dashboard da empresa e painel de Configurações totalmente editável. Mantém Firebase (Auth + Firestore) e anexação de documentos (Cloudinary). 100 % gratuito (plano Spark).
 
 ---
 
@@ -23,6 +23,21 @@ Uma aplicação web num **único ficheiro HTML** ligada ao **Firebase**:
 - **Pesquisa instantânea** por nome, NIF, NISS, função, cliente ou CC
 - **3 secções separadas** por país: 🇧🇪 Bélgica · 🇵🇹 Portugal · 🌐 Outros
 - Identidade visual oficial (azul #003366 + dourado #D4AF37, Montserrat + Poppins)
+
+### Novo na v3.0 — Gestão Fiscal e Salarial (sem IA)
+
+Duas áreas na navegação: **👥 Funcionários** e **🏢 Empresa**.
+
+- **Processamento de salários** por trabalhador (modo mês ou horas): SS trabalhador (11 %) e entidade (23,75 %), parte tributável do subsídio de refeição, base de IRS, retenção pela tabela, líquido a receber e custo total para a empresa. Cada parcela mostra **fórmula e taxa**. Histórico mensal guardado no Firestore.
+- **Faltas e baixas médicas**: justificada/injustificada/baixa (CIT), em dias ou horas. Injustificada desconta 1/30 por dia e remove subsídio de refeição. As faltas alimentam automaticamente o salário do mês.
+- **Destacamento A1 e contratos**: estado do A1, validade, base de SS (continua em Portugal), validação de renovações/duração do termo certo. Alertas no dashboard.
+- **Dashboard da empresa**: custo de pessoal do mês, A1 a expirar, contratos a terminar e parâmetros em vigor.
+- **Configurações 100 % editáveis** (Firestore): SS, IAS, RMMG, subsídios, taxas de IVA, IRC/PME, derrama, mínimo de existência, dias úteis/horas e a **tabela de retenção de IRS** (vazia por opção — cola-se a oficial). Histórico de alterações, data de vigência e botão "Repor valores 2026 de origem".
+- **Recibos PDF** (completo para auditoria e simples para o contabilista) e **Exportar todos os dados** (JSON + CSV).
+
+> ⚠️ **Aviso legal:** estimativas de apoio à gestão. Não substituem contabilidade certificada nem software de faturação certificado pela AT.
+
+Guia completo em [docs/FISCAL.md](docs/FISCAL.md).
 
 ---
 
@@ -91,7 +106,8 @@ CONTROLELEGADOACLAMADO/
     ├── BACKUP.md           # Procedimento de backup
     ├── RGPD.md             # Avisos de proteção de dados
     ├── FIREBASE.md         # Gestão Firebase (utilizadores, roles, logs, custos)
-    └── CLOUDINARY.md       # Gestão de documentos anexados (Cloudinary)
+    ├── CLOUDINARY.md       # Gestão de documentos anexados (Cloudinary)
+    └── FISCAL.md           # Gestão fiscal e salarial (cálculos, configurações)
 ```
 
 ---
@@ -137,6 +153,6 @@ Regra **3-2-1**. Procedimento completo em [docs/BACKUP.md](docs/BACKUP.md).
 
 ---
 
-**Versão actual:** v2.1
+**Versão actual:** v3.1
 
 © 2026 LEGADO ACLAMADO — UNIPESSOAL LDA · Todos os direitos reservados.
