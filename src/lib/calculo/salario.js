@@ -76,7 +76,45 @@ export const TIPOS_FALTA = {
   BAIXA: 'baixa', // CIT / baixa médica
 };
 
-// ---------- 3. CÁLCULO COMPLETO "COMO O CONTABILISTA" ----------
+// ---------- CÁLCULO RÁPIDO (página simples) ----------
+/**
+ * Cálculo simples do salário a receber, sem impostos.
+ * Campos: salário, horas extra, vale alimentação, dias úteis e faltas.
+ *
+ * valor/dia  = salário ÷ dias úteis
+ * valor/hora = valor/dia ÷ horas por dia (8 por omissão)
+ * a receber  = salário − (faltas × valor/dia) + (horas extra × valor/hora) + vale alimentação
+ */
+export function calcularSalarioRapido({ salario = 0, horasExtra = 0, valeAlimentacao = 0, diasUteis = 22, faltas = 0, horasDia = 8 }) {
+  const base = Number(salario) || 0;
+  const dU = Number(diasUteis) || 22;
+  const valorDia = arred(base / dU, 4);
+  const valorHora = arred(valorDia / (Number(horasDia) || 8), 4);
+
+  const descontoFaltas = arred((Number(faltas) || 0) * valorDia);
+  const pagoHorasExtra = arred((Number(horasExtra) || 0) * valorHora);
+  const vale = arred(Number(valeAlimentacao) || 0);
+
+  const aReceber = arred(base - descontoFaltas + pagoHorasExtra + vale);
+
+  return {
+    base,
+    valorDia,
+    valorHora,
+    descontoFaltas,
+    pagoHorasExtra,
+    valeAlimentacao: vale,
+    aReceber,
+    formulas: {
+      valorDia: `${base.toFixed(2)} € ÷ ${dU} dias úteis = ${valorDia.toFixed(4)} €/dia`,
+      valorHora: `${valorDia.toFixed(4)} €/dia ÷ ${horasDia} h = ${valorHora.toFixed(4)} €/h`,
+      descontoFaltas: `${faltas || 0} falta(s) × ${valorDia.toFixed(4)} €/dia = ${descontoFaltas.toFixed(2)} €`,
+      pagoHorasExtra: `${horasExtra || 0} h × ${valorHora.toFixed(4)} €/h = ${pagoHorasExtra.toFixed(2)} €`,
+      aReceber: `${base.toFixed(2)} − ${descontoFaltas.toFixed(2)} + ${pagoHorasExtra.toFixed(2)} + ${vale.toFixed(2)} = ${aReceber.toFixed(2)} €`,
+    },
+  };
+}
+
 /**
  * @param {object} args
  * @param {object} args.config            configuração da empresa (rates 2026 editáveis)

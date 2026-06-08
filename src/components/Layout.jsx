@@ -31,6 +31,7 @@ export default function Layout() {
           <Item to="/" label="📊 Painel" end />
           <div className="grupo">Recursos Humanos</div>
           <Item to="/funcionarios" label="👥 Funcionários" />
+          <Item to="/salario-rapido" label="⚡ Salário rápido" />
           <Item to="/salario" label="🧮 Cálculo salarial" />
           <div className="grupo">Fiscal</div>
           <Item to="/iva" label="🧾 IVA" />

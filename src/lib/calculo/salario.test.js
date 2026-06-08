@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcularReciboCompleto, calcularHoras, calcularSimplificado, TIPOS_FALTA } from './salario.js';
+import { calcularReciboCompleto, calcularHoras, calcularSimplificado, calcularSalarioRapido, TIPOS_FALTA } from './salario.js';
 import { apurarIVA } from './iva.js';
 import { estimarIRC } from './irc.js';
 import { CONFIG_2026 } from '../configDefaults.js';
@@ -78,6 +78,23 @@ describe('Faltas injustificadas removem subsídio de alimentação', () => {
   it('só paga 20 dias de subsídio (22 − 2)', () => {
     // limite dinheiro 6.15 × 20 = 123
     expect(r.totais.subAlimentacao).toBe(123);
+  });
+});
+
+describe('Cálculo rápido (página simples)', () => {
+  it('salário − faltas + horas extra + vale', () => {
+    // 1100 ÷ 22 = 50 €/dia ; 50 ÷ 8 = 6,25 €/h
+    const r = calcularSalarioRapido({ salario: 1100, horasExtra: 4, valeAlimentacao: 120, diasUteis: 22, faltas: 2 });
+    expect(r.valorDia).toBe(50);
+    expect(r.valorHora).toBe(6.25);
+    expect(r.descontoFaltas).toBe(100); // 2 × 50
+    expect(r.pagoHorasExtra).toBe(25); // 4 × 6.25
+    // 1100 − 100 + 25 + 120 = 1145
+    expect(r.aReceber).toBe(1145);
+  });
+  it('sem faltas nem extras devolve o salário + vale', () => {
+    const r = calcularSalarioRapido({ salario: 900, valeAlimentacao: 0, diasUteis: 22, faltas: 0 });
+    expect(r.aReceber).toBe(900);
   });
 });
 

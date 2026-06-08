@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Empresas from './pages/Empresas.jsx';
 import Funcionarios from './pages/Funcionarios.jsx';
 import CalculoSalario from './pages/CalculoSalario.jsx';
+import SalarioRapido from './pages/SalarioRapido.jsx';
 import Configuracao from './pages/Configuracao.jsx';
 import IVA from './pages/IVA.jsx';
 import IRC from './pages/IRC.jsx';
@@ -23,6 +24,7 @@ function Protegido() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="funcionarios" element={<Funcionarios />} />
+          <Route path="salario-rapido" element={<SalarioRapido />} />
           <Route path="salario" element={<CalculoSalario />} />
           <Route path="iva" element={<IVA />} />
           <Route path="irc" element={<IRC />} />
