@@ -1,0 +1,25 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "tests/**",
+      "*.md",
+      "package*.json",
+      "firestore.rules",
+      "firestore.indexes.json"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(html)",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      }
+    ],
+    "cleanUrls": true
+  }
+}
