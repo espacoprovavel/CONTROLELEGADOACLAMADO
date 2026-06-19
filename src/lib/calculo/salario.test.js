@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcularReciboCompleto, calcularHoras, calcularSimplificado, calcularSalarioRapido, TIPOS_FALTA } from './salario.js';
+import { calcularReciboCompleto, calcularHoras, calcularSimplificado, calcularSalarioRapido, calcularReciboPorLinhas, linhasReciboPadrao, TIPOS_FALTA } from './salario.js';
 import { apurarIVA } from './iva.js';
 import { estimarIRC } from './irc.js';
 import { CONFIG_2026 } from '../configDefaults.js';
@@ -95,6 +95,28 @@ describe('Cálculo rápido (página simples)', () => {
   it('sem faltas nem extras devolve o salário + vale', () => {
     const r = calcularSalarioRapido({ salario: 900, valeAlimentacao: 0, diasUteis: 22, faltas: 0 });
     expect(r.aReceber).toBe(900);
+  });
+});
+
+describe('Recibo por linhas (editável, Portugal) — Legado abr/2026', () => {
+  const linhas = [
+    { codigo: '1', descricao: 'Vencimento', valor: 920, incideSS: true, incideIRS: true },
+    { codigo: '20', descricao: 'Subs. Férias', valor: 76.67, incideSS: true, incideIRS: true },
+    { codigo: '21', descricao: 'Subs. Natal', valor: 76.67, incideSS: true, incideIRS: true },
+    { codigo: '40', descricao: 'Ajudas Custo Estrangeiro', valor: 1500, incideSS: false, incideIRS: false },
+  ];
+  const r = calcularReciboPorLinhas({ config, linhas });
+  it('base SS = 1.073,34 € e desconto SS = 118,07 €', () => {
+    expect(r.baseSS).toBe(1073.34);
+    expect(r.descontoSS).toBe(118.07);
+  });
+  it('ajudas isentas entram no líquido mas não na base SS', () => {
+    expect(r.totalRem).toBe(2573.34);
+    expect(r.liquido).toBe(2573.34 - 118.07); // sem IRS (tabela vazia)
+  });
+  it('linhasReciboPadrao gera duodécimos corretos', () => {
+    const l = linhasReciboPadrao(920);
+    expect(l.find((x) => x.codigo === '20').valor).toBe(76.67);
   });
 });
 

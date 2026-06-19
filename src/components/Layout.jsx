@@ -32,6 +32,7 @@ export default function Layout() {
           <div className="grupo">Recursos Humanos</div>
           <Item to="/funcionarios" label="👥 Funcionários" />
           <Item to="/salario-rapido" label="⚡ Salário rápido" />
+          <Item to="/recibo-pt" label="🇵🇹 Recibo (Portugal)" />
           <Item to="/salario" label="🧮 Cálculo salarial" />
           <div className="grupo">Fiscal</div>
           <Item to="/iva" label="🧾 IVA" />

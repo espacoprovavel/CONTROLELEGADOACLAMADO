@@ -115,6 +115,63 @@ export function calcularSalarioRapido({ salario = 0, horasExtra = 0, valeAliment
   };
 }
 
+// ---------- RECIBO POR LINHAS (totalmente editável, Portugal) ----------
+/**
+ * Calcula um recibo a partir de linhas livres. Cada linha indica se
+ * incide para a base de Segurança Social e/ou para a base de IRS.
+ * Reproduz o modelo do recibo português, com tudo editável.
+ *
+ * @param {object} args
+ * @param {object} args.config
+ * @param {Array}  args.linhas  [{ codigo, descricao, valor, incideSS, incideIRS }]
+ * @param {string} [args.situacaoFamiliar='solteiro']
+ * @param {number} [args.dependentes=0]
+ */
+export function calcularReciboPorLinhas({ config, linhas = [], situacaoFamiliar = 'solteiro', dependentes = 0 }) {
+  const taxaSS = config?.ss?.taxaTrabalhador ?? 11;
+  const taxaSSEnt = config?.ss?.taxaEntidade ?? 23.75;
+
+  let totalRem = 0;
+  let baseSS = 0;
+  let baseIRS = 0;
+  const detalhe = linhas.map((l) => {
+    const v = arred(Number(l.valor) || 0);
+    totalRem += v;
+    if (l.incideSS) baseSS += v;
+    if (l.incideIRS) baseIRS += v;
+    return { ...l, valor: v };
+  });
+  totalRem = arred(totalRem);
+  baseSS = arred(baseSS);
+  baseIRS = arred(baseIRS);
+
+  const descontoSS = arred(baseSS * (taxaSS / 100));
+  const ssEntidade = arred(baseSS * (taxaSSEnt / 100));
+  const irs = calcularIRS({ remuneracaoMensal: baseIRS, situacaoFamiliar, dependentes, configIRS: config?.irs });
+  const totalDescontos = arred(descontoSS + irs.valor);
+  const liquido = arred(totalRem - totalDescontos);
+  const custoEmpresa = arred(totalRem + ssEntidade);
+
+  return {
+    detalhe, totalRem, baseSS, descontoSS, ssEntidade, baseIRS,
+    irs: irs.valor, irsTaxa: irs.taxa, irsFormula: irs.formula, irsAviso: irs.aviso,
+    totalDescontos, liquido, custoEmpresa, taxaSS, taxaSSEnt,
+  };
+}
+
+// Linhas iniciais sugeridas (modelo do recibo português). Editáveis.
+export function linhasReciboPadrao(salarioBase = 920) {
+  const duod = arred(salarioBase / 12);
+  return [
+    { codigo: '1', descricao: 'Vencimento', valor: salarioBase, incideSS: true, incideIRS: true },
+    { codigo: '20', descricao: 'Subsídio de Férias (duodécimo)', valor: duod, incideSS: true, incideIRS: true },
+    { codigo: '21', descricao: 'Subsídio de Natal (duodécimo)', valor: duod, incideSS: true, incideIRS: true },
+    { codigo: '30', descricao: 'Subsídio de Alimentação', valor: 0, incideSS: false, incideIRS: false },
+    { codigo: '38', descricao: 'Ajudas de Custo', valor: 0, incideSS: false, incideIRS: false },
+    { codigo: '40', descricao: 'Ajudas de Custo Estrangeiro', valor: 0, incideSS: false, incideIRS: false },
+  ];
+}
+
 /**
  * @param {object} args
  * @param {object} args.config            configuração da empresa (rates 2026 editáveis)
