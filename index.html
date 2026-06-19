@@ -453,6 +453,94 @@ footer strong { color: var(--ink); }
   .calc-line .cl-value { text-align: left; }
   .falta-row { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   Redesenho: abas na ficha, agrupamento, badges de validade
+   ============================================================ */
+
+/* ---------- Abas da ficha do funcionário ---------- */
+.ficha-tabs {
+  display: flex; gap: 4px; border-bottom: 2px solid var(--bg-alt);
+  margin: 6px 0 18px; flex-wrap: wrap;
+}
+.ficha-tab {
+  font-family: 'Montserrat'; font-weight: 700; font-size: 13px;
+  background: none; border: none; cursor: pointer; padding: 10px 16px;
+  color: var(--ink-soft); border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 7px;
+}
+.ficha-tab:hover { color: var(--accent); }
+.ficha-tab.active { color: var(--accent); border-bottom-color: var(--gold); }
+.ficha-tab-pane { display: none; }
+.ficha-tab-pane.active { display: block; }
+
+/* ---------- Badges de validade de documentos ---------- */
+.val-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 999px; margin-left: 6px;
+  line-height: 1.4; white-space: nowrap;
+}
+.val-badge.ok    { background: rgba(22,163,74,0.12);  color: #16a34a; }
+.val-badge.warn  { background: rgba(217,119,6,0.14);  color: #d97706; }
+.val-badge.bad   { background: rgba(220,38,38,0.12);  color: #dc2626; }
+.val-badge.none  { background: rgba(75,75,75,0.10);   color: var(--ink-soft); }
+
+.field-val-row { display: flex; gap: 10px; align-items: flex-end; }
+.field-val-row > input[type="date"] { flex: 1; }
+.field-val-row .val-badge { margin-left: 0; margin-bottom: 10px; }
+
+.detail-item .val-badge { vertical-align: middle; }
+
+/* ---------- Agrupamento país → empresa ---------- */
+.country-group { margin-bottom: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; box-shadow: var(--shadow); }
+.country-head {
+  display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  background: var(--accent-deep); color: #fff; cursor: pointer; user-select: none;
+  border-bottom: 2px solid var(--gold);
+}
+.country-head:hover { background: var(--accent); }
+.country-head .flag { font-size: 22px; }
+.country-head h2 { font-size: 17px; color: #fff; font-weight: 700; }
+.country-head .country-count { font-family: 'JetBrains Mono'; font-size: 12px; background: rgba(255,255,255,0.15); color: var(--gold); padding: 3px 10px; border-radius: 999px; }
+.country-head .country-caret { margin-left: auto; transition: transform 0.18s; font-size: 14px; color: var(--gold); }
+.country-group.collapsed .country-caret { transform: rotate(-90deg); }
+.country-group.collapsed .country-body { display: none; }
+.country-body { padding: 10px 12px 14px; }
+
+.empresa-group { margin: 8px 0; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.empresa-head {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  cursor: pointer; user-select: none; background: var(--bg-alt);
+  border-bottom: 1px solid var(--line); border-radius: 9px 9px 0 0;
+}
+.empresa-head:hover { background: #dde5ee; }
+.empresa-head h3 { font-family: 'Montserrat'; font-size: 14px; font-weight: 700; color: var(--accent); }
+.empresa-head .empresa-count { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); }
+.empresa-head .empresa-caret { margin-left: auto; font-size: 12px; color: var(--accent); transition: transform 0.18s; }
+.empresa-group.collapsed .empresa-caret { transform: rotate(-90deg); }
+.empresa-group.collapsed .empresa-body { display: none; }
+.empresa-body { padding: 8px 10px 12px; }
+.country-group.hidden, .empresa-group.hidden { display: none; }
+
+/* ---------- Toggle ativos / inativos ---------- */
+.estado-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: #fff; }
+.estado-toggle button {
+  background: #fff; border: none; padding: 8px 16px; font-family: 'Poppins'; font-weight: 600;
+  font-size: 13px; cursor: pointer; color: var(--ink-soft);
+}
+.estado-toggle button.active { background: var(--accent); color: #fff; }
+.estado-toggle button:not(.active):hover { background: var(--bg-alt); }
+
+/* ---------- Gestão de listas (empresas/países) ---------- */
+.list-mgmt { display: flex; flex-direction: column; gap: 6px; max-width: 420px; }
+.list-mgmt-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+.list-mgmt-row .lm-val { flex: 1; font-size: 13.5px; color: var(--ink); }
+.list-mgmt-row .lm-del { background: var(--red); color: #fff; border: none; border-radius: 7px; cursor: pointer; padding: 5px 10px; font-size: 13px; }
+.list-mgmt-row .lm-del:disabled { background: #c8d3e0; cursor: not-allowed; }
+.list-mgmt-add { display: flex; gap: 8px; margin-top: 6px; }
+.list-mgmt-add input { flex: 1; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 14px; }
+.list-mgmt-empty { font-size: 12.5px; color: var(--ink-soft); font-style: italic; padding: 6px 2px; }
 </style>
 </head>
 <body>
@@ -532,6 +620,10 @@ footer strong { color: var(--ink); }
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Pesquisar por nome, NIF, NISS, função, cliente ou CC…" aria-label="Pesquisar funcionários">
       </div>
+      <div class="estado-toggle" id="estadoToggle" role="tablist" aria-label="Filtrar por estado">
+        <button type="button" class="active" data-estado="ativo">Ativos</button>
+        <button type="button" data-estado="inativo">Inativos</button>
+      </div>
       <button class="btn btn-primary" id="btnNew">＋ Novo Funcionário</button>
       <button class="btn btn-ghost" id="btnPdfAll">📄 PDF Todos</button>
       <button class="btn btn-ghost" id="btnZipAll">🗜️ ZIP Completo</button>
@@ -589,7 +681,7 @@ footer strong { color: var(--ink); }
           <div class="form-grid">
             <div class="field full"><label for="f_nome">Nome completo <span class="req">*</span></label><input type="text" id="f_nome" required></div>
             <div class="field"><label for="f_nasc">Data de nascimento</label><input type="date" id="f_nasc"></div>
-            <div class="field"><label for="f_nacionalidade">Nacionalidade</label><input type="text" id="f_nacionalidade" value="Portuguesa"></div>
+            <div class="field"><label for="f_nacionalidade">Nacionalidade</label><select id="f_nacionalidade" data-lista="paises"></select></div>
             <div class="field"><label for="f_naturalidade">Naturalidade</label><input type="text" id="f_naturalidade"></div>
             <div class="field"><label for="f_estadocivil">Estado civil</label>
               <select id="f_estadocivil"><option value="">—</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União de Facto</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select>
@@ -603,11 +695,13 @@ footer strong { color: var(--ink); }
           <div class="form-section-title">2 · Documentação</div>
           <div class="form-grid">
             <div class="field"><label for="f_cc">CC / BI</label><input type="text" id="f_cc"></div>
-            <div class="field"><label for="f_cc_val">Validade CC</label><input type="date" id="f_cc_val"></div>
+            <div class="field"><label for="f_cc_val">Validade CC</label><div class="field-val-row"><input type="date" id="f_cc_val"><span id="f_cc_val_badge" class="val-badge none">Sem data</span></div></div>
+            <div class="field full"><label for="f_cc_obs">Observações CC</label><textarea id="f_cc_obs" rows="2" placeholder="Notas sobre o cartão de cidadão"></textarea></div>
             <div class="field"><label for="f_nif">NIF <span class="req">*</span></label><input type="text" id="f_nif" required inputmode="numeric"></div>
             <div class="field"><label for="f_niss">NISS</label><input type="text" id="f_niss" inputmode="numeric"></div>
             <div class="field"><label for="f_passaporte">N.º Passaporte</label><input type="text" id="f_passaporte"></div>
-            <div class="field"><label for="f_pass_val">Validade Passaporte</label><input type="date" id="f_pass_val"></div>
+            <div class="field"><label for="f_pass_val">Validade Passaporte</label><div class="field-val-row"><input type="date" id="f_pass_val"><span id="f_pass_val_badge" class="val-badge none">Sem data</span></div></div>
+            <div class="field full"><label for="f_pass_obs">Observações Passaporte</label><textarea id="f_pass_obs" rows="2" placeholder="Notas sobre o passaporte"></textarea></div>
           </div>
         </div>
         <div class="form-section">
@@ -618,7 +712,7 @@ footer strong { color: var(--ink); }
             <div class="field full"><label for="f_morada">Morada</label><input type="text" id="f_morada"></div>
             <div class="field"><label for="f_cp">Código postal</label><input type="text" id="f_cp"></div>
             <div class="field"><label for="f_loc">Localidade</label><input type="text" id="f_loc"></div>
-            <div class="field"><label for="f_pais">País</label><input type="text" id="f_pais" value="Portugal"></div>
+            <div class="field"><label for="f_pais">País</label><select id="f_pais" data-lista="paises"></select></div>
           </div>
         </div>
         <div class="form-section">
@@ -641,8 +735,8 @@ footer strong { color: var(--ink); }
         <div class="form-section">
           <div class="form-section-title">5 · Cliente / Destacamento</div>
           <div class="form-grid">
-            <div class="field full"><label for="f_cliente">Empresa cliente</label><input type="text" id="f_cliente"></div>
-            <div class="field"><label for="f_cli_pais">País de destacamento</label><input type="text" id="f_cli_pais" value="Bélgica"></div>
+            <div class="field full"><label for="f_cliente">Empresa cliente</label><select id="f_cliente" data-lista="empresas"></select></div>
+            <div class="field"><label for="f_cli_pais">País de destacamento</label><select id="f_cli_pais" data-lista="paises"></select></div>
             <div class="field"><label for="f_cli_morada">Morada do local de trabalho</label><input type="text" id="f_cli_morada"></div>
           </div>
         </div>
@@ -778,8 +872,8 @@ footer strong { color: var(--ink); }
   </div>
 </div>
 
-<!-- Modal: Faltas e Baixas -->
-<div class="modal-backdrop" id="faltasModal">
+<!-- Modal: Faltas e Baixas (DESCONTINUADO — substituído pela aba "Faltas e Baixas" da ficha; permanece oculto por compatibilidade) -->
+<div class="modal-backdrop" id="faltasModal" hidden style="display:none;">
   <div class="modal">
     <div class="modal-head">
       <h2 id="faltasTitle">Faltas e Baixas Médicas</h2>
@@ -952,6 +1046,35 @@ function showOverlay(msg) {
   document.getElementById('overlay').classList.add('show');
 }
 function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+
+/* ---------- Validade de documentos (cores) ---------- */
+function daysUntilDateStr(dStr) {
+  if (!dStr) return null;
+  const d = new Date(dStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((d - today) / (1000 * 60 * 60 * 24));
+}
+function valBadgeInfo(dStr) {
+  const days = daysUntilDateStr(dStr);
+  if (days === null) return { cls: 'none', txt: 'Sem data' };
+  if (days < 0) return { cls: 'bad', txt: 'Vencido há ' + Math.abs(days) + ' dia' + (Math.abs(days) === 1 ? '' : 's') };
+  if (days <= 30) return { cls: 'warn', txt: 'A vencer em ' + days + ' dia' + (days === 1 ? '' : 's') };
+  return { cls: 'ok', txt: 'Válido' };
+}
+function renderValBadgeHtml(dStr) {
+  const info = valBadgeInfo(dStr);
+  return `<span class="val-badge ${info.cls}">${escapeHtml(info.txt)}</span>`;
+}
+function updateValBadge(inputId, badgeId) {
+  const inp = document.getElementById(inputId);
+  const bad = document.getElementById(badgeId);
+  if (!inp || !bad) return;
+  const info = valBadgeInfo(inp.value);
+  bad.className = 'val-badge ' + info.cls;
+  bad.textContent = info.txt;
+}
 
 function friendlyError(err) {
   const code = (err && err.code) || '';
@@ -1185,48 +1308,109 @@ function subTableHtml(list, q) {
       </table></div>`;
 }
 
+// Bandeiras conhecidas para os países geridos; resto fica com globo
+const PAIS_FLAGS = {
+  'Portugal': '🇵🇹', 'Bélgica': '🇧🇪', 'Belgica': '🇧🇪', 'França': '🇫🇷', 'Franca': '🇫🇷',
+  'Espanha': '🇪🇸', 'Alemanha': '🇩🇪', 'Luxemburgo': '🇱🇺', 'Países Baixos': '🇳🇱',
+  'Paises Baixos': '🇳🇱', 'Suíça': '🇨🇭', 'Suica': '🇨🇭', 'Reino Unido': '🇬🇧',
+  'Irlanda': '🇮🇪', 'Itália': '🇮🇹', 'Italia': '🇮🇹', 'Polónia': '🇵🇱',
+  'Polonia': '🇵🇱', 'Suécia': '🇸🇪', 'Suecia': '🇸🇪'
+};
+function flagFor(pais) {
+  if (!pais) return '🌐';
+  return PAIS_FLAGS[pais] || '🌐';
+}
+
+// Estado de colapso e filtro entre re-renders
+const collapsedCountries = new Set();
+const collapsedEmpresas = new Set();
+let estadoFiltro = 'ativo';
+
 function render() {
   const q = document.getElementById('searchInput').value.trim();
   const wrap = document.getElementById('groupsWrap');
   wrap.innerHTML = '';
 
-  const SUBS = [
-    { estado: 'ativo',  label: 'Activos',   cls: 'badge-on' },
-    { estado: 'inativo', label: 'Inactivos', cls: 'badge-off' }
-  ];
+  // Filtra por estado (toggle Ativos/Inativos)
+  const baseList = employees.filter(e => (e.estado || 'ativo') === estadoFiltro);
 
-  GROUPS.forEach(g => {
-    const inGroup = employees.filter(e => getGroup(e) === g.key);
-    const matched = inGroup.filter(e => matchesSearch(e, q));
+  // Agrupa por país → empresa
+  const paisesMap = new Map();
+  baseList.forEach(e => {
+    const pais = (e.cli_pais || '').trim() || '(Sem país)';
+    const empresa = (e.cliente || '').trim() || '(Sem empresa)';
+    if (!paisesMap.has(pais)) paisesMap.set(pais, new Map());
+    const empMap = paisesMap.get(pais);
+    if (!empMap.has(empresa)) empMap.set(empresa, []);
+    empMap.get(empresa).push(e);
+  });
 
-    const section = document.createElement('div');
-    section.className = 'group-section';
+  const paisesOrdenados = Array.from(paisesMap.keys()).sort((a, b) => {
+    if (a === '(Sem país)') return 1;
+    if (b === '(Sem país)') return -1;
+    return a.localeCompare(b, 'pt');
+  });
 
-    let subHtml = '';
-    SUBS.forEach(s => {
-      const list = matched.filter(e => e.estado === s.estado)
-        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
-      const totalSub = inGroup.filter(e => e.estado === s.estado).length;
-      subHtml += `
-        <div class="subgroup-head">
-          <span class="badge ${s.cls}">${s.label}</span>
-          <span class="subcount">(${list.length}${q && list.length !== totalSub ? ' / ' + totalSub : ''})</span>
-        </div>
-        ${subTableHtml(list, q)}`;
+  if (paisesOrdenados.length === 0) {
+    wrap.innerHTML = `<div class="empresa-section" style="text-align:center;color:var(--ink-soft);">Sem funcionários ${estadoFiltro === 'ativo' ? 'activos' : 'inactivos'}.</div>`;
+    refreshStats();
+    return;
+  }
+
+  paisesOrdenados.forEach(pais => {
+    const empMap = paisesMap.get(pais);
+    const empresasOrdenadas = Array.from(empMap.keys()).sort((a, b) => {
+      if (a === '(Sem empresa)') return 1;
+      if (b === '(Sem empresa)') return -1;
+      return a.localeCompare(b, 'pt');
     });
 
-    section.innerHTML = `
-      <div class="group-head">
-        <span class="flag">${g.flag}</span>
-        <h2>${g.key}</h2>
-        <span class="group-pill">${matched.length}${q && matched.length !== inGroup.length ? ' / ' + inGroup.length : ''}</span>
-        <div class="group-actions">
-          <button class="btn btn-ghost btn-sm act-group-pdf" data-group="${g.key}">📄 PDF do Grupo</button>
-          <button class="btn btn-ghost btn-sm act-group-zip" data-group="${g.key}">🗜️ ZIP do Grupo</button>
-        </div>
+    // Conta funcionários que correspondem à pesquisa neste país
+    let totalPaisMatch = 0;
+    let totalPaisAll = 0;
+    empresasOrdenadas.forEach(emp => {
+      empMap.get(emp).forEach(e => {
+        totalPaisAll++;
+        if (matchesSearch(e, q)) totalPaisMatch++;
+      });
+    });
+
+    const collapsed = collapsedCountries.has(pais);
+    const hidden = q && totalPaisMatch === 0;
+    const country = document.createElement('div');
+    country.className = 'country-group' + (collapsed ? ' collapsed' : '') + (hidden ? ' hidden' : '');
+    country.dataset.pais = pais;
+
+    let empsHtml = '';
+    empresasOrdenadas.forEach(empresa => {
+      const list = empMap.get(empresa).slice()
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt'));
+      const matched = list.filter(e => matchesSearch(e, q));
+      const empKey = pais + '||' + empresa;
+      const empCollapsed = collapsedEmpresas.has(empKey);
+      const empHidden = q && matched.length === 0;
+      empsHtml += `
+        <div class="empresa-group${empCollapsed ? ' collapsed' : ''}${empHidden ? ' hidden' : ''}" data-empkey="${escapeHtml(empKey)}">
+          <div class="empresa-head" data-toggle-empresa="${escapeHtml(empKey)}">
+            <h3>▸ ${escapeHtml(empresa)}</h3>
+            <span class="empresa-count">— ${matched.length}${q && matched.length !== list.length ? ' / ' + list.length : ''}</span>
+            <span class="empresa-caret">▼</span>
+          </div>
+          <div class="empresa-body">
+            ${subTableHtml(matched, q)}
+          </div>
+        </div>`;
+    });
+
+    country.innerHTML = `
+      <div class="country-head" data-toggle-pais="${escapeHtml(pais)}">
+        <span class="flag">${flagFor(pais)}</span>
+        <h2>${escapeHtml(pais)}</h2>
+        <span class="country-count">${totalPaisMatch} funcionário${totalPaisMatch === 1 ? '' : 's'}${q && totalPaisMatch !== totalPaisAll ? ' (de ' + totalPaisAll + ')' : ''}</span>
+        <span class="country-caret">▼</span>
       </div>
-      ${subHtml}`;
-    wrap.appendChild(section);
+      <div class="country-body">${empsHtml}</div>`;
+    wrap.appendChild(country);
   });
   refreshStats();
 }
@@ -1237,7 +1421,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function closeAllModals() { document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open')); }
 
 const FIELDS = ['nome','nasc','nacionalidade','naturalidade','estadocivil','genero',
-  'cc','cc_val','nif','niss','passaporte','pass_val',
+  'cc','cc_val','cc_obs','nif','niss','passaporte','pass_val','pass_obs',
   'tel','email','morada','cp','loc','pais',
   'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario',
   'cliente','cli_pais','cli_morada','banco','iban','swift',
@@ -1248,17 +1432,54 @@ function openForm(emp) {
   document.getElementById('empForm').reset();
   document.getElementById('formTitle').textContent = emp ? 'Editar Funcionário' : 'Novo Funcionário';
   document.getElementById('f_id').value = emp ? emp.id : '';
+  // Repopular selects ligados a listas geridas (paises/empresas) para garantir opções actualizadas
+  refreshListaSelects();
   if (emp) {
-    FIELDS.forEach(f => { const el = document.getElementById('f_' + f); if (el) el.value = emp[f] != null ? emp[f] : ''; });
+    FIELDS.forEach(f => {
+      const el = document.getElementById('f_' + f);
+      if (!el) return;
+      const val = emp[f] != null ? emp[f] : '';
+      if (el.tagName === 'SELECT' && el.dataset.lista && val && !hasOption(el, val)) {
+        // legado: valor que não está na lista actual — adiciona opção dinâmica
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val + ' (legado)'; opt.dataset.legacy = '1';
+        el.insertBefore(opt, el.firstChild);
+      }
+      el.value = val;
+    });
   } else {
-    document.getElementById('f_nacionalidade').value = 'Portuguesa';
-    document.getElementById('f_pais').value = 'Portugal';
-    document.getElementById('f_cli_pais').value = 'Bélgica';
+    setSelectValue('f_nacionalidade', 'Portuguesa');
+    setSelectValue('f_pais', 'Portugal');
+    setSelectValue('f_cli_pais', 'Bélgica');
     document.getElementById('f_horario').value = 40;
     document.getElementById('f_estado').value = 'ativo';
   }
+  // Actualiza badges dos campos de validade
+  updateValBadge('f_cc_val', 'f_cc_val_badge');
+  updateValBadge('f_pass_val', 'f_pass_val_badge');
   openModal('formModal');
   setTimeout(() => document.getElementById('f_nome').focus(), 50);
+}
+
+function hasOption(sel, val) {
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === val) return true;
+  }
+  return false;
+}
+function setSelectValue(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'SELECT') {
+    if (val && !hasOption(el, val)) {
+      const opt = document.createElement('option');
+      opt.value = val; opt.textContent = val;
+      el.insertBefore(opt, el.firstChild);
+    }
+    el.value = val;
+  } else {
+    el.value = val;
+  }
 }
 
 async function saveForm() {
@@ -1278,6 +1499,7 @@ async function saveForm() {
     const el = document.getElementById('f_' + f);
     if (!el) return;
     let v = el.value;
+    if (v === '__new__') v = '';
     if (f === 'venc') v = v === '' ? '' : parseFloat(v);
     if (f === 'horario') v = v === '' ? '' : parseFloat(v);
     data[f] = v;
@@ -1305,39 +1527,56 @@ function viewDetail(id) {
   if (!e) return;
   currentDetailEmp = e;
   unsubscribeDocsFn();
+  if (typeof unsubscribeFaltas !== 'undefined' && unsubscribeFaltas) { unsubscribeFaltas(); unsubscribeFaltas = null; }
   const badge = e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>';
+  const ccBadge = renderValBadgeHtml(e.cc_val);
+  const passBadge = renderValBadgeHtml(e.pass_val);
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-head"><span class="dname">${escapeHtml(e.nome)}</span> ${badge}</div>
     <div class="detail-idline">ID: ${escapeHtml(e.id)} · ${escapeHtml(getGroup(e))} · NIF: ${escapeHtml(e.nif)}</div>
-    <div class="detail-section"><div class="form-section-title">1 · Dados Pessoais</div><div class="detail-grid">
-      ${detailItem('Data de nascimento', formatDate(e.nasc))}${detailItem('Nacionalidade', e.nacionalidade)}${detailItem('Naturalidade', e.naturalidade)}${detailItem('Estado civil', e.estadocivil)}${detailItem('Género', e.genero)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">2 · Documentação</div><div class="detail-grid">
-      ${detailItem('CC / BI', e.cc)}${detailItem('Validade CC', formatDate(e.cc_val))}${detailItem('NIF', e.nif)}${detailItem('NISS', e.niss)}${detailItem('N.º Passaporte', e.passaporte)}${detailItem('Validade Passaporte', formatDate(e.pass_val))}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">3 · Contacto e Morada</div><div class="detail-grid">
-      ${detailItem('Telemóvel', e.tel)}${detailItem('Email', e.email)}${detailItem('Morada', e.morada)}${detailItem('Código postal', e.cp)}${detailItem('Localidade', e.loc)}${detailItem('País', e.pais)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">4 · Contrato de Trabalho</div><div class="detail-grid">
-      ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
-      ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">6 · Conta Bancária</div><div class="detail-grid">
-      ${detailItem('Banco', e.banco)}${detailItem('IBAN', e.iban)}${detailItem('SWIFT / BIC', e.swift)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">7 · Contacto de Emergência</div><div class="detail-grid">
-      ${detailItem('Nome', e.emerg_nome)}${detailItem('Relação', e.emerg_rel)}${detailItem('Telefone', e.emerg_tel)}
-    </div></div>
-    <div class="detail-section"><div class="form-section-title">8 · Observações</div><div class="detail-grid">
-      <div class="detail-item" style="grid-column:1/-1;"><span class="dv">${escapeHtml(e.obs) || '—'}</span></div>
-    </div></div>
-    <div class="detail-section docs-section">
-      <div class="form-section-title">Documentos Anexados <span class="docs-count" id="docsCount">(0)</span></div>
-      ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">📎 Adicionar documento(s)</button></div>' : ''}
-      <div class="doc-list" id="docsList"><div class="doc-empty">A carregar…</div></div>
-      <button class="btn btn-ghost btn-sm act-doc-zip">📦 Descarregar todos em ZIP</button>
+    <div class="ficha-tabs" role="tablist">
+      <button type="button" class="ficha-tab active" data-ficha-tab="controle" role="tab" aria-selected="true">📋 Controle</button>
+      <button type="button" class="ficha-tab" data-ficha-tab="faltas" role="tab" aria-selected="false">🗓️ Faltas e Baixas</button>
+    </div>
+    <div class="ficha-tab-pane active" data-ficha-pane="controle">
+      <div class="detail-section"><div class="form-section-title">1 · Dados Pessoais</div><div class="detail-grid">
+        ${detailItem('Data de nascimento', formatDate(e.nasc))}${detailItem('Nacionalidade', e.nacionalidade)}${detailItem('Naturalidade', e.naturalidade)}${detailItem('Estado civil', e.estadocivil)}${detailItem('Género', e.genero)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">2 · Documentação</div><div class="detail-grid">
+        ${detailItem('CC / BI', e.cc)}
+        <div class="detail-item"><span class="dl">Validade CC</span><span class="dv">${escapeHtml(formatDate(e.cc_val))} ${ccBadge}</span></div>
+        ${detailItem('NIF', e.nif)}${detailItem('NISS', e.niss)}${detailItem('N.º Passaporte', e.passaporte)}
+        <div class="detail-item"><span class="dl">Validade Passaporte</span><span class="dv">${escapeHtml(formatDate(e.pass_val))} ${passBadge}</span></div>
+        ${e.cc_obs ? `<div class="detail-item" style="grid-column:1/-1;"><span class="dl">Observações CC</span><span class="dv">${escapeHtml(e.cc_obs)}</span></div>` : ''}
+        ${e.pass_obs ? `<div class="detail-item" style="grid-column:1/-1;"><span class="dl">Observações Passaporte</span><span class="dv">${escapeHtml(e.pass_obs)}</span></div>` : ''}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">3 · Contacto e Morada</div><div class="detail-grid">
+        ${detailItem('Telemóvel', e.tel)}${detailItem('Email', e.email)}${detailItem('Morada', e.morada)}${detailItem('Código postal', e.cp)}${detailItem('Localidade', e.loc)}${detailItem('País', e.pais)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">4 · Contrato de Trabalho</div><div class="detail-grid">
+        ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
+        ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">6 · Conta Bancária</div><div class="detail-grid">
+        ${detailItem('Banco', e.banco)}${detailItem('IBAN', e.iban)}${detailItem('SWIFT / BIC', e.swift)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">7 · Contacto de Emergência</div><div class="detail-grid">
+        ${detailItem('Nome', e.emerg_nome)}${detailItem('Relação', e.emerg_rel)}${detailItem('Telefone', e.emerg_tel)}
+      </div></div>
+      <div class="detail-section"><div class="form-section-title">8 · Observações</div><div class="detail-grid">
+        <div class="detail-item" style="grid-column:1/-1;"><span class="dv">${escapeHtml(e.obs) || '—'}</span></div>
+      </div></div>
+      <div class="detail-section docs-section">
+        <div class="form-section-title">Documentos Anexados <span class="docs-count" id="docsCount">(0)</span></div>
+        ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">📎 Adicionar documento(s)</button></div>' : ''}
+        <div class="doc-list" id="docsList"><div class="doc-empty">A carregar…</div></div>
+        <button class="btn btn-ghost btn-sm act-doc-zip">📦 Descarregar todos em ZIP</button>
+      </div>
+    </div>
+    <div class="ficha-tab-pane" data-ficha-pane="faltas">
+      <div id="faltasInlineWrap"><div class="doc-empty">Abrindo aba…</div></div>
     </div>`;
   document.getElementById('detailEdit').dataset.id = e.id;
   document.getElementById('detailDelete').dataset.id = e.id;
@@ -1345,6 +1584,20 @@ function viewDetail(id) {
   applyRolePermissions();
   openModal('detailModal');
   subscribeDocs(e.id);
+}
+
+function switchFichaTab(tabName) {
+  document.querySelectorAll('.ficha-tab').forEach(t => {
+    const on = t.dataset.fichaTab === tabName;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.ficha-tab-pane').forEach(p => {
+    p.classList.toggle('active', p.dataset.fichaPane === tabName);
+  });
+  if (tabName === 'faltas' && currentDetailEmp) {
+    renderFaltasInline(currentDetailEmp);
+  }
 }
 
 async function deleteEmployee(id) {
@@ -1618,7 +1871,7 @@ function drawEmployeePdf(doc, e) {
 
   const sections = [
     ['1 · DADOS PESSOAIS', [['Data de nascimento', formatDate(e.nasc)],['Nacionalidade', e.nacionalidade],['Naturalidade', e.naturalidade],['Estado civil', e.estadocivil],['Género', e.genero]]],
-    ['2 · DOCUMENTAÇÃO', [['CC / BI', e.cc],['Validade CC', formatDate(e.cc_val)],['NIF', e.nif],['NISS', e.niss],['N.º Passaporte', e.passaporte],['Validade Passaporte', formatDate(e.pass_val)]]],
+    ['2 · DOCUMENTAÇÃO', [['CC / BI', e.cc],['Validade CC', formatDate(e.cc_val)],['Observações CC', e.cc_obs],['NIF', e.nif],['NISS', e.niss],['N.º Passaporte', e.passaporte],['Validade Passaporte', formatDate(e.pass_val)],['Observações Passaporte', e.pass_obs]]],
     ['3 · CONTACTO E MORADA', [['Telemóvel', e.tel],['Email', e.email],['Morada', e.morada],['Código postal', e.cp],['Localidade', e.loc],['País', e.pais]]],
     ['4 · CONTRATO DE TRABALHO', [['Função', e.funcao],['Categoria profissional', e.categoria],['Tipo de contrato', e.tipocontrato],['Estado', estado],['Data admissão', formatDate(e.adm)],['Data cessação', formatDate(e.cess)],['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],['Horário semanal (h)', e.horario]]],
     ['5 · CLIENTE / DESTACAMENTO', [['Empresa cliente', e.cliente],['País de destacamento', e.cli_pais],['Morada do local de trabalho', e.cli_morada]]],
@@ -1920,10 +2173,21 @@ function bind() {
   document.getElementById('formClose').addEventListener('click', () => closeModal('formModal'));
   document.getElementById('formCancel').addEventListener('click', () => closeModal('formModal'));
   document.getElementById('formSave').addEventListener('click', saveForm);
+  // Badges de validade nos campos de data
+  ['f_cc_val', 'f_pass_val'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => updateValBadge(id, id + '_badge'));
+  });
+  // Selects ligados a listas: tratamento da opção "➕ Adicionar novo…"
+  ['f_nacionalidade', 'f_pais', 'f_cli_pais', 'f_cliente'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => handleListaSelectChange(el));
+  });
   document.getElementById('empForm').addEventListener('submit', e => { e.preventDefault(); saveForm(); });
 
   // Detail modal
-  document.getElementById('detailClose').addEventListener('click', () => { unsubscribeDocsFn(); closeModal('detailModal'); });
+  document.getElementById('detailClose').addEventListener('click', () => { unsubscribeDocsFn(); if (typeof unsubscribeFaltas !== 'undefined' && unsubscribeFaltas) { unsubscribeFaltas(); unsubscribeFaltas = null; } closeModal('detailModal'); });
   document.getElementById('detailEdit').addEventListener('click', function () { const id = this.dataset.id; unsubscribeDocsFn(); closeModal('detailModal'); openForm(employees.find(e => e.id === id)); });
   document.getElementById('detailDelete').addEventListener('click', function () { deleteEmployee(this.dataset.id); });
   document.getElementById('detailPdf').addEventListener('click', function () { generateSinglePdf(this.dataset.id); });
@@ -1959,17 +2223,57 @@ function bind() {
   document.getElementById('logFilterDate').addEventListener('change', renderLogs);
 
   // Backdrops + ESC
-  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => { if (e.target === bd) { if (bd.id === 'detailModal') unsubscribeDocsFn(); bd.classList.remove('open'); } }));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { unsubscribeDocsFn(); closeAllModals(); } });
+  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => {
+    if (e.target === bd) {
+      if (bd.id === 'detailModal') {
+        unsubscribeDocsFn();
+        if (typeof unsubscribeFaltas !== 'undefined' && unsubscribeFaltas) { unsubscribeFaltas(); unsubscribeFaltas = null; }
+      }
+      bd.classList.remove('open');
+    }
+  }));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      unsubscribeDocsFn();
+      if (typeof unsubscribeFaltas !== 'undefined' && unsubscribeFaltas) { unsubscribeFaltas(); unsubscribeFaltas = null; }
+      closeAllModals();
+    }
+  });
 
   // Delegated table actions
   document.getElementById('groupsWrap').addEventListener('click', e => {
+    // Colapsar/expandir país
+    const paisHead = e.target.closest('[data-toggle-pais]');
+    if (paisHead) {
+      const k = paisHead.dataset.togglePais;
+      if (collapsedCountries.has(k)) collapsedCountries.delete(k); else collapsedCountries.add(k);
+      paisHead.parentElement.classList.toggle('collapsed');
+      return;
+    }
+    // Colapsar/expandir empresa
+    const empHead = e.target.closest('[data-toggle-empresa]');
+    if (empHead) {
+      const k = empHead.dataset.toggleEmpresa;
+      if (collapsedEmpresas.has(k)) collapsedEmpresas.delete(k); else collapsedEmpresas.add(k);
+      empHead.parentElement.classList.toggle('collapsed');
+      return;
+    }
     const btn = e.target.closest('button'); if (!btn) return;
     if (btn.classList.contains('act-view')) viewDetail(btn.dataset.id);
     else if (btn.classList.contains('act-pdf')) generateSinglePdf(btn.dataset.id);
-    else if (btn.classList.contains('act-group-pdf')) generateGroupPdf(btn.dataset.group);
-    else if (btn.classList.contains('act-group-zip')) buildZip(employees.filter(x => getGroup(x) === btn.dataset.group), btn.dataset.group);
   });
+
+  // Toggle Activos / Inactivos
+  const estadoTog = document.getElementById('estadoToggle');
+  if (estadoTog) {
+    estadoTog.addEventListener('click', e => {
+      const b = e.target.closest('button[data-estado]');
+      if (!b) return;
+      estadoFiltro = b.dataset.estado;
+      estadoTog.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+      render();
+    });
+  }
 }
 
 bind();
@@ -1993,6 +2297,200 @@ let unsubscribeConfig = null;
 let currentEmpTab = 'dashboard';
 let faltasCacheEmp = { id: null, list: [] };
 let unsubscribeFaltas = null;
+
+/* ---------- Listas geridas (países / empresas) ---------- */
+const PAISES_DEFAULT = ['Portugal', 'Bélgica', 'França', 'Espanha', 'Alemanha', 'Luxemburgo', 'Países Baixos', 'Suíça', 'Reino Unido', 'Irlanda', 'Itália', 'Polónia', 'Suécia'];
+let appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
+let unsubscribeListas = null;
+
+function subscribeListas() {
+  if (unsubscribeListas) unsubscribeListas();
+  unsubscribeListas = db.collection('config').doc('listas').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data() || {};
+      appListas.paises = Array.isArray(d.paises) && d.paises.length ? d.paises.slice() : PAISES_DEFAULT.slice();
+      appListas.empresas = Array.isArray(d.empresas) ? d.empresas.slice() : [];
+    } else {
+      // Bootstrap: só editor consegue escrever
+      appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
+      if (isEditor()) {
+        db.collection('config').doc('listas').set({
+          paises: PAISES_DEFAULT.slice(),
+          empresas: [],
+          updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+          updated_by: currentUser ? currentUser.email : ''
+        }).catch(() => {});
+      }
+    }
+    refreshListaSelects();
+    if (currentEmpTab === 'config' && document.getElementById('areaEmpresa').style.display !== 'none') {
+      // re-renderiza secção de listas se a tab config está aberta
+      const wrap = document.getElementById('listasMgmtWrap');
+      if (wrap) wrap.innerHTML = renderListasMgmt();
+    }
+  }, err => {
+    console.warn('Falha ao subscrever listas:', err);
+  });
+}
+
+async function adicionarItemLista(tipo, valor) {
+  if (!isAdmin()) { toast('Apenas administradores podem gerir listas.', true); return false; }
+  const v = (valor || '').trim();
+  if (!v) { toast('Indique um valor.', true); return false; }
+  const arr = (appListas[tipo] || []).slice();
+  if (arr.some(x => x.toLowerCase() === v.toLowerCase())) { toast('Já existe na lista.', true); return false; }
+  arr.push(v);
+  arr.sort((a, b) => a.localeCompare(b, 'pt'));
+  try {
+    await db.collection('config').doc('listas').set({
+      [tipo]: arr,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    }, { merge: true });
+    appListas[tipo] = arr;
+    return true;
+  } catch (err) {
+    toast('Erro ao adicionar: ' + friendlyError(err), true);
+    return false;
+  }
+}
+
+async function removerItemLista(tipo, valor) {
+  if (!isAdmin()) { toast('Apenas administradores podem gerir listas.', true); return; }
+  // Regra crítica: bloquear se há funcionários a usar este valor
+  const campo = tipo === 'empresas' ? 'cliente' : 'cli_pais';
+  const emUso = employees.filter(e => (e[campo] || '').trim() === valor);
+  if (tipo === 'empresas' && emUso.length > 0) {
+    toast(`Não é possível remover "${valor}": ${emUso.length} funcionário(s) ainda usam esta empresa.`, true);
+    return;
+  }
+  if (tipo === 'paises' && emUso.length > 0) {
+    if (!confirm(`Aviso: ${emUso.length} funcionário(s) têm "${valor}" como país. Remover assim mesmo da lista? Os registos mantêm o valor (legado).`)) return;
+  }
+  const arr = (appListas[tipo] || []).filter(x => x !== valor);
+  try {
+    await db.collection('config').doc('listas').set({
+      [tipo]: arr,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    }, { merge: true });
+    appListas[tipo] = arr;
+    toast('Removido.');
+  } catch (err) {
+    toast('Erro ao remover: ' + friendlyError(err), true);
+  }
+}
+
+function refreshListaSelects() {
+  document.querySelectorAll('select[data-lista]').forEach(sel => {
+    const tipo = sel.dataset.lista; // "paises" ou "empresas"
+    const lista = appListas[tipo] || [];
+    const previous = sel.value;
+    // preserva opções legadas marcadas
+    const legacyOpts = Array.from(sel.options).filter(o => o.dataset.legacy === '1');
+    sel.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = ''; blank.textContent = '—';
+    sel.appendChild(blank);
+    legacyOpts.forEach(o => sel.appendChild(o));
+    lista.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    if (isAdmin()) {
+      const add = document.createElement('option');
+      add.value = '__new__'; add.textContent = '➕ Adicionar novo…';
+      sel.appendChild(add);
+    }
+    if (previous && (lista.includes(previous) || legacyOpts.some(o => o.value === previous))) sel.value = previous;
+  });
+}
+
+async function handleListaSelectChange(sel) {
+  if (sel.value !== '__new__') return;
+  const tipo = sel.dataset.lista;
+  if (!isAdmin()) {
+    toast('Apenas administradores podem adicionar à lista.', true);
+    sel.value = '';
+    return;
+  }
+  const label = tipo === 'paises' ? 'país' : 'empresa';
+  const nome = (prompt(`Novo ${label}:`) || '').trim();
+  if (!nome) { sel.value = ''; return; }
+  const ok = await adicionarItemLista(tipo, nome);
+  // O snapshot vai disparar refreshListaSelects(); seleciona o novo depois
+  if (ok) {
+    // adiciona localmente já para não perder selecção
+    if (!hasOption(sel, nome)) {
+      const opt = document.createElement('option');
+      opt.value = nome; opt.textContent = nome;
+      // inserir antes da opção __new__
+      const newOpt = Array.from(sel.options).find(o => o.value === '__new__');
+      if (newOpt) sel.insertBefore(opt, newOpt); else sel.appendChild(opt);
+    }
+    sel.value = nome;
+    toast('Adicionado.');
+  } else {
+    sel.value = '';
+  }
+}
+
+/* ---------- UI de gestão de listas (na aba Configurações) ---------- */
+function renderListasMgmt() {
+  const podeEditar = isAdmin();
+  const blocoPaises = renderListaBloco('paises', 'Países', appListas.paises || [], podeEditar);
+  const blocoEmpresas = renderListaBloco('empresas', 'Empresas / Clientes', appListas.empresas || [], podeEditar);
+  return `
+    <div class="cfg-group">
+      <div class="cfg-group-title">Listas geridas</div>
+      <div class="es-sub" style="margin-bottom:14px;">Estes valores aparecem nos dropdowns dos formulários de funcionários. Só administradores podem adicionar/remover.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        ${blocoEmpresas}
+        ${blocoPaises}
+      </div>
+    </div>`;
+}
+
+function renderListaBloco(tipo, titulo, itens, podeEditar) {
+  const linhas = itens.length === 0
+    ? `<div class="list-mgmt-empty">Sem entradas.</div>`
+    : itens.map(v => `
+        <div class="list-mgmt-row">
+          <span class="lm-val">${escapeHtml(v)}</span>
+          <button type="button" class="lm-del" data-lista-del="${escapeHtml(tipo)}" data-valor="${escapeHtml(v)}" ${podeEditar ? '' : 'disabled'} title="Remover">🗑</button>
+        </div>`).join('');
+  return `
+    <div>
+      <div class="cfg-group-title">${escapeHtml(titulo)} (${itens.length})</div>
+      <div class="list-mgmt" data-lista-tipo="${escapeHtml(tipo)}">
+        ${linhas}
+        <div class="list-mgmt-add">
+          <input type="text" placeholder="Novo ${tipo === 'paises' ? 'país' : 'empresa'}…" data-lista-input="${escapeHtml(tipo)}" ${podeEditar ? '' : 'disabled'}>
+          <button type="button" class="btn btn-primary btn-sm" data-lista-add="${escapeHtml(tipo)}" ${podeEditar ? '' : 'disabled'}>➕ Adicionar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wireListasMgmt() {
+  document.querySelectorAll('[data-lista-add]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const tipo = b.dataset.listaAdd;
+      const inp = document.querySelector(`[data-lista-input="${tipo}"]`);
+      const ok = await adicionarItemLista(tipo, inp ? inp.value : '');
+      if (ok && inp) { inp.value = ''; toast('Adicionado.'); }
+    });
+  });
+  document.querySelectorAll('[data-lista-del]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const tipo = b.dataset.listaDel;
+      const v = b.dataset.valor;
+      if (!confirm(`Remover "${v}" da lista?`)) return;
+      await removerItemLista(tipo, v);
+    });
+  });
+}
 
 /* ============================================================
    Parâmetros 2026 de origem (ponto de partida — 100% editáveis)
@@ -2776,6 +3274,8 @@ function renderConfig() {
       <button class="btn btn-ghost btn-sm" id="addIrsBtn" style="margin-top:10px;">＋ Adicionar linha</button>
     </div>
 
+    <div id="listasMgmtWrap">${renderListasMgmt()}</div>
+
     <div class="calc-actions">
       <button class="btn btn-primary" id="cfgSaveBtn">💾 Guardar configuração</button>
       <button class="btn btn-danger" id="cfgResetBtn">↺ Repor valores 2026 de origem</button>
@@ -2800,6 +3300,7 @@ function wireConfig() {
   document.querySelectorAll('[data-del-irs]').forEach(b => b.addEventListener('click', () => { harvestConfigUI(); appConfig.irs_tabela.splice(parseInt(b.dataset.delIrs, 10), 1); renderEmpContentKeep('config'); }));
   document.getElementById('cfgSaveBtn').addEventListener('click', saveConfig);
   document.getElementById('cfgResetBtn').addEventListener('click', resetConfig);
+  wireListasMgmt();
   // Aviso (sem bloquear) para valores fora do normal
   const warnPairs = [['cfg_ss_trabalhador', 11], ['cfg_ss_entidade', 23.75]];
   warnPairs.forEach(([id, normal]) => {
@@ -3142,11 +3643,8 @@ function gerarReciboPdf(tipo) {
 /* ============================================================
    FALTAS E BAIXAS MÉDICAS
    ============================================================ */
-async function openFaltas(emp) {
-  if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
-  faltasCacheEmp = { id: emp.id, nome: emp.nome, list: [] };
-  document.getElementById('faltasTitle').textContent = `Faltas e Baixas — ${emp.nome}`;
-  document.getElementById('faltasBody').innerHTML = `
+function faltasBodyHtml() {
+  return `
     <div class="es-sub" style="margin-bottom:14px;">Registo de faltas por período. O resultado alimenta automaticamente o processamento de salário. Anexe o comprovativo (atestado/CIT) — a leitura é manual, sem IA.</div>
     ${isEditor() ? `<div class="empresa-section" style="box-shadow:none;padding:16px;">
       <div class="cfg-group-title">Nova falta</div>
@@ -3168,18 +3666,41 @@ async function openFaltas(emp) {
       <button class="btn btn-primary" id="fa_add_btn">＋ Registar falta</button>
     </div>` : ''}
     <div id="fa_list"><div class="es-sub">A carregar…</div></div>`;
-  if (isEditor()) {
-    const tipo = document.getElementById('fa_tipo');
-    tipo.addEventListener('change', () => {
-      document.getElementById('fa_remun_wrap').style.display = tipo.value === 'justificada' ? '' : 'none';
-      const baixa = tipo.value === 'baixa';
-      document.getElementById('fa_compl_wrap').style.display = baixa ? '' : 'none';
-      document.getElementById('fa_complpct_wrap').style.display = baixa ? '' : 'none';
-    });
-    document.getElementById('fa_add_btn').addEventListener('click', () => addFalta(emp));
-  }
+}
+
+function wireFaltasBody(emp) {
+  if (!isEditor()) return;
+  const tipo = document.getElementById('fa_tipo');
+  if (!tipo) return;
+  tipo.addEventListener('change', () => {
+    document.getElementById('fa_remun_wrap').style.display = tipo.value === 'justificada' ? '' : 'none';
+    const baixa = tipo.value === 'baixa';
+    document.getElementById('fa_compl_wrap').style.display = baixa ? '' : 'none';
+    document.getElementById('fa_complpct_wrap').style.display = baixa ? '' : 'none';
+  });
+  document.getElementById('fa_add_btn').addEventListener('click', () => addFalta(emp));
+}
+
+// Render inline na aba "Faltas e Baixas" da ficha
+function renderFaltasInline(emp) {
+  if (!appConfig) { toast('Configuração ainda não carregada.', true); return; }
+  faltasCacheEmp = { id: emp.id, nome: emp.nome, list: [] };
+  const wrap = document.getElementById('faltasInlineWrap');
+  if (!wrap) return;
+  wrap.innerHTML = faltasBodyHtml();
+  wireFaltasBody(emp);
   subscribeFaltasList(emp.id);
-  openModal('faltasModal');
+}
+
+// Compat: alguns sítios podem ainda chamar openFaltas — encaminha para a aba inline
+async function openFaltas(emp) {
+  if (!currentDetailEmp || currentDetailEmp.id !== emp.id) {
+    // ficha não está aberta → abre detalhe e activa aba "faltas"
+    viewDetail(emp.id);
+    setTimeout(() => switchFichaTab('faltas'), 60);
+  } else {
+    switchFichaTab('faltas');
+  }
 }
 
 function subscribeFaltasList(funcId) {
@@ -3823,7 +4344,12 @@ function bindFiscal() {
   // Botões da ficha do funcionário
   document.getElementById('detailSalary').addEventListener('click', () => { if (currentDetailEmp) openSalary(currentDetailEmp); });
   document.getElementById('detailContab').addEventListener('click', () => { if (currentDetailEmp) openToolContab(currentDetailEmp); });
-  document.getElementById('detailFaltas').addEventListener('click', () => { if (currentDetailEmp) openFaltas(currentDetailEmp); });
+  document.getElementById('detailFaltas').addEventListener('click', () => { if (currentDetailEmp) switchFichaTab('faltas'); });
+  // Delegação dos botões das abas da ficha
+  document.getElementById('detailBody').addEventListener('click', e => {
+    const tabBtn = e.target.closest('.ficha-tab');
+    if (tabBtn) { switchFichaTab(tabBtn.dataset.fichaTab); }
+  });
   document.getElementById('detailA1').addEventListener('click', () => { if (currentDetailEmp) openA1(currentDetailEmp); });
 
   // Modal salário
@@ -3865,8 +4391,11 @@ function bindFiscal() {
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
-    if (user) { subscribeConfig(); }
-    else { if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; } appConfig = null; }
+    if (user) { subscribeConfig(); subscribeListas(); }
+    else {
+      if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; } appConfig = null;
+      if (unsubscribeListas) { unsubscribeListas(); unsubscribeListas = null; } appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
+    }
   });
 }
 bindFiscal();

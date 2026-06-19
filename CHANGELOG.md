@@ -2,6 +2,17 @@
 
 Todas as alterações relevantes deste projeto são documentadas neste ficheiro.
 
+## [3.3.0] — 2026-06-19
+
+### Adicionado — Redesenho da ficha do funcionário
+- **Abas na ficha**: separadores **📋 Controle** (dados/documentos) e **🗓️ Faltas e Baixas** (inline, substituiu o pop-up).
+- **Validade de documentos com cores**: badge verde/amarelo/vermelho/cinza para CC e Passaporte (no formulário e no detalhe).
+- **Observações** dedicadas para CC (`cc_obs`) e Passaporte (`pass_obs`), incluídas no PDF.
+- **Agrupamento país → empresa** na listagem principal, com accordions colapsáveis e contagens; pesquisa transversal mantida.
+- **Toggle Ativos / Inativos** no topo da lista de funcionários.
+- **Gestão de empresas e países** em Configurações (admin), com regra que bloqueia remoção de empresa em uso.
+- **Dropdowns País/Empresa/Nacionalidade** nos formulários populados pelas listas geridas, com opção “➕ Adicionar novo…” e preservação de valores legados.
+
 ## [3.2.0] — 2026-06-07
 
 ### Adicionado — Acesso master e relatório de pagamentos consolidado
