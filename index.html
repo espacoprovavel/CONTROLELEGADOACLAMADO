@@ -728,8 +728,15 @@ footer strong { color: var(--ink); }
             </div>
             <div class="field"><label for="f_adm">Data admissão <span class="req">*</span></label><input type="date" id="f_adm" required></div>
             <div class="field"><label for="f_cess">Data cessação</label><input type="date" id="f_cess"></div>
-            <div class="field"><label for="f_venc">Vencimento base (€)</label><input type="number" id="f_venc" step="0.01" min="0"></div>
+            <div class="field"><label for="f_venc">Vencimento base (€) <span id="f_venc_hint" class="es-sub" style="display:none;">(referência — não usado no cálculo)</span></label><input type="number" id="f_venc" step="0.01" min="0"></div>
             <div class="field"><label for="f_horario">Horário semanal (h)</label><input type="number" id="f_horario" step="1" min="0" value="40"></div>
+            <div class="field"><label for="f_modo_pagamento">Modo de pagamento</label>
+              <select id="f_modo_pagamento">
+                <option value="salario_horas_extra">💼 Salário fixo + horas extra</option>
+                <option value="so_horas">🕐 Só por horas</option>
+              </select>
+            </div>
+            <div class="field" id="f_valor_hora_wrap" style="display:none;"><label for="f_valor_hora">Valor/hora (€)</label><input type="number" id="f_valor_hora" step="0.01" min="0"></div>
           </div>
         </div>
         <div class="form-section">
@@ -1423,7 +1430,7 @@ function closeAllModals() { document.querySelectorAll('.modal-backdrop.open').fo
 const FIELDS = ['nome','nasc','nacionalidade','naturalidade','estadocivil','genero',
   'cc','cc_val','cc_obs','nif','niss','passaporte','pass_val','pass_obs',
   'tel','email','morada','cp','loc','pais',
-  'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario',
+  'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario','modo_pagamento','valor_hora',
   'cliente','cli_pais','cli_morada','banco','iban','swift',
   'emerg_nome','emerg_rel','emerg_tel','obs'];
 
@@ -1453,7 +1460,13 @@ function openForm(emp) {
     setSelectValue('f_cli_pais', 'Bélgica');
     document.getElementById('f_horario').value = 40;
     document.getElementById('f_estado').value = 'ativo';
+    document.getElementById('f_modo_pagamento').value = 'salario_horas_extra';
+    document.getElementById('f_valor_hora').value = '';
   }
+  // Normaliza o modo de pagamento (campo legado pode vir vazio)
+  const modoEl = document.getElementById('f_modo_pagamento');
+  if (modoEl && !modoEl.value) modoEl.value = 'salario_horas_extra';
+  toggleValorHoraField();
   // Actualiza badges dos campos de validade
   updateValBadge('f_cc_val', 'f_cc_val_badge');
   updateValBadge('f_pass_val', 'f_pass_val_badge');
@@ -1467,6 +1480,16 @@ function hasOption(sel, val) {
   }
   return false;
 }
+function toggleValorHoraField() {
+  const modoEl = document.getElementById('f_modo_pagamento');
+  const wrap = document.getElementById('f_valor_hora_wrap');
+  const hint = document.getElementById('f_venc_hint');
+  if (!modoEl || !wrap) return;
+  const isHoras = modoEl.value === 'so_horas';
+  wrap.style.display = isHoras ? '' : 'none';
+  if (hint) hint.style.display = isHoras ? '' : 'none';
+}
+
 function setSelectValue(id, val) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -1502,6 +1525,8 @@ async function saveForm() {
     if (v === '__new__') v = '';
     if (f === 'venc') v = v === '' ? '' : parseFloat(v);
     if (f === 'horario') v = v === '' ? '' : parseFloat(v);
+    if (f === 'valor_hora') v = v === '' ? '' : parseFloat(v);
+    if (f === 'modo_pagamento' && !v) v = 'salario_horas_extra';
     data[f] = v;
   });
 
@@ -1554,7 +1579,7 @@ function viewDetail(id) {
         ${detailItem('Telemóvel', e.tel)}${detailItem('Email', e.email)}${detailItem('Morada', e.morada)}${detailItem('Código postal', e.cp)}${detailItem('Localidade', e.loc)}${detailItem('País', e.pais)}
       </div></div>
       <div class="detail-section"><div class="form-section-title">4 · Contrato de Trabalho</div><div class="detail-grid">
-        ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}
+        ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}${detailItem('Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? '🕐 Só por horas' : '💼 Salário fixo + horas extra')}${((e.modo_pagamento || '') === 'so_horas') ? detailItem('Valor/hora (€)', (e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '') : ''}
       </div></div>
       <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
         ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
@@ -1873,7 +1898,7 @@ function drawEmployeePdf(doc, e) {
     ['1 · DADOS PESSOAIS', [['Data de nascimento', formatDate(e.nasc)],['Nacionalidade', e.nacionalidade],['Naturalidade', e.naturalidade],['Estado civil', e.estadocivil],['Género', e.genero]]],
     ['2 · DOCUMENTAÇÃO', [['CC / BI', e.cc],['Validade CC', formatDate(e.cc_val)],['Observações CC', e.cc_obs],['NIF', e.nif],['NISS', e.niss],['N.º Passaporte', e.passaporte],['Validade Passaporte', formatDate(e.pass_val)],['Observações Passaporte', e.pass_obs]]],
     ['3 · CONTACTO E MORADA', [['Telemóvel', e.tel],['Email', e.email],['Morada', e.morada],['Código postal', e.cp],['Localidade', e.loc],['País', e.pais]]],
-    ['4 · CONTRATO DE TRABALHO', [['Função', e.funcao],['Categoria profissional', e.categoria],['Tipo de contrato', e.tipocontrato],['Estado', estado],['Data admissão', formatDate(e.adm)],['Data cessação', formatDate(e.cess)],['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],['Horário semanal (h)', e.horario]]],
+    ['4 · CONTRATO DE TRABALHO', [['Função', e.funcao],['Categoria profissional', e.categoria],['Tipo de contrato', e.tipocontrato],['Estado', estado],['Data admissão', formatDate(e.adm)],['Data cessação', formatDate(e.cess)],['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],['Horário semanal (h)', e.horario],['Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? 'Só por horas' : 'Salário fixo + horas extra'],['Valor/hora (€)', ((e.modo_pagamento || '') === 'so_horas' && e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '']]],
     ['5 · CLIENTE / DESTACAMENTO', [['Empresa cliente', e.cliente],['País de destacamento', e.cli_pais],['Morada do local de trabalho', e.cli_morada]]],
     ['6 · CONTA BANCÁRIA', [['Banco', e.banco],['IBAN', e.iban],['SWIFT / BIC', e.swift]]],
     ['7 · CONTACTO DE EMERGÊNCIA', [['Nome', e.emerg_nome],['Relação', e.emerg_rel],['Telefone', e.emerg_tel]]],
@@ -2185,6 +2210,9 @@ function bind() {
     el.addEventListener('change', () => handleListaSelectChange(el));
   });
   document.getElementById('empForm').addEventListener('submit', e => { e.preventDefault(); saveForm(); });
+  // Modo de pagamento: alternar visibilidade do campo Valor/hora
+  const modoPagEl = document.getElementById('f_modo_pagamento');
+  if (modoPagEl) modoPagEl.addEventListener('change', toggleValorHoraField);
 
   // Detail modal
   document.getElementById('detailClose').addEventListener('click', () => { unsubscribeDocsFn(); if (typeof unsubscribeFaltas !== 'undefined' && unsubscribeFaltas) { unsubscribeFaltas(); unsubscribeFaltas = null; } closeModal('detailModal'); });
@@ -2717,7 +2745,11 @@ function calcularSalario(inp, cfg) {
 
   // 1 · Vencimento base efetivo
   let vencEfetivo, formulaVenc;
-  if (inp.modo === 'horas') {
+  if (inp.modoPagamento === 'so_horas') {
+    const vh = num(inp.valorHora, 0);
+    vencEfetivo = vh * inp.horasTrabalhadas;
+    formulaVenc = `${eur(vh)}/h × ${inp.horasTrabalhadas}h (modo: só por horas)`;
+  } else if (inp.modo === 'horas') {
     const valorHora = valorHoraRef(inp.salarioBase, cfg);
     vencEfetivo = valorHora * inp.horasTrabalhadas;
     formulaVenc = `${eur(inp.salarioBase)} ÷ ${num(cfg.horas_mes, 173.33)}h = ${eur(valorHora)}/h × ${inp.horasTrabalhadas}h`;
@@ -3446,18 +3478,25 @@ async function openSalary(emp) {
     faltas = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
   } catch (e) { /* segue sem faltas */ }
   salaryCtx.faltas = faltas;
+  const modoPag = emp.modo_pagamento || 'salario_horas_extra';
+  const isSoHoras = modoPag === 'so_horas';
+  const valorHoraFunc = num(emp.valor_hora, 0);
+  const modoBadge = isSoHoras
+    ? `🕐 Modo: Só por horas — Valor/hora: ${eur(valorHoraFunc)}`
+    : `💼 Modo: Salário fixo + horas extra`;
   document.getElementById('salaryBody').innerHTML = `
+    <div class="es-sub" style="margin-bottom:6px;">${modoBadge}</div>
     <div class="es-sub" style="margin-bottom:14px;">Cálculo determinístico com os parâmetros vigentes (${escapeHtml(appConfig.vigente_desde || '—')}). Cada parcela mostra a fórmula e a taxa.</div>
     <div class="calc-input-grid">
       <div class="cfg-field"><label>Período</label><input type="month" id="sal_periodo" value="${periodo}"></div>
-      <div class="cfg-field"><label>Modo de cálculo</label>
+      ${isSoHoras ? '' : `<div class="cfg-field"><label>Modo de cálculo</label>
         <div class="calc-mode-toggle" id="sal_modo_toggle">
           <button type="button" data-modo="mes" class="active">Por mês</button>
           <button type="button" data-modo="horas">Por horas</button>
         </div>
-      </div>
-      <div class="cfg-field"><label>Salário base (€)</label><input type="number" step="any" id="sal_base" value="${num(emp.venc, 0)}"></div>
-      <div class="cfg-field" id="sal_horas_wrap" style="display:none;"><label>Horas trabalhadas</label><input type="number" step="any" id="sal_horas" value="${num(appConfig.dias_uteis,22)*num(appConfig.horas_dia,8)}"></div>
+      </div>`}
+      <div class="cfg-field"${isSoHoras ? ' style="display:none;"' : ''}><label>Salário base (€)</label><input type="number" step="any" id="sal_base" value="${num(emp.venc, 0)}"></div>
+      <div class="cfg-field" id="sal_horas_wrap"${isSoHoras ? '' : ' style="display:none;"'}><label>Horas trabalhadas</label><input type="number" step="any" id="sal_horas" value="${num(appConfig.dias_uteis,22)*num(appConfig.horas_dia,8)}"></div>
       <div class="cfg-field"><label>Subsídio refeição (€/dia)</label><input type="number" step="any" id="sal_sub" value="${num(emp.sub_refeicao, appConfig.sub_refeicao_dinheiro)}"></div>
       <div class="cfg-field"><label>Modo do subsídio</label><select id="sal_sub_modo"><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option></select></div>
       <div class="cfg-field"><label>Dias com subsídio</label><input type="number" step="any" id="sal_dias_sub" value="${num(appConfig.dias_uteis,22)}"></div>
@@ -3476,11 +3515,14 @@ async function openSalary(emp) {
     <button class="btn btn-primary" id="sal_calc_btn">🧮 Calcular</button>
     <div id="sal_result" style="margin-top:18px;"></div>`;
   document.getElementById('sal_sit').value = situacaoFromEmp(emp);
-  document.getElementById('sal_modo_toggle').addEventListener('click', e => {
-    const b = e.target.closest('button[data-modo]'); if (!b) return;
-    document.querySelectorAll('#sal_modo_toggle button').forEach(x => x.classList.toggle('active', x === b));
-    document.getElementById('sal_horas_wrap').style.display = b.dataset.modo === 'horas' ? '' : 'none';
-  });
+  const modoToggleEl = document.getElementById('sal_modo_toggle');
+  if (modoToggleEl) {
+    modoToggleEl.addEventListener('click', e => {
+      const b = e.target.closest('button[data-modo]'); if (!b) return;
+      document.querySelectorAll('#sal_modo_toggle button').forEach(x => x.classList.toggle('active', x === b));
+      document.getElementById('sal_horas_wrap').style.display = b.dataset.modo === 'horas' ? '' : 'none';
+    });
+  }
   document.getElementById('sal_periodo').addEventListener('change', refreshFaltasInfoSalary);
   document.getElementById('sal_calc_btn').addEventListener('click', runSalaryCalc);
   document.getElementById('salaryPdfSimples').dataset.ready = '';
@@ -3491,7 +3533,8 @@ async function openSalary(emp) {
 
 function refreshFaltasInfoSalary() {
   const periodo = document.getElementById('sal_periodo').value;
-  const base = num(document.getElementById('sal_base').value, 0);
+  const baseEl = document.getElementById('sal_base');
+  const base = num(baseEl ? baseEl.value : 0, 0);
   const resumo = resumoFaltasMes(salaryCtx.faltas, periodo, appConfig, base);
   salaryCtx.faltasResumo = resumo;
   const info = document.getElementById('sal_faltas_info');
@@ -3503,11 +3546,20 @@ function refreshFaltasInfoSalary() {
 }
 
 function gatherSalaryInput() {
-  const modo = document.querySelector('#sal_modo_toggle button.active').dataset.modo;
+  const emp = salaryCtx ? salaryCtx.emp : null;
+  const modoPagamento = (emp && emp.modo_pagamento) || 'salario_horas_extra';
+  const isSoHoras = modoPagamento === 'so_horas';
+  const toggleBtn = document.querySelector('#sal_modo_toggle button.active');
+  const modo = isSoHoras ? 'horas' : (toggleBtn ? toggleBtn.dataset.modo : 'mes');
   const resumo = salaryCtx.faltasResumo || { valorDesconto: 0, diasDesconto: 0, diasSemSubsidio: 0, complemento: 0 };
+  const baseEl = document.getElementById('sal_base');
+  const salarioBase = isSoHoras ? 0 : num(baseEl ? baseEl.value : 0, 0);
+  const valorHora = isSoHoras ? num(emp ? emp.valor_hora : 0, 0) : 0;
   return {
     modo,
-    salarioBase: num(document.getElementById('sal_base').value, 0),
+    modoPagamento,
+    salarioBase,
+    valorHora,
     horasTrabalhadas: num(document.getElementById('sal_horas').value, 0),
     subValor: num(document.getElementById('sal_sub').value, 0),
     subModo: document.getElementById('sal_sub_modo').value,
@@ -3518,9 +3570,9 @@ function gatherSalaryInput() {
     horasExtra: num(document.getElementById('sal_extra').value, 0),
     situacao: document.getElementById('sal_sit').value,
     dependentes: num(document.getElementById('sal_dep').value, 0),
-    faltaDesconto: resumo.valorDesconto,
-    faltaDias: resumo.diasDesconto,
-    faltaDiasSubsidio: resumo.diasSemSubsidio,
+    faltaDesconto: isSoHoras ? 0 : resumo.valorDesconto,
+    faltaDias: isSoHoras ? 0 : resumo.diasDesconto,
+    faltaDiasSubsidio: isSoHoras ? 0 : resumo.diasSemSubsidio,
     complementoBaixa: resumo.complemento
   };
 }
@@ -3601,22 +3653,41 @@ function gerarReciboPdf(tipo) {
   doc.text(`NIF: ${e.nif || '—'} · NISS: ${e.niss || '—'} · Função: ${e.funcao || '—'}`, margin, y); y += 8;
 
   if (tipo === 'simples') {
-    const rows = [
-      ['Salário base', eur(t.vencEfetivo)],
-      ['Dias/horas de falta com desconto', `${salaryCtx.input.faltaDias.toFixed(2)} (${eur(salaryCtx.input.faltaDesconto)})`],
-      ['Subsídio de refeição', eur(t.totalSub)],
-      ['Outros (diut./com./prémios/extra)', eur(t.adicionais)],
-      ['SS trabalhador', '-' + eur(t.ssTrab)],
-      ['Retenção IRS', '-' + eur(t.irs)],
-      ['LÍQUIDO A RECEBER', eur(t.liquido)],
-      ['Custo total p/ empresa', eur(t.custoEmpresa)]
-    ];
-    rows.forEach(([l, v], i) => {
+    const inp = salaryCtx.input;
+    const modo = e.modo_pagamento || 'salario_horas_extra';
+    const isHoras = modo === 'so_horas';
+    const subsidiosTotal = num(t.totalSub, 0) + num(t.adicionais, 0) - num(inp.horasExtra, 0);
+    const rows = [];
+    if (isHoras) {
+      const horas = num(inp.horasTrabalhadas, 0);
+      const vh = num(inp.valorHora, num(e.valor_hora, 0));
+      rows.push([`Horas trabalhadas (${horas} h × ${eur(vh)}/h)`, eur(t.vencEfetivo)]);
+    } else {
+      rows.push(['Salário base', eur(t.vencEfetivo)]);
+      if (num(inp.faltaDesconto, 0) > 0) {
+        // Discriminação: dias ou horas (faltaDias é numérico — fallback a dias se modoFaltas ausente)
+        const modoFaltas = inp.modoFaltas;
+        let detalhe;
+        if (modoFaltas === 'horas') detalhe = `${num(inp.faltaDias, 0).toFixed(2)} hora(s)`;
+        else detalhe = `${num(inp.faltaDias, 0).toFixed(2)} dia(s)`;
+        rows.push([`Faltas (${detalhe})`, '-' + eur(inp.faltaDesconto)]);
+      }
+    }
+    if (num(inp.horasExtra, 0) > 0) rows.push(['Horas extra', eur(inp.horasExtra)]);
+    if (subsidiosTotal > 0) rows.push(['Subsídios', eur(subsidiosTotal)]);
+    const descontos = num(t.ssTrab, 0) + num(t.irs, 0);
+    if (descontos > 0) rows.push(['Descontos (SS + IRS)', '-' + eur(descontos)]);
+    rows.push(['LÍQUIDO A RECEBER', eur(t.liquido)]);
+    rows.forEach(([l, v]) => {
       const isTot = l.startsWith('LÍQUIDO');
-      if (isTot) { doc.setFillColor(0, 51, 102); doc.rect(margin, y - 4, pageW - margin * 2, 8, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); }
-      else { doc.setTextColor(0, 34, 68); doc.setFont('helvetica', 'normal'); }
-      doc.setFontSize(10);
-      doc.text(l, margin + 2, y); doc.text(v, pageW - margin - 2, y, { align: 'right' }); y += isTot ? 10 : 7;
+      if (isTot) {
+        doc.setFillColor(0, 51, 102); doc.rect(margin, y - 5, pageW - margin * 2, 9, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+      } else {
+        doc.setTextColor(0, 34, 68); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      }
+      doc.text(l, margin + 2, y); doc.text(v, pageW - margin - 2, y, { align: 'right' });
+      y += isTot ? 12 : 8;
     });
   } else {
     res.lines.forEach(l => {
@@ -4169,8 +4240,11 @@ async function gerarRelContab() {
       try { const fs = await db.collection('funcionarios').doc(e.id).collection('faltas').where('periodo', '==', periodo).get(); faltas = fs.docs.map(x => x.data()); } catch (err) { /* segue */ }
       const fcount = t => faltas.filter(f => f.tipo === t).reduce((s, f) => s + num(f.quantidade, 0), 0);
       const t = recibo ? recibo.totais : null;
+      const modoPag = e.modo_pagamento || 'salario_horas_extra';
       relContabRows.push({
         nome: e.nome || '', nif: e.nif || '', niss: e.niss || '', categoria: e.categoria || e.funcao || '',
+        modoPagamento: modoPag,
+        modoBadge: modoPag === 'so_horas' ? '🕐' : '💼',
         faltaJust: fcount('justificada'), faltaInjust: fcount('injustificada'), faltaBaixa: fcount('baixa'), faltaAdm: fcount('admissao'),
         vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
         ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
@@ -4183,9 +4257,10 @@ async function gerarRelContab() {
     document.getElementById('rc_tabela').innerHTML = `
       <div class="es-sub" style="margin-bottom:8px;">${periodoLabel(periodo)} · ${comRecibo} recibo(s) guardado(s) de ${relContabRows.length} trabalhador(es). Linhas sem recibo mostram “—”.</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>NIF</th><th>Faltas (J/I/B/A)</th><th>Vencimento</th><th>Subsídios</th><th>Aj. custo</th><th>Base SS</th><th>SS</th><th>IRS</th><th>Líquido</th></tr></thead>
+        <thead><tr><th>Nome</th><th>Modo</th><th>NIF</th><th>Faltas (J/I/B/A)</th><th>Vencimento</th><th>Subsídios</th><th>Aj. custo</th><th>Base SS</th><th>SS</th><th>IRS</th><th>Líquido</th></tr></thead>
         <tbody>${relContabRows.map(r => `<tr>
           <td>${escapeHtml(r.nome)}</td>
+          <td title="${r.modoPagamento === 'so_horas' ? 'Só por horas' : 'Salário fixo + horas extra'}">${r.modoBadge}</td>
           <td class="cell-mono">${escapeHtml(r.nif)}</td>
           <td class="cell-mono">${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}</td>
           <td>${r.vencimento != null ? eur(r.vencimento) : '—'}</td>
@@ -4208,10 +4283,14 @@ async function gerarRelContab() {
 function relContabCsv() {
   if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
   const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
-  const cols = ['nome', 'nif', 'niss', 'categoria', 'faltaJust', 'faltaInjust', 'faltaBaixa', 'faltaAdm', 'vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'];
-  const head = ['Nome', 'NIF', 'Nº SS', 'Categoria', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão', 'Vencimento', 'Subsídios', 'Ajudas custo', 'Base SS', 'Desconto SS', 'IRS', 'Líquido'];
+  const cols = ['nome', 'modoPagamento', 'nif', 'niss', 'categoria', 'faltaJust', 'faltaInjust', 'faltaBaixa', 'faltaAdm', 'vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'];
+  const head = ['Nome', 'Modo de pagamento', 'NIF', 'Nº SS', 'Categoria', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão', 'Vencimento', 'Subsídios', 'Ajudas custo', 'Base SS', 'Desconto SS', 'IRS', 'Líquido'];
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const fmt = (r, c) => (['vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'].includes(c) && r[c] != null) ? Number(r[c]).toFixed(2) : r[c];
+  const fmt = (r, c) => {
+    if (c === 'modoPagamento') return r[c] === 'so_horas' ? 'Só por horas' : 'Salário fixo + horas extra';
+    if (['vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'].includes(c) && r[c] != null) return Number(r[c]).toFixed(2);
+    return r[c];
+  };
   const csv = '﻿' + head.join(';') + '\r\n' + relContabRows.map(r => cols.map(c => esc(fmt(r, c))).join(';')).join('\r\n');
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Relatorio_contabilista_${periodo}.csv`);
   toast('CSV exportado.');
@@ -4228,14 +4307,15 @@ function relContabPdf() {
   doc.setFontSize(9); doc.setTextColor(212, 175, 55);
   doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
   let y = 32;
-  const headers = ['Nome', 'NIF', 'J/I/B/A', 'Vencim.', 'Subsíd.', 'Aj.custo', 'Base SS', 'SS', 'IRS', 'Líquido'];
-  const xs = [margin, margin + 46, margin + 74, margin + 96, margin + 120, margin + 143, margin + 166, margin + 190, margin + 212, margin + 236];
+  const headers = ['Nome', 'Modo', 'NIF', 'J/I/B/A', 'Vencim.', 'Subsíd.', 'Aj.custo', 'Base SS', 'SS', 'IRS', 'Líquido'];
+  const xs = [margin, margin + 44, margin + 54, margin + 80, margin + 100, margin + 122, margin + 143, margin + 166, margin + 190, margin + 212, margin + 236];
   doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
   headers.forEach((h, i) => doc.text(h, xs[i], y)); y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 4;
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 34, 68);
   relContabRows.forEach(r => {
     if (y > 195) { doc.addPage(); y = 20; }
-    const cells = [r.nome.slice(0, 26), r.nif, `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`,
+    const modoTxt = r.modoPagamento === 'so_horas' ? 'Horas' : 'Salário';
+    const cells = [r.nome.slice(0, 24), modoTxt, r.nif, `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`,
       r.vencimento != null ? eur(r.vencimento) : '—', r.subsidios != null ? eur(r.subsidios) : '—',
       r.ajudas != null ? eur(r.ajudas) : '—', r.baseSS != null ? eur(r.baseSS) : '—',
       r.ssTrab != null ? eur(r.ssTrab) : '—', r.irs != null ? eur(r.irs) : '—', r.liquido != null ? eur(r.liquido) : '—'];
