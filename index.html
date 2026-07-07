@@ -4245,6 +4245,8 @@ async function gerarRelContab() {
         nome: e.nome || '', nif: e.nif || '', niss: e.niss || '', categoria: e.categoria || e.funcao || '',
         modoPagamento: modoPag,
         modoBadge: modoPag === 'so_horas' ? '🕐' : '💼',
+        salarioFicha: (e.venc !== '' && e.venc != null) ? num(e.venc, 0) : null,
+        valorHora: (e.valor_hora !== '' && e.valor_hora != null) ? num(e.valor_hora, 0) : null,
         faltaJust: fcount('justificada'), faltaInjust: fcount('injustificada'), faltaBaixa: fcount('baixa'), faltaAdm: fcount('admissao'),
         vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
         ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
@@ -4253,25 +4255,18 @@ async function gerarRelContab() {
         temRecibo: !!recibo, reciboFull: recibo
       });
     }
-    const comRecibo = relContabRows.filter(r => r.temRecibo).length;
     document.getElementById('rc_tabela').innerHTML = `
-      <div class="es-sub" style="margin-bottom:8px;">${periodoLabel(periodo)} · ${comRecibo} recibo(s) guardado(s) de ${relContabRows.length} trabalhador(es). Linhas sem recibo mostram “—”.</div>
+      <div class="es-sub" style="margin-bottom:8px;">${periodoLabel(periodo)} · ${relContabRows.length} trabalhador(es). Salário e faltas para entrega ao contabilista.</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>Modo</th><th>NIF</th><th>Faltas (J/I/B/A)</th><th>Vencimento</th><th>Subsídios</th><th>Aj. custo</th><th>Base SS</th><th>SS</th><th>IRS</th><th>Líquido</th></tr></thead>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Salário</th><th>Faltas (J/I/B/A)</th></tr></thead>
         <tbody>${relContabRows.map(r => `<tr>
           <td>${escapeHtml(r.nome)}</td>
-          <td title="${r.modoPagamento === 'so_horas' ? 'Só por horas' : 'Salário fixo + horas extra'}">${r.modoBadge}</td>
           <td class="cell-mono">${escapeHtml(r.nif)}</td>
+          <td>${salarioContabTxt(r)}</td>
           <td class="cell-mono">${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}</td>
-          <td>${r.vencimento != null ? eur(r.vencimento) : '—'}</td>
-          <td>${r.subsidios != null ? eur(r.subsidios) : '—'}</td>
-          <td>${r.ajudas != null ? eur(r.ajudas) : '—'}</td>
-          <td>${r.baseSS != null ? eur(r.baseSS) : '—'}</td>
-          <td>${r.ssTrab != null ? eur(r.ssTrab) : '—'}</td>
-          <td>${r.irs != null ? eur(r.irs) : '—'}</td>
-          <td>${r.liquido != null ? eur(r.liquido) : '—'}</td>
         </tr>`).join('')}</tbody>
-      </table></div>`;
+      </table></div>
+      <div class="es-sub" style="margin-top:8px;">Faltas: <strong>J</strong>=justificada · <strong>I</strong>=injustificada · <strong>B</strong>=baixa · <strong>A</strong>=por admissão. Quantidades em dias/horas do período.</div>`;
     document.getElementById('relContabModal').dataset.periodo = periodo;
   } catch (err) {
     toast('Erro ao gerar relatório: ' + friendlyError(err), true);
@@ -4280,18 +4275,24 @@ async function gerarRelContab() {
   }
 }
 
+// Texto do salário para a tabela do contabilista: €/mês (salário fixo) ou €/h (só por horas).
+function salarioContabTxt(r) {
+  if (r.modoPagamento === 'so_horas') {
+    return r.valorHora != null ? `${eur(r.valorHora)}/h` : '—';
+  }
+  return r.salarioFicha != null ? eur(r.salarioFicha) : '—';
+}
+
 function relContabCsv() {
   if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
   const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
-  const cols = ['nome', 'modoPagamento', 'nif', 'niss', 'categoria', 'faltaJust', 'faltaInjust', 'faltaBaixa', 'faltaAdm', 'vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'];
-  const head = ['Nome', 'Modo de pagamento', 'NIF', 'Nº SS', 'Categoria', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão', 'Vencimento', 'Subsídios', 'Ajudas custo', 'Base SS', 'Desconto SS', 'IRS', 'Líquido'];
+  const head = ['Nome', 'NIF', 'Salário', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão'];
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const fmt = (r, c) => {
-    if (c === 'modoPagamento') return r[c] === 'so_horas' ? 'Só por horas' : 'Salário fixo + horas extra';
-    if (['vencimento', 'subsidios', 'ajudas', 'baseSS', 'ssTrab', 'irs', 'liquido'].includes(c) && r[c] != null) return Number(r[c]).toFixed(2);
-    return r[c];
-  };
-  const csv = '﻿' + head.join(';') + '\r\n' + relContabRows.map(r => cols.map(c => esc(fmt(r, c))).join(';')).join('\r\n');
+  const rows = relContabRows.map(r => [
+    r.nome, r.nif, salarioContabTxt(r).replace(/€/g, '€'),
+    r.faltaJust, r.faltaInjust, r.faltaBaixa, r.faltaAdm
+  ]);
+  const csv = '﻿' + head.join(';') + '\r\n' + rows.map(row => row.map(esc).join(';')).join('\r\n');
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Relatorio_contabilista_${periodo}.csv`);
   toast('CSV exportado.');
 }
@@ -4307,22 +4308,18 @@ function relContabPdf() {
   doc.setFontSize(9); doc.setTextColor(212, 175, 55);
   doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
   let y = 32;
-  const headers = ['Nome', 'Modo', 'NIF', 'J/I/B/A', 'Vencim.', 'Subsíd.', 'Aj.custo', 'Base SS', 'SS', 'IRS', 'Líquido'];
-  const xs = [margin, margin + 44, margin + 54, margin + 80, margin + 100, margin + 122, margin + 143, margin + 166, margin + 190, margin + 212, margin + 236];
-  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
-  headers.forEach((h, i) => doc.text(h, xs[i], y)); y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 4;
-  doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 34, 68);
+  const headers = ['Nome', 'NIF', 'Salário', 'Faltas (J/I/B/A)'];
+  const xs = [margin, margin + 90, margin + 130, margin + 175];
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
+  headers.forEach((h, i) => doc.text(h, xs[i], y)); y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0, 34, 68);
   relContabRows.forEach(r => {
     if (y > 195) { doc.addPage(); y = 20; }
-    const modoTxt = r.modoPagamento === 'so_horas' ? 'Horas' : 'Salário';
-    const cells = [r.nome.slice(0, 24), modoTxt, r.nif, `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`,
-      r.vencimento != null ? eur(r.vencimento) : '—', r.subsidios != null ? eur(r.subsidios) : '—',
-      r.ajudas != null ? eur(r.ajudas) : '—', r.baseSS != null ? eur(r.baseSS) : '—',
-      r.ssTrab != null ? eur(r.ssTrab) : '—', r.irs != null ? eur(r.irs) : '—', r.liquido != null ? eur(r.liquido) : '—'];
-    cells.forEach((c, i) => doc.text(String(c), xs[i], y)); y += 6;
+    const cells = [r.nome.slice(0, 48), r.nif, salarioContabTxt(r), `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`];
+    cells.forEach((c, i) => doc.text(String(c), xs[i], y)); y += 7;
   });
   y += 4; doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
-  doc.text('Faltas: J=justificada I=injustificada B=baixa A=por admissão. Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software certificado pela AT.', margin, y);
+  doc.text('Faltas: J=justificada I=injustificada B=baixa A=por admissão (quantidades em dias/horas do período). Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software certificado pela AT.', margin, y);
   pdfFooter(doc, pageW, doc.internal.pageSize.getHeight());
   doc.save(`Relatorio_contabilista_${periodo}.pdf`);
   toast('PDF exportado.');
