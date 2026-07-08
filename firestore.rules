@@ -70,6 +70,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Faturas de despesas da empresa (por mês)
+    match /despesas/{docId} {
+      allow read: if isAuth();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isAuth();
       allow write: if isAdmin();

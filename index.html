@@ -650,6 +650,7 @@ footer strong { color: var(--ink); }
     <div class="toolbar">
       <button class="btn btn-primary active" id="btnEmpDash" data-emp-tab="dashboard">📊 Dashboard</button>
       <button class="btn btn-ghost" id="btnEmpIva" data-emp-tab="iva">🧾 IVA</button>
+      <button class="btn btn-ghost" id="btnEmpDespesas" data-emp-tab="despesas">💸 Despesas</button>
       <button class="btn btn-ghost" id="btnEmpIrc" data-emp-tab="irc">🏛️ IRC</button>
       <button class="btn btn-ghost" id="btnEmpProforma" data-emp-tab="proforma">📄 Pró-formas</button>
       <button class="btn btn-gold" id="btnEmpConfig" data-emp-tab="config">⚙️ Configurações</button>
@@ -2326,6 +2327,12 @@ let currentEmpTab = 'dashboard';
 let faltasCacheEmp = { id: null, list: [] };
 let unsubscribeFaltas = null;
 
+/* ---------- Despesas da empresa (faturas por mês) ---------- */
+let unsubscribeDespesas = null;
+let despesasCache = [];
+let despesasMesActual = null;
+function unsubscribeDespesasFn() { if (unsubscribeDespesas) { unsubscribeDespesas(); unsubscribeDespesas = null; } }
+
 /* ---------- Listas geridas (países / empresas) ---------- */
 const PAISES_DEFAULT = ['Portugal', 'Bélgica', 'França', 'Espanha', 'Alemanha', 'Luxemburgo', 'Países Baixos', 'Suíça', 'Reino Unido', 'Irlanda', 'Itália', 'Polónia', 'Suécia'];
 let appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
@@ -2858,6 +2865,7 @@ function switchArea(area) {
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
   document.getElementById('areaEmpresa').style.display = area === 'empresa' ? '' : 'none';
   if (area === 'empresa') renderEmpContent();
+  else unsubscribeDespesasFn();
 }
 function switchEmpTab(tab) {
   currentEmpTab = tab;
@@ -2876,10 +2884,13 @@ function switchEmpTab(tab) {
    ============================================================ */
 function renderEmpContent() {
   const c = document.getElementById('empContent');
+  // Cancela subscrições penduradas ao sair do separador respectivo
+  if (currentEmpTab !== 'despesas') unsubscribeDespesasFn();
   if (!appConfig) { c.innerHTML = '<div class="empresa-section">A carregar configuração…</div>'; return; }
   if (currentEmpTab === 'dashboard') c.innerHTML = renderDashboard();
   else if (currentEmpTab === 'config') { c.innerHTML = renderConfig(); wireConfig(); }
   else if (currentEmpTab === 'iva') { c.innerHTML = renderIva(); wireIva(); }
+  else if (currentEmpTab === 'despesas') { c.innerHTML = renderDespesas(); wireDespesas(); }
   else if (currentEmpTab === 'irc') { c.innerHTML = renderIrc(); wireIrc(); }
   else if (currentEmpTab === 'proforma') { c.innerHTML = renderProforma(); wireProforma(); }
 }
@@ -3092,6 +3103,233 @@ function wireIva() {
       toast('Trimestre de IVA guardado.');
     } catch (err) { toast('Erro ao guardar IVA: ' + friendlyError(err), true); } finally { hideOverlay(); }
   });
+}
+
+/* ---------- Despesas da empresa (faturas por mês) ---------- */
+const DESPESA_CATEGORIAS = ['Geral', 'Materiais', 'Serviços', 'Transporte', 'Alojamento', 'Refeições', 'Outros'];
+
+function renderDespesas() {
+  const mes = despesasMesActual || currentPeriodo();
+  const catOpts = DESPESA_CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
+  const form = isEditor() ? `
+    <div class="cfg-group">
+      <div class="cfg-group-title">Nova fatura</div>
+      <div class="es-sub">Preencha os dados (opcionais) e depois anexe o ficheiro. Os dados ficam associados à fatura carregada.</div>
+      <div class="calc-input-grid">
+        <div class="cfg-field"><label>Descrição</label><input type="text" id="desp_desc" placeholder="Ex.: Material de escritório"></div>
+        <div class="cfg-field"><label>Fornecedor</label><input type="text" id="desp_fornecedor" placeholder="Ex.: Staples"></div>
+        <div class="cfg-field"><label>Valor (€)</label><input type="number" step="any" id="desp_valor" placeholder="0,00"></div>
+        <div class="cfg-field"><label>Categoria</label><select id="desp_categoria">${catOpts}</select></div>
+      </div>
+      <div class="calc-actions"><button class="btn btn-primary" id="desp_upload">📎 Anexar fatura</button></div>
+    </div>` : '';
+  return `
+  <div class="empresa-section">
+    <h2>💸 Despesas da empresa</h2>
+    <div class="es-sub">Faturas de gastos/despesas da empresa, organizadas por mês. Não estão associadas a nenhum funcionário.</div>
+    <div class="calc-input-grid">
+      <div class="cfg-field"><label>Mês</label><input type="month" id="desp_mes" value="${escapeHtml(mes)}"></div>
+      <div class="cfg-field"><label>Total do mês</label><input type="text" id="desp_total_top" value="—" readonly></div>
+    </div>
+    ${form}
+    <div class="cfg-group">
+      <div class="cfg-group-title">Faturas de <span id="desp_mes_label">${escapeHtml(periodoLabel(mes))}</span> <span id="desp_count" class="es-sub" style="font-weight:normal;"></span></div>
+      <button class="btn btn-ghost btn-sm" id="desp_csv">📊 Exportar CSV do mês</button>
+      <div id="desp_list" style="margin-top:12px;"><div class="doc-empty">A carregar…</div></div>
+    </div>
+    <div class="calc-result">
+      <div class="calc-line total"><span class="cl-label">TOTAL DO MÊS</span><span class="cl-formula"><span id="desp_footer_count">0</span> fatura(s)</span><span class="cl-value" id="desp_total">${eur(0)}</span></div>
+    </div>
+  </div>`;
+}
+
+function wireDespesas() {
+  const mesEl = document.getElementById('desp_mes');
+  const mes = (mesEl && mesEl.value) || currentPeriodo();
+  despesasMesActual = mes;
+  subscribeDespesas(mes);
+  if (mesEl) mesEl.addEventListener('change', () => {
+    const m = mesEl.value || currentPeriodo();
+    despesasMesActual = m;
+    const lbl = document.getElementById('desp_mes_label');
+    if (lbl) lbl.textContent = periodoLabel(m);
+    subscribeDespesas(m);
+  });
+  const up = document.getElementById('desp_upload');
+  if (up) up.addEventListener('click', () => openDespesaUpload(despesasMesActual));
+  const csv = document.getElementById('desp_csv');
+  if (csv) csv.addEventListener('click', () => despesasCsv(despesasMesActual));
+  const list = document.getElementById('desp_list');
+  if (list) list.addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    if (btn.classList.contains('act-desp-view')) viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename);
+    else if (btn.classList.contains('act-desp-dl')) downloadDocument(btn.dataset.url);
+    else if (btn.classList.contains('act-desp-del')) deleteDespesa(btn.dataset.id, btn.dataset.desc);
+  });
+}
+
+function openDespesaUpload(mes) {
+  if (!isEditor()) { toast('Sem permissões para anexar faturas.', true); return; }
+  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
+  const descEl = document.getElementById('desp_desc');
+  const fornEl = document.getElementById('desp_fornecedor');
+  const valEl = document.getElementById('desp_valor');
+  const catEl = document.getElementById('desp_categoria');
+  const descricao = descEl ? descEl.value.trim() : '';
+  const fornecedor = fornEl ? fornEl.value.trim() : '';
+  const valorRaw = valEl ? valEl.value.trim() : '';
+  const valor = valorRaw === '' ? null : num(valorRaw, 0);
+  const categoria = catEl ? catEl.value : 'Geral';
+  const widget = cloudinary.createUploadWidget({
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    folder: `legado-aclamado/despesas/${mes}`,
+    resourceType: 'auto',
+    clientAllowedFormats: ['jpg','jpeg','png','pdf'],
+    maxFileSize: 10485760,
+    multiple: true,
+    sources: ['local','camera'],
+    language: 'pt',
+    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
+  }, (error, result) => {
+    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
+    if (result && result.event === 'success') {
+      saveDespesaMetadata(mes, { descricao, fornecedor, valor, categoria }, result.info);
+    }
+  });
+  widget.open();
+}
+
+async function saveDespesaMetadata(mes, meta, info) {
+  try {
+    await db.collection('despesas').add({
+      mes: mes,
+      descricao: meta.descricao || '',
+      fornecedor: meta.fornecedor || '',
+      valor: (meta.valor == null ? null : num(meta.valor, 0)),
+      categoria: meta.categoria || 'Geral',
+      url: info.secure_url,
+      public_id: info.public_id,
+      format: info.format,
+      bytes: info.bytes,
+      original_filename: info.original_filename,
+      resource_type: info.resource_type,
+      created_at: firebase.firestore.FieldValue.serverTimestamp(),
+      created_by: currentUser ? currentUser.email : ''
+    });
+    await logAudit('despesa_upload', mes, `Despesa ${mes} · ${meta.descricao || info.original_filename || ''}`);
+    toast('Fatura anexada.');
+    // Limpa os campos do formulário
+    const ids = ['desp_desc', 'desp_fornecedor', 'desp_valor'];
+    ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const catEl = document.getElementById('desp_categoria'); if (catEl) catEl.value = 'Geral';
+  } catch (err) {
+    toast('Erro ao guardar fatura: ' + friendlyError(err), true);
+  }
+}
+
+function subscribeDespesas(mes) {
+  unsubscribeDespesasFn();
+  despesasCache = [];
+  const list = document.getElementById('desp_list');
+  if (list) list.innerHTML = '<div class="doc-empty">A carregar…</div>';
+  unsubscribeDespesas = db.collection('despesas').where('mes', '==', mes)
+    .onSnapshot(snap => {
+      despesasCache = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      renderDespesasList();
+    }, err => {
+      const l = document.getElementById('desp_list');
+      if (l) l.innerHTML = `<div class="doc-empty">Erro ao carregar faturas: ${escapeHtml(friendlyError(err))}</div>`;
+    });
+}
+
+function renderDespesasList() {
+  const list = document.getElementById('desp_list');
+  if (!list) return;
+  const arr = despesasCache.slice().sort((a, b) => {
+    const ta = a.created_at && a.created_at.toMillis ? a.created_at.toMillis() : Infinity;
+    const tb = b.created_at && b.created_at.toMillis ? b.created_at.toMillis() : Infinity;
+    return tb - ta;
+  });
+  const total = arr.reduce((s, d) => s + num(d.valor, 0), 0);
+  const totalEl = document.getElementById('desp_total');
+  const totalTop = document.getElementById('desp_total_top');
+  const footCount = document.getElementById('desp_footer_count');
+  const countEl = document.getElementById('desp_count');
+  if (totalEl) totalEl.textContent = eur(total);
+  if (totalTop) totalTop.value = eur(total);
+  if (footCount) footCount.textContent = String(arr.length);
+  if (countEl) countEl.textContent = `(${arr.length})`;
+  if (arr.length === 0) {
+    list.innerHTML = '<div class="doc-empty">Sem faturas anexadas neste mês.</div>';
+    return;
+  }
+  list.innerHTML = arr.map(d => {
+    const name = docFullName(d);
+    const titulo = escapeHtml(d.descricao || d.original_filename || 'Fatura');
+    const partes = [];
+    if (d.fornecedor) partes.push(escapeHtml(d.fornecedor));
+    if (d.categoria) partes.push(escapeHtml(d.categoria));
+    partes.push(docDateStr(d.created_at));
+    if (d.created_by) partes.push(escapeHtml(d.created_by));
+    const valorTxt = d.valor == null ? '—' : eur(num(d.valor, 0));
+    const delBtn = isAdmin()
+      ? `<button class="btn btn-danger btn-sm act-desp-del" data-id="${d.id}" data-desc="${escapeHtml(d.descricao || name)}">🗑 Eliminar</button>`
+      : '';
+    return `<div class="doc-card">
+      <div class="doc-info">
+        <span class="doc-icon">${docIcon(d.format)}</span>
+        <div>
+          <div class="doc-name">${titulo} · <strong>${valorTxt}</strong></div>
+          <div class="doc-meta">${partes.join(' · ')} · ${formatBytes(d.bytes)}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm act-desp-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm act-desp-dl" data-url="${escapeHtml(d.url)}">⬇ Descarregar</button>
+        ${delBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteDespesa(id, descricao) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar faturas.', true); return; }
+  if (!confirm(`Eliminar a fatura "${descricao || ''}"?`)) return;
+  if (!confirm('Tem a certeza? Esta acção não pode ser revertida. (O ficheiro permanece no Cloudinary.)')) return;
+  showOverlay('A eliminar fatura…');
+  try {
+    await db.collection('despesas').doc(id).delete();
+    await logAudit('despesa_delete', despesasMesActual || '', `Despesa · ${descricao || ''}`);
+    toast('Fatura eliminada.');
+  } catch (err) {
+    toast('Erro ao eliminar fatura: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+function despesasCsv(mes) {
+  if (!despesasCache || despesasCache.length === 0) { toast('Não há faturas neste mês para exportar.', true); return; }
+  const arr = despesasCache.slice().sort((a, b) => {
+    const ta = a.created_at && a.created_at.toMillis ? a.created_at.toMillis() : Infinity;
+    const tb = b.created_at && b.created_at.toMillis ? b.created_at.toMillis() : Infinity;
+    return tb - ta;
+  });
+  const head = ['Mês', 'Data', 'Descrição', 'Fornecedor', 'Categoria', 'Valor', 'Ficheiro'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = arr.map(d => [
+    d.mes || mes,
+    docDateStr(d.created_at),
+    d.descricao || '',
+    d.fornecedor || '',
+    d.categoria || '',
+    d.valor == null ? '' : num(d.valor, 0).toFixed(2),
+    d.url || ''
+  ]);
+  const csv = '﻿' + head.join(';') + '\r\n' + rows.map(row => row.map(esc).join(';')).join('\r\n');
+  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Despesas_${mes}.csv`);
+  toast('CSV exportado.');
 }
 
 /* ---------- IRC ---------- */
