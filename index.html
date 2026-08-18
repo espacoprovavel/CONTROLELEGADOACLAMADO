@@ -419,6 +419,29 @@ footer strong { color: var(--ink); }
 .irs-table input, .irs-table select { width: 100%; font-family: 'Poppins'; font-size: 12.5px; padding: 6px 7px; border: 1px solid var(--line); border-radius: 6px; }
 .irs-empty-note { font-size: 12px; color: var(--gold-soft); background: #fffaf0; border: 1px solid #f0e0a8; border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
 
+/* ---------- Contabilidade (folha mensal manual) ---------- */
+.contab-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.contab-toolbar .contab-mes-field { display: flex; flex-direction: column; gap: 4px; margin-right: 6px; }
+.contab-toolbar .contab-mes-field label { font-size: 11px; font-weight: 500; color: var(--ink-soft); }
+.contab-toolbar input[type=month] { font-family: 'Poppins'; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; }
+.contab-empty { border: 1px dashed var(--line); border-radius: 12px; padding: 28px; text-align: center; color: var(--ink-soft); font-size: 13.5px; }
+.contab-grupo { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; overflow: hidden; background: var(--card); }
+.contab-grupo-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 14px; background: var(--bg-alt); border-bottom: 1px solid var(--line); }
+.contab-grupo-head input.contab-grupo-nome { flex: 1; min-width: 200px; font-family: 'Poppins'; font-weight: 600; font-size: 15px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; }
+.contab-grupo-head input.contab-grupo-nome:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,51,102,0.08); }
+.contab-table-wrap { overflow-x: auto; }
+.contab-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.contab-table th { font-family: 'JetBrains Mono'; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); padding: 9px 7px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.contab-table td { padding: 4px 5px; border-bottom: 1px solid var(--bg-alt); vertical-align: middle; }
+.contab-table tr:last-child td { border-bottom: none; }
+.contab-table input { width: 100%; box-sizing: border-box; font-family: 'Poppins'; font-size: 12.5px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: #fff; }
+.contab-table input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,51,102,0.07); }
+.contab-table .contab-col-acao { width: 44px; text-align: center; }
+.contab-row-empty td { padding: 14px; text-align: center; color: var(--ink-soft); font-size: 12.5px; }
+.contab-del-row { background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; height: 32px; width: 32px; font-size: 13px; }
+.contab-dirty-note { font-size: 12px; color: var(--gold-soft); background: #fffaf0; border: 1px solid #f0e0a8; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; display: none; }
+.contab-dirty-note.on { display: block; }
+
 /* ---------- Cálculo / recibo ---------- */
 .calc-input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
 .calc-result { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; }
@@ -651,6 +674,7 @@ footer strong { color: var(--ink); }
       <button class="btn btn-primary active" id="btnEmpDash" data-emp-tab="dashboard">📊 Dashboard</button>
       <button class="btn btn-ghost" id="btnEmpIva" data-emp-tab="iva">🧾 IVA</button>
       <button class="btn btn-ghost" id="btnEmpDespesas" data-emp-tab="despesas">💸 Despesas</button>
+      <button class="btn btn-ghost" id="btnEmpContab" data-emp-tab="contab">📋 Contabilidade</button>
       <button class="btn btn-ghost" id="btnEmpIrc" data-emp-tab="irc">🏛️ IRC</button>
       <button class="btn btn-ghost" id="btnEmpProforma" data-emp-tab="proforma">📄 Pró-formas</button>
       <button class="btn btn-gold" id="btnEmpConfig" data-emp-tab="config">⚙️ Configurações</button>
@@ -2333,6 +2357,10 @@ let despesasCache = [];
 let despesasMesActual = null;
 function unsubscribeDespesasFn() { if (unsubscribeDespesas) { unsubscribeDespesas(); unsubscribeDespesas = null; } }
 
+/* ---------- Folha mensal para a contabilidade (preenchida à mão) ---------- */
+let contabModel = { mes: null, grupos: [] };
+let contabDirty = false;
+
 /* ---------- Listas geridas (países / empresas) ---------- */
 const PAISES_DEFAULT = ['Portugal', 'Bélgica', 'França', 'Espanha', 'Alemanha', 'Luxemburgo', 'Países Baixos', 'Suíça', 'Reino Unido', 'Irlanda', 'Itália', 'Polónia', 'Suécia'];
 let appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
@@ -2861,13 +2889,24 @@ function subscribeConfig() {
    NAVEGAÇÃO ENTRE ÁREAS
    ============================================================ */
 function switchArea(area) {
+  if (area !== 'empresa' && !contabConfirmLeave()) return;
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
   document.getElementById('areaEmpresa').style.display = area === 'empresa' ? '' : 'none';
   if (area === 'empresa') renderEmpContent();
   else unsubscribeDespesasFn();
 }
+function contabConfirmLeave() {
+  // Aviso ao sair do separador Contabilidade com alterações não guardadas
+  if (currentEmpTab === 'contab' && contabDirty) {
+    if (!confirm('Tens alterações não guardadas na folha para a contabilidade. Sair sem guardar?')) return false;
+    contabSetDirty(false);
+  }
+  return true;
+}
 function switchEmpTab(tab) {
+  if (tab === currentEmpTab) return;
+  if (!contabConfirmLeave()) return;
   currentEmpTab = tab;
   document.querySelectorAll('[data-emp-tab]').forEach(b => {
     const on = b.dataset.empTab === tab;
@@ -2891,6 +2930,7 @@ function renderEmpContent() {
   else if (currentEmpTab === 'config') { c.innerHTML = renderConfig(); wireConfig(); }
   else if (currentEmpTab === 'iva') { c.innerHTML = renderIva(); wireIva(); }
   else if (currentEmpTab === 'despesas') { c.innerHTML = renderDespesas(); wireDespesas(); }
+  else if (currentEmpTab === 'contab') { c.innerHTML = renderContab(); wireContab(); }
   else if (currentEmpTab === 'irc') { c.innerHTML = renderIrc(); wireIrc(); }
   else if (currentEmpTab === 'proforma') { c.innerHTML = renderProforma(); wireProforma(); }
 }
@@ -3329,6 +3369,372 @@ function despesasCsv(mes) {
   ]);
   const csv = '﻿' + head.join(';') + '\r\n' + rows.map(row => row.map(esc).join(';')).join('\r\n');
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Despesas_${mes}.csv`);
+  toast('CSV exportado.');
+}
+
+/* ============================================================
+   CONTABILIDADE — folha mensal editável à mão (por empresa)
+   ============================================================ */
+function contabNovaLinha() {
+  return { id: uid(), nome: '', salario: '', faltas: '', inicio: '', fim: '', obs: '' };
+}
+function contabSetDirty(v) {
+  contabDirty = !!v;
+  const note = document.getElementById('contab_dirty');
+  if (note) note.classList.toggle('on', contabDirty);
+}
+function contabPrevMonth(mes) {
+  const m = /^(\d{4})-(\d{2})$/.exec(mes || '');
+  if (!m) return null;
+  let ano = parseInt(m[1], 10);
+  let mm = parseInt(m[2], 10) - 1; // mês anterior
+  if (mm < 1) { mm = 12; ano -= 1; }
+  return `${ano}-${String(mm).padStart(2, '0')}`;
+}
+
+function renderContab() {
+  const mes = contabModel.mes || currentPeriodo();
+  const editor = isEditor();
+  const btns = editor ? `
+      <button class="btn btn-primary" id="contab_save">💾 Guardar</button>
+      <button class="btn btn-ghost" id="contab_pdf">📄 Imprimir PDF</button>
+      <button class="btn btn-ghost" id="contab_csv">📊 CSV</button>
+      <button class="btn btn-ghost" id="contab_copy">📋 Copiar do mês anterior</button>
+      <button class="btn btn-gold" id="contab_add_emp">➕ Adicionar empresa</button>`
+    : `
+      <button class="btn btn-ghost" id="contab_pdf">📄 Imprimir PDF</button>
+      <button class="btn btn-ghost" id="contab_csv">📊 CSV</button>`;
+  return `
+  <div class="empresa-section" id="contab_root">
+    <h2>📋 Folha para a contabilidade</h2>
+    <div class="es-sub">Folha mensal preenchida manualmente, agrupada por empresa-cliente. Independente dos cálculos de salários. Escolha o mês, preencha as linhas e clique em Guardar.</div>
+    <div class="contab-dirty-note" id="contab_dirty">Tem alterações não guardadas. Não se esqueça de clicar em 💾 Guardar.</div>
+    <div class="contab-toolbar">
+      <div class="contab-mes-field">
+        <label for="contab_mes">Mês</label>
+        <input type="month" id="contab_mes" value="${escapeHtml(mes)}">
+      </div>
+      <span class="es-sub" id="contab_mes_label" style="margin-right:auto;">${escapeHtml(periodoLabel(mes))}</span>
+      ${btns}
+    </div>
+    <div id="contab_body">${renderContabGrupos()}</div>
+  </div>`;
+}
+
+function renderContabGrupos() {
+  const editor = isEditor();
+  const admin = isAdmin();
+  const grupos = contabModel.grupos || [];
+  if (!grupos.length) {
+    return `<div class="contab-empty">Ainda não há empresas neste mês. Clica em ➕ Adicionar empresa${editor ? ' ou 📋 Copiar do mês anterior' : ''}.</div>`;
+  }
+  return grupos.map(g => {
+    const linhas = g.linhas || [];
+    const rows = linhas.length ? linhas.map(l => `
+      <tr>
+        <td><input type="text" value="${escapeHtml(l.nome || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="nome" placeholder="Nome"${editor ? '' : ' readonly'}></td>
+        <td><input type="text" value="${escapeHtml(l.salario || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="salario" placeholder="—"${editor ? '' : ' readonly'}></td>
+        <td><input type="text" value="${escapeHtml(l.faltas || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="faltas" placeholder="—"${editor ? '' : ' readonly'}></td>
+        <td><input type="text" value="${escapeHtml(l.inicio || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="inicio" placeholder="dd/mm/aaaa"${editor ? '' : ' readonly'}></td>
+        <td><input type="text" value="${escapeHtml(l.fim || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="fim" placeholder="dd/mm/aaaa"${editor ? '' : ' readonly'}></td>
+        <td><input type="text" value="${escapeHtml(l.obs || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="obs" placeholder="Observação"${editor ? '' : ' readonly'}></td>
+        <td class="contab-col-acao">${editor ? `<button class="contab-del-row" data-action="del-linha" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" title="Eliminar linha">🗑</button>` : ''}</td>
+      </tr>`).join('') : `<tr class="contab-row-empty"><td colspan="7">Sem funcionários nesta empresa.${editor ? ' Clica em ➕ Adicionar funcionário.' : ''}</td></tr>`;
+    const headActions = editor ? `
+        <button class="btn btn-primary btn-sm" data-action="add-linha" data-gid="${escapeHtml(g.id)}">➕ Adicionar funcionário</button>
+        ${admin ? `<button class="btn btn-danger btn-sm" data-action="del-empresa" data-gid="${escapeHtml(g.id)}">🗑 Eliminar empresa</button>` : ''}` : '';
+    return `
+    <div class="contab-grupo" data-gid="${escapeHtml(g.id)}">
+      <div class="contab-grupo-head">
+        <input type="text" class="contab-grupo-nome" value="${escapeHtml(g.nome || '')}" data-gid="${escapeHtml(g.id)}" data-field="nome" placeholder="Nome da empresa"${editor ? '' : ' readonly'}>
+        ${headActions}
+      </div>
+      <div class="contab-table-wrap">
+        <table class="contab-table">
+          <thead><tr>
+            <th>Funcionários</th><th>Salários</th><th>Faltas</th><th>Início Contrato</th><th>Fim do Contrato</th><th>Observação</th><th class="contab-col-acao"></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function contabRerenderBody() {
+  const body = document.getElementById('contab_body');
+  if (body) body.innerHTML = renderContabGrupos();
+}
+
+function wireContab() {
+  // Se não há modelo carregado para o mês actual, carrega-o
+  const mesEl = document.getElementById('contab_mes');
+  const mes = (mesEl && mesEl.value) || currentPeriodo();
+  if (contabModel.mes !== mes) {
+    contabLoadMes(mes);
+  }
+  const root = document.getElementById('contab_root');
+  if (!root) return;
+
+  // Mudança de mês
+  if (mesEl) mesEl.addEventListener('change', () => {
+    const novo = mesEl.value || currentPeriodo();
+    if (novo === contabModel.mes) return;
+    if (contabDirty && !confirm('Tens alterações não guardadas. Descartar?')) {
+      mesEl.value = contabModel.mes || currentPeriodo();
+      return;
+    }
+    contabLoadMes(novo);
+  });
+
+  // Edição de campos (delegação) — inputs texto
+  root.addEventListener('input', e => {
+    const t = e.target;
+    if (!t.dataset || !t.dataset.field) return;
+    const gid = t.dataset.gid;
+    const grupo = (contabModel.grupos || []).find(g => g.id === gid);
+    if (!grupo) return;
+    if (t.dataset.lid) {
+      const linha = (grupo.linhas || []).find(l => l.id === t.dataset.lid);
+      if (linha) { linha[t.dataset.field] = t.value; contabSetDirty(true); }
+    } else {
+      grupo[t.dataset.field] = t.value; contabSetDirty(true);
+    }
+  });
+
+  // Botões de acção (delegação)
+  root.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const gid = btn.dataset.gid;
+    if (action === 'add-linha') contabAddLinha(gid);
+    else if (action === 'del-linha') contabDelLinha(gid, btn.dataset.lid);
+    else if (action === 'del-empresa') contabDelEmpresa(gid);
+  });
+
+  const bSave = document.getElementById('contab_save'); if (bSave) bSave.addEventListener('click', contabSave);
+  const bPdf = document.getElementById('contab_pdf'); if (bPdf) bPdf.addEventListener('click', contabPdf);
+  const bCsv = document.getElementById('contab_csv'); if (bCsv) bCsv.addEventListener('click', contabCsv);
+  const bCopy = document.getElementById('contab_copy'); if (bCopy) bCopy.addEventListener('click', contabCopyPrev);
+  const bAdd = document.getElementById('contab_add_emp'); if (bAdd) bAdd.addEventListener('click', contabAddEmpresa);
+}
+
+async function contabLoadMes(mes) {
+  contabModel = { mes: mes, grupos: [] };
+  contabSetDirty(false);
+  const lbl = document.getElementById('contab_mes_label');
+  if (lbl) lbl.textContent = periodoLabel(mes);
+  const mesEl = document.getElementById('contab_mes'); if (mesEl && mesEl.value !== mes) mesEl.value = mes;
+  const body = document.getElementById('contab_body');
+  if (body) body.innerHTML = '<div class="contab-empty">A carregar…</div>';
+  try {
+    const snap = await db.collection('contabilidade').doc(mes).get();
+    if (snap.exists) {
+      const data = snap.data() || {};
+      contabModel = {
+        mes: mes,
+        grupos: Array.isArray(data.grupos) ? data.grupos.map(g => ({
+          id: g.id || uid(),
+          nome: g.nome || '',
+          linhas: Array.isArray(g.linhas) ? g.linhas.map(l => ({
+            id: l.id || uid(), nome: l.nome || '', salario: l.salario || '',
+            faltas: l.faltas || '', inicio: l.inicio || '', fim: l.fim || '', obs: l.obs || ''
+          })) : []
+        })) : []
+      };
+    }
+    contabSetDirty(false);
+    contabRerenderBody();
+  } catch (err) {
+    if (body) body.innerHTML = `<div class="contab-empty">Erro ao carregar a folha: ${escapeHtml(friendlyError(err))}</div>`;
+  }
+}
+
+async function contabSave() {
+  if (!isEditor()) { toast('Sem permissões para guardar.', true); return; }
+  const mes = contabModel.mes || currentPeriodo();
+  try {
+    await db.collection('contabilidade').doc(mes).set({
+      mes: mes,
+      grupos: (contabModel.grupos || []).map(g => ({
+        id: g.id, nome: g.nome || '',
+        linhas: (g.linhas || []).map(l => ({
+          id: l.id, nome: l.nome || '', salario: l.salario || '',
+          faltas: l.faltas || '', inicio: l.inicio || '', fim: l.fim || '', obs: l.obs || ''
+        }))
+      })),
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    });
+    contabSetDirty(false);
+    await logAudit('contab_save', mes, `Folha contabilidade · ${periodoLabel(mes)} · ${(contabModel.grupos || []).length} empresa(s)`);
+    toast('Folha guardada.');
+  } catch (err) {
+    toast(friendlyError(err), true);
+  }
+}
+
+async function contabCopyPrev() {
+  if (!isEditor()) { toast('Sem permissões para editar.', true); return; }
+  const mes = contabModel.mes || currentPeriodo();
+  const prev = contabPrevMonth(mes);
+  if (!prev) { toast('Mês inválido.', true); return; }
+  if ((contabModel.grupos || []).length && !confirm('Isto substitui o conteúdo actual pela estrutura do mês anterior (por rever antes de guardar). Continuar?')) return;
+  try {
+    const snap = await db.collection('contabilidade').doc(prev).get();
+    if (!snap.exists) { toast(`Não há folha em ${periodoLabel(prev)} para copiar.`, true); return; }
+    const data = snap.data() || {};
+    const grupos = Array.isArray(data.grupos) ? data.grupos : [];
+    if (!grupos.length) { toast(`A folha de ${periodoLabel(prev)} está vazia.`, true); return; }
+    contabModel.grupos = grupos.map(g => ({
+      id: uid(), nome: g.nome || '',
+      linhas: Array.isArray(g.linhas) ? g.linhas.map(l => ({
+        id: uid(), nome: l.nome || '', salario: l.salario || '',
+        faltas: l.faltas || '', inicio: l.inicio || '', fim: l.fim || '', obs: l.obs || ''
+      })) : []
+    }));
+    contabSetDirty(true);
+    contabRerenderBody();
+    toast(`Copiado de ${periodoLabel(prev)}. Revê e clica em 💾 Guardar.`);
+  } catch (err) {
+    toast(friendlyError(err), true);
+  }
+}
+
+function contabAddEmpresa() {
+  if (!isEditor()) { toast('Sem permissões para editar.', true); return; }
+  const nome = (prompt('Nome da empresa-cliente:', '') || '').trim();
+  if (nome === '') return;
+  if (!contabModel.grupos) contabModel.grupos = [];
+  contabModel.grupos.push({ id: uid(), nome: nome, linhas: [contabNovaLinha()] });
+  contabSetDirty(true);
+  contabRerenderBody();
+}
+
+function contabAddLinha(gid) {
+  if (!isEditor()) { toast('Sem permissões para editar.', true); return; }
+  const grupo = (contabModel.grupos || []).find(g => g.id === gid);
+  if (!grupo) return;
+  if (!grupo.linhas) grupo.linhas = [];
+  const nova = contabNovaLinha();
+  grupo.linhas.push(nova);
+  contabSetDirty(true);
+  contabRerenderBody();
+  // Foca o input do nome da nova linha
+  const el = document.querySelector(`input[data-lid="${nova.id}"][data-field="nome"]`);
+  if (el) el.focus();
+}
+
+function contabDelLinha(gid, lid) {
+  if (!isEditor()) { toast('Sem permissões para editar.', true); return; }
+  const grupo = (contabModel.grupos || []).find(g => g.id === gid);
+  if (!grupo) return;
+  const linha = (grupo.linhas || []).find(l => l.id === lid);
+  const nomeTxt = linha && linha.nome ? ` "${linha.nome}"` : '';
+  if (!confirm(`Eliminar esta linha${nomeTxt}?`)) return;
+  grupo.linhas = (grupo.linhas || []).filter(l => l.id !== lid);
+  contabSetDirty(true);
+  contabRerenderBody();
+}
+
+function contabDelEmpresa(gid) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar empresas.', true); return; }
+  const grupo = (contabModel.grupos || []).find(g => g.id === gid);
+  if (!grupo) return;
+  if (!confirm(`Eliminar a empresa "${grupo.nome || ''}" e todas as suas linhas?`)) return;
+  contabModel.grupos = (contabModel.grupos || []).filter(g => g.id !== gid);
+  contabSetDirty(true);
+  contabRerenderBody();
+}
+
+function contabPdf() {
+  const mes = contabModel.mes || currentPeriodo();
+  const grupos = (contabModel.grupos || []);
+  if (!grupos.length) { toast('Não há empresas nesta folha para imprimir.', true); return; }
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 12;
+  // Cabeçalho
+  const header = () => {
+    doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 24, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
+    doc.text('FOLHA PARA CONTABILIDADE', margin, 11);
+    doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+    doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(mes)}`, margin, 18);
+  };
+  // Colunas (landscape): Funcionários / Salários / Faltas / Início / Fim / Observação
+  const cols = [
+    { label: 'Funcionários', w: 62 },
+    { label: 'Salários', w: 30 },
+    { label: 'Faltas', w: 26 },
+    { label: 'Início Contrato', w: 38 },
+    { label: 'Fim do Contrato', w: 38 },
+    { label: 'Observação', w: 79 }
+  ];
+  const xs = []; let acc = margin; cols.forEach(c => { xs.push(acc); acc += c.w; });
+  const trunc = (txt, w) => {
+    let s = String(txt == null ? '' : txt);
+    const max = w - 3;
+    while (s && doc.getTextWidth(s) > max) s = s.slice(0, -1);
+    return s;
+  };
+  const drawColHead = (y) => {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(0, 51, 102);
+    cols.forEach((c, i) => doc.text(c.label, xs[i] + 1.5, y));
+    doc.setDrawColor(0, 51, 102); doc.line(margin, y + 1.5, margin + acc - margin, y + 1.5);
+  };
+
+  header();
+  let y = 32;
+  grupos.forEach(g => {
+    // Banda de título do grupo (nova página se não couber)
+    if (y > pageH - 30) { doc.addPage(); header(); y = 32; }
+    doc.setFillColor(212, 175, 55); doc.rect(margin, y - 4.5, acc - margin, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(0, 34, 68);
+    doc.text(trunc(g.nome || '(sem nome)', acc - margin - 4), margin + 2, y + 1);
+    y += 8;
+    // Cabeçalho das colunas
+    drawColHead(y); y += 6;
+    const linhas = g.linhas || [];
+    if (!linhas.length) {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.setTextColor(120, 120, 120);
+      doc.text('(sem funcionários)', margin + 2, y); y += 7;
+    }
+    linhas.forEach((l, idx) => {
+      if (y > pageH - 16) { doc.addPage(); header(); y = 32; drawColHead(y); y += 6; }
+      if (idx % 2 === 1) { doc.setFillColor(244, 246, 249); doc.rect(margin, y - 4, acc - margin, 6.5, 'F'); }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(0, 34, 68);
+      const cells = [l.nome, l.salario, l.faltas, l.inicio, l.fim, l.obs];
+      cells.forEach((val, i) => doc.text(trunc(val, cols[i].w), xs[i] + 1.5, y));
+      y += 6.5;
+    });
+    y += 6;
+  });
+  y = Math.min(y, pageH - 12);
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+  doc.text('Documento de apoio à gestão.', margin, pageH - 12);
+  pdfFooter(doc, pageW, pageH);
+  doc.save(`Folha_contabilidade_${mes}.pdf`);
+  toast('PDF gerado.');
+}
+
+function contabCsv() {
+  const mes = contabModel.mes || currentPeriodo();
+  const grupos = (contabModel.grupos || []);
+  const linhasTotal = grupos.reduce((s, g) => s + ((g.linhas || []).length), 0);
+  if (!linhasTotal) { toast('Não há linhas nesta folha para exportar.', true); return; }
+  const head = ['Empresa', 'Funcionário', 'Salário', 'Faltas', 'Início Contrato', 'Fim do Contrato', 'Observação'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [];
+  grupos.forEach(g => {
+    (g.linhas || []).forEach(l => {
+      rows.push([g.nome || '', l.nome || '', l.salario || '', l.faltas || '', l.inicio || '', l.fim || '', l.obs || '']);
+    });
+  });
+  const csv = '﻿' + head.join(';') + '\r\n' + rows.map(row => row.map(esc).join(';')).join('\r\n');
+  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Folha_contabilidade_${mes}.csv`);
   toast('CSV exportado.');
 }
 
