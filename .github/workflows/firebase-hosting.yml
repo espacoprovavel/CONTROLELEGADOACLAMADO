@@ -1,0 +1,24 @@
+name: Publicar no Firebase Hosting
+
+# Publica a app automaticamente sempre que houver alterações no main,
+# e permite publicar manualmente a partir do separador Actions.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter o código
+        uses: actions/checkout@v4
+
+      - name: Publicar no Firebase Hosting (canal live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CONTROLE_LEGADO_ACLAMADO }}
+          channelId: live
+          projectId: controle-legado-aclamado
