@@ -658,11 +658,7 @@ footer strong { color: var(--ink); }
     </div>
 
     <div class="toolbar master-only" style="margin-top:-12px;">
-      <span style="font-family:'JetBrains Mono';font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);">Ferramentas de cálculo:</span>
-      <button class="btn btn-ghost" id="btnToolHoras">🕐 Calculadora de Horas</button>
-      <button class="btn btn-ghost" id="btnToolSimples">➖ Cálculo Simplificado</button>
-      <button class="btn btn-ghost" id="btnToolContab">📑 Cálculo Completo (Contabilista)</button>
-      <button class="btn btn-ghost" id="btnRelContab" style="margin-left:auto;">📤 Relatório p/ Contabilista</button>
+      <button class="btn btn-ghost" id="btnRelContab">📤 Relatório p/ Contabilista</button>
     </div>
 
     <div id="groupsWrap"></div>
@@ -5090,9 +5086,6 @@ function bindFiscal() {
   document.getElementById('a1Save').addEventListener('click', saveA1);
 
   // Ferramentas de cálculo (área Funcionários)
-  document.getElementById('btnToolHoras').addEventListener('click', openToolHoras);
-  document.getElementById('btnToolSimples').addEventListener('click', openToolSimples);
-  document.getElementById('btnToolContab').addEventListener('click', () => openToolContab(null));
   document.getElementById('btnRelContab').addEventListener('click', openRelContab);
   document.getElementById('toolHorasClose').addEventListener('click', () => closeModal('toolHorasModal'));
   document.getElementById('toolHorasCloseFoot').addEventListener('click', () => closeModal('toolHorasModal'));
