@@ -997,9 +997,11 @@ footer strong { color: var(--ink); }
     <div class="modal-body" id="relContabBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="relContabCloseFoot">Fechar</button>
+      <button class="btn btn-primary" id="relContabSave">💾 Guardar relatório</button>
+      <button class="btn btn-ghost" id="relContabSync">📤 Atualizar fichas dos funcionários</button>
       <button class="btn btn-ghost" id="relContabExcel">📊 Exportar Excel/CSV</button>
       <button class="btn btn-ghost" id="relContabPdf">📄 Tabela PDF</button>
-      <button class="btn btn-primary" id="relContabConsolidado">📑 PDF Consolidado (pagamentos do mês)</button>
+      <button class="btn btn-ghost" id="relContabConsolidado">📑 PDF Consolidado (pagamentos do mês)</button>
     </div>
   </div>
 </div>
@@ -4854,60 +4856,103 @@ async function salvarReciboContab() {
    RELATÓRIO PARA O CONTABILISTA (por trabalhador e mês)
    ============================================================ */
 let relContabRows = [];
+let relContabMes = '';
+let relContabDirty = false;
+let relContabSaved = false;
+
+/* ---- utilitários de data para o relatório ---- */
+// YYYY-MM-DD -> dd/mm/aaaa (aceita já dd/mm/aaaa ou vazio)
+function ymdToBr(s) {
+  s = (s == null ? '' : String(s)).trim();
+  if (!s) return '';
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return s; // já em dd/mm/aaaa ou texto livre
+}
+// dd/mm/aaaa -> YYYY-MM-DD (aceita já YYYY-MM-DD); '' se inválida
+function brToYmd(s) {
+  s = (s == null ? '' : String(s)).trim();
+  if (!s) return '';
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) { const dt = new Date(s + 'T00:00:00'); return isNaN(dt.getTime()) ? '' : s; }
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (m) {
+    const d = m[1].padStart(2, '0'), mo = m[2].padStart(2, '0'), y = m[3];
+    if (parseInt(mo, 10) < 1 || parseInt(mo, 10) > 12 || parseInt(d, 10) < 1 || parseInt(d, 10) > 31) return '';
+    const iso = `${y}-${mo}-${d}`;
+    const dt = new Date(iso + 'T00:00:00');
+    return isNaN(dt.getTime()) ? '' : iso;
+  }
+  return '';
+}
+
 async function openRelContab() {
   if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
-  const periodo = currentPeriodo();
+  const periodo = relContabMes || currentPeriodo();
   document.getElementById('relContabBody').innerHTML = `
     <div class="calc-input-grid">
-      <div class="cfg-field"><label>Período</label><input type="month" id="rc_periodo" value="${periodo}"></div>
+      <div class="cfg-field"><label>Mês</label><input type="month" id="rc_periodo" value="${periodo}"></div>
+      <div class="cfg-field"><label>Histórico (meses guardados)</label><select id="rc_historico"><option value="">— meses guardados —</option></select></div>
     </div>
-    <button class="btn btn-primary" id="rc_gerar">🔄 Gerar relatório</button>
-    <div id="rc_tabela" style="margin-top:16px;"><div class="es-sub">Escolha o período e clique em “Gerar relatório”. Inclui os recibos guardados desse mês.</div></div>`;
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 2px;">
+      <button class="btn btn-primary" id="rc_gerar">🔄 Gerar / Carregar</button>
+      <span id="rc_status" class="es-sub"></span>
+    </div>
+    <div id="rc_tabela" style="margin-top:12px;"><div class="es-sub">Escolha o mês e clique em “Gerar / Carregar”. Carrega o relatório guardado desse mês ou pré-preenche a partir das fichas dos funcionários ativos.</div></div>`;
   document.getElementById('rc_gerar').addEventListener('click', gerarRelContab);
+  document.getElementById('rc_historico').addEventListener('change', (ev) => {
+    const m = ev.target.value;
+    if (m) { document.getElementById('rc_periodo').value = m; gerarRelContab(); }
+  });
+  const tab = document.getElementById('rc_tabela');
+  tab.addEventListener('input', onRcEdit);
+  tab.addEventListener('change', onRcEdit);
+  loadRcHistorico();
   openModal('relContabModal');
+}
+
+async function loadRcHistorico() {
+  const sel = document.getElementById('rc_historico');
+  if (!sel) return;
+  try {
+    const snap = await db.collection('contabilidade').get();
+    const meses = snap.docs.map(d => d.id).filter(id => id.indexOf('rel_') === 0).map(id => id.slice(4)).sort().reverse();
+    sel.innerHTML = '<option value="">— meses guardados —</option>' + meses.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(periodoLabel(m))}</option>`).join('');
+  } catch (err) { /* silencioso — histórico é auxiliar */ }
 }
 
 async function gerarRelContab() {
   const periodo = document.getElementById('rc_periodo').value;
-  showOverlay('A reunir recibos do período…');
-  relContabRows = [];
+  if (!periodo) { toast('Escolha um mês.', true); return; }
+  showOverlay('A carregar relatório…');
   try {
-    for (const e of employees) {
-      let recibo = null;
-      try { const d = await db.collection('funcionarios').doc(e.id).collection('recibos').doc(periodo).get(); if (d.exists) recibo = d.data(); } catch (err) { /* segue */ }
-      // faltas por tipo no período
-      let faltas = [];
-      try { const fs = await db.collection('funcionarios').doc(e.id).collection('faltas').where('periodo', '==', periodo).get(); faltas = fs.docs.map(x => x.data()); } catch (err) { /* segue */ }
-      const fcount = t => faltas.filter(f => f.tipo === t).reduce((s, f) => s + num(f.quantidade, 0), 0);
-      const t = recibo ? recibo.totais : null;
-      const modoPag = e.modo_pagamento || 'salario_horas_extra';
-      relContabRows.push({
-        nome: e.nome || '', nif: e.nif || '', niss: e.niss || '', categoria: e.categoria || e.funcao || '',
-        modoPagamento: modoPag,
-        modoBadge: modoPag === 'so_horas' ? '🕐' : '💼',
-        salarioFicha: (e.venc !== '' && e.venc != null) ? num(e.venc, 0) : null,
-        valorHora: (e.valor_hora !== '' && e.valor_hora != null) ? num(e.valor_hora, 0) : null,
-        faltaJust: fcount('justificada'), faltaInjust: fcount('injustificada'), faltaBaixa: fcount('baixa'), faltaAdm: fcount('admissao'),
-        vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
-        ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
-        baseSS: t ? t.baseIncidencia : null, ssTrab: t ? t.ssTrab : null, irs: t ? t.irs : null, liquido: t ? t.liquido : null,
-        custoEmpresa: t ? num(t.custoEmpresa, 0) : null, iliquido: t ? num(t.iliquido, 0) : null,
-        temRecibo: !!recibo, reciboFull: recibo
-      });
+    let snap = null;
+    try { snap = await db.collection('contabilidade').doc('rel_' + periodo).get(); } catch (err) { /* segue para pré-preenchimento */ }
+    if (snap && snap.exists && Array.isArray(snap.data().linhas)) {
+      relContabRows = snap.data().linhas.map(l => ({
+        funcId: l.funcId || '', nome: l.nome || '', nif: l.nif || '',
+        empresa: l.empresa || '',
+        salario: (l.salario == null ? '' : String(l.salario)),
+        faltas: l.faltas || '', inicio: l.inicio || '', fim: l.fim || '', obs: l.obs || ''
+      }));
+      relContabSaved = true;
+    } else {
+      relContabRows = employees.filter(e => e.estado === 'ativo').map(e => ({
+        funcId: e.id, nome: e.nome || '', nif: e.nif || '',
+        empresa: e.cliente || '',
+        salario: (e.venc !== '' && e.venc != null && num(e.venc, 0) !== 0) ? String(num(e.venc, 0)) : '',
+        faltas: '',
+        inicio: ymdToBr(e.adm || ''),
+        fim: ymdToBr(e.cess || ''),
+        obs: ''
+      }));
+      relContabSaved = false;
     }
-    document.getElementById('rc_tabela').innerHTML = `
-      <div class="es-sub" style="margin-bottom:8px;">${periodoLabel(periodo)} · ${relContabRows.length} trabalhador(es). Salário e faltas para entrega ao contabilista.</div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>NIF</th><th>Salário</th><th>Faltas (J/I/B/A)</th></tr></thead>
-        <tbody>${relContabRows.map(r => `<tr>
-          <td>${escapeHtml(r.nome)}</td>
-          <td class="cell-mono">${escapeHtml(r.nif)}</td>
-          <td>${salarioContabTxt(r)}</td>
-          <td class="cell-mono">${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}</td>
-        </tr>`).join('')}</tbody>
-      </table></div>
-      <div class="es-sub" style="margin-top:8px;">Faltas: <strong>J</strong>=justificada · <strong>I</strong>=injustificada · <strong>B</strong>=baixa · <strong>A</strong>=por admissão. Quantidades em dias/horas do período.</div>`;
+    relContabMes = periodo;
+    relContabDirty = false;
     document.getElementById('relContabModal').dataset.periodo = periodo;
+    renderRelContab();
+    updateRcStatus();
   } catch (err) {
     toast('Erro ao gerar relatório: ' + friendlyError(err), true);
   } finally {
@@ -4915,62 +4960,271 @@ async function gerarRelContab() {
   }
 }
 
-// Texto do salário para a tabela do contabilista: €/mês (salário fixo) ou €/h (só por horas).
-function salarioContabTxt(r) {
-  if (r.modoPagamento === 'so_horas') {
-    return r.valorHora != null ? `${eur(r.valorHora)}/h` : '—';
+// Rótulo do grupo: "Empresa - País" quando os membros partilham um único país conhecido.
+function empGroupLabel(empresa, idxs) {
+  const paises = new Set();
+  idxs.forEach(i => {
+    const r = relContabRows[i];
+    const e = employees.find(x => x.id === r.funcId);
+    if (e) { const g = getGroup(e); if (g && g !== 'Outros') paises.add(g); }
+  });
+  if (paises.size === 1) return empresa + ' - ' + Array.from(paises)[0];
+  return empresa;
+}
+
+function rcInput(idx, field, val, ph, width) {
+  return `<input data-idx="${idx}" data-field="${field}" value="${escapeHtml(val)}" placeholder="${escapeHtml(ph || '')}" style="width:${width || '100%'};min-width:60px;box-sizing:border-box;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font:inherit;background:#fff;color:#0a2540;">`;
+}
+
+function rcEmpSelect(idx, val) {
+  const list = appListas.empresas || [];
+  const seen = new Set();
+  let o = `<option value="">— Sem empresa —</option>`;
+  list.forEach(v => { o += `<option value="${escapeHtml(v)}"${v === val ? ' selected' : ''}>${escapeHtml(v)}</option>`; seen.add(v); });
+  if (val && !seen.has(val)) o += `<option value="${escapeHtml(val)}" selected>${escapeHtml(val)}</option>`;
+  return `<select data-idx="${idx}" data-field="empresa" style="min-width:140px;box-sizing:border-box;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font:inherit;background:#fff;color:#0a2540;">${o}</select>`;
+}
+
+function renderRelContab() {
+  const cont = document.getElementById('rc_tabela');
+  if (!cont) return;
+  if (!relContabRows.length) { cont.innerHTML = '<div class="es-sub">Sem funcionários ativos para este mês.</div>'; return; }
+  // Agrupar por empresa (preservando índice no array canónico)
+  const groups = new Map();
+  relContabRows.forEach((r, idx) => {
+    const key = (r.empresa || '').trim() || '__none__';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(idx);
+  });
+  const keys = Array.from(groups.keys()).filter(k => k !== '__none__').sort((a, b) => a.localeCompare(b, 'pt'));
+  if (groups.has('__none__')) keys.push('__none__');
+  let html = `<div class="es-sub" style="margin-bottom:8px;">${periodoLabel(relContabMes)} · ${relContabRows.length} funcionário(s) · ${keys.length} empresa(s). Edite os valores e use <strong>💾 Guardar relatório</strong> no rodapé.</div>`;
+  keys.forEach(key => {
+    const idxs = groups.get(key);
+    const label = key === '__none__' ? 'Sem empresa cliente' : empGroupLabel(key, idxs);
+    html += `<div style="margin:16px 0 6px;padding:7px 12px;background:#eef2f8;border-left:4px solid #003366;border-radius:4px;font-weight:700;color:#003366;">${escapeHtml(label)} <span style="font-weight:400;color:#5a6b80;">· ${idxs.length} funcionário(s)</span></div>`;
+    html += `<div class="table-wrap"><table><thead><tr>
+      <th>Funcionários</th><th>NIF</th><th>Empresa</th><th>Salário</th><th>Faltas</th><th>Início Contrato</th><th>Fim Contrato</th><th>Observação</th>
+    </tr></thead><tbody>`;
+    idxs.forEach(i => {
+      const r = relContabRows[i];
+      html += `<tr>
+        <td>${escapeHtml(r.nome)}</td>
+        <td class="cell-mono">${escapeHtml(r.nif)}</td>
+        <td>${rcEmpSelect(i, r.empresa || '')}</td>
+        <td>${rcInput(i, 'salario', r.salario, '€', '90px')}</td>
+        <td>${rcInput(i, 'faltas', r.faltas, 'ex.: 2 injust.', '110px')}</td>
+        <td>${rcInput(i, 'inicio', r.inicio, 'dd/mm/aaaa', '110px')}</td>
+        <td>${rcInput(i, 'fim', r.fim, 'dd/mm/aaaa', '110px')}</td>
+        <td>${rcInput(i, 'obs', r.obs, '', '180px')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  cont.innerHTML = html;
+}
+
+function onRcEdit(ev) {
+  const el = ev.target.closest('[data-idx][data-field]');
+  if (!el) return;
+  const idx = parseInt(el.dataset.idx, 10);
+  const field = el.dataset.field;
+  if (isNaN(idx) || !relContabRows[idx]) return;
+  relContabRows[idx][field] = el.value;
+  relContabDirty = true;
+  updateRcStatus();
+  if (field === 'empresa' && ev.type === 'change') renderRelContab();
+}
+
+function updateRcStatus() {
+  const el = document.getElementById('rc_status');
+  if (!el) return;
+  if (relContabDirty) { el.innerHTML = '<span style="color:#b8860b;font-weight:600;">● alterações por guardar</span>'; return; }
+  el.innerHTML = relContabSaved
+    ? '<span style="color:#1a7f37;font-weight:600;">✔ guardado</span>'
+    : '<span style="color:#5a6b80;">novo (ainda não guardado)</span>';
+}
+
+async function saveRelContab() {
+  if (!isEditor()) { toast('Sem permissões para guardar.', true); return; }
+  if (!relContabMes) { toast('Gere/carregue um mês primeiro.', true); return; }
+  showOverlay('A guardar relatório…');
+  try {
+    const linhas = relContabRows.map(r => ({
+      funcId: r.funcId || '', nome: r.nome || '', nif: r.nif || '',
+      empresa: (r.empresa || '').trim(),
+      salario: r.salario || '', faltas: r.faltas || '',
+      inicio: r.inicio || '', fim: r.fim || '', obs: r.obs || ''
+    }));
+    await db.collection('contabilidade').doc('rel_' + relContabMes).set({
+      tipo: 'relatorio_contab', mes: relContabMes, linhas,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    }, { merge: true });
+    relContabDirty = false; relContabSaved = true;
+    toast('Relatório guardado.');
+    logAudit('relcontab_save', 'rel_' + relContabMes, periodoLabel(relContabMes));
+    updateRcStatus();
+    loadRcHistorico();
+  } catch (err) {
+    toast('Erro ao guardar: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
   }
-  return r.salarioFicha != null ? eur(r.salarioFicha) : '—';
+}
+
+async function syncRelContabFichas() {
+  if (!isEditor()) { toast('Sem permissões para atualizar fichas.', true); return; }
+  if (!relContabRows.length) { toast('Gere/carregue um mês primeiro.', true); return; }
+  if (!confirm('Atualizar as fichas dos funcionários com a Empresa cliente, o Início e o Fim de contrato deste relatório?\n\nEsta ação grava diretamente nas fichas (campos: empresa cliente, admissão e cessação).')) return;
+  showOverlay('A atualizar fichas…');
+  let n = 0;
+  try {
+    for (const r of relContabRows) {
+      if (!r.funcId) continue;
+      const data = { cliente: (r.empresa || '').trim() };
+      const ini = brToYmd(r.inicio); if (ini) data.adm = ini;
+      const fim = brToYmd(r.fim); if (fim) data.cess = fim;
+      await db.collection('funcionarios').doc(r.funcId).set(data, { merge: true });
+      n++;
+    }
+    toast(`Fichas atualizadas: ${n}.`);
+    logAudit('relcontab_sync', 'rel_' + relContabMes, `${n} ficha(s)`);
+  } catch (err) {
+    toast('Erro ao atualizar fichas: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+// Ordena os índices agrupados por empresa (mesma ordem do ecrã) para exportações.
+function relContabOrdered() {
+  const groups = new Map();
+  relContabRows.forEach((r, idx) => {
+    const key = (r.empresa || '').trim() || '__none__';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(idx);
+  });
+  const keys = Array.from(groups.keys()).filter(k => k !== '__none__').sort((a, b) => a.localeCompare(b, 'pt'));
+  if (groups.has('__none__')) keys.push('__none__');
+  return keys.map(k => ({
+    empresa: k === '__none__' ? 'Sem empresa cliente' : empGroupLabel(k, groups.get(k)),
+    idxs: groups.get(k)
+  }));
 }
 
 function relContabCsv() {
   if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
-  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
-  const head = ['Nome', 'NIF', 'Salário', 'Faltas justif.', 'Faltas injustif.', 'Baixa', 'Por admissão'];
+  const periodo = document.getElementById('relContabModal').dataset.periodo || relContabMes || currentPeriodo();
+  const head = ['Empresa', 'Funcionário', 'NIF', 'Salário', 'Faltas', 'Início Contrato', 'Fim do Contrato', 'Observação'];
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const rows = relContabRows.map(r => [
-    r.nome, r.nif, salarioContabTxt(r).replace(/€/g, '€'),
-    r.faltaJust, r.faltaInjust, r.faltaBaixa, r.faltaAdm
-  ]);
-  const csv = '﻿' + head.join(';') + '\r\n' + rows.map(row => row.map(esc).join(';')).join('\r\n');
+  const lines = [];
+  relContabOrdered().forEach(g => {
+    g.idxs.forEach(i => {
+      const r = relContabRows[i];
+      lines.push([g.empresa, r.nome, r.nif, r.salario, r.faltas, r.inicio, r.fim, r.obs].map(esc).join(';'));
+    });
+  });
+  const csv = '﻿' + head.join(';') + '\r\n' + lines.join('\r\n');
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `Relatorio_contabilista_${periodo}.csv`);
   toast('CSV exportado.');
 }
 
 function relContabPdf() {
   if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
-  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
+  const periodo = document.getElementById('relContabModal').dataset.periodo || relContabMes || currentPeriodo();
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-  const pageW = doc.internal.pageSize.getWidth(); const margin = 12;
-  doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 24, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
-  doc.text('RELATÓRIO PARA O CONTABILISTA', margin, 11);
-  doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-  doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 12;
+  const cols = [
+    { h: 'Funcionários', x: margin, w: 70 },
+    { h: 'Salário', x: margin + 72, w: 28 },
+    { h: 'Faltas', x: margin + 102, w: 28 },
+    { h: 'Início', x: margin + 132, w: 30 },
+    { h: 'Fim', x: margin + 164, w: 30 },
+    { h: 'Observação', x: margin + 196, w: pageW - margin - (margin + 196) }
+  ];
+
+  const topBanner = () => {
+    doc.setFillColor(0, 51, 102); doc.rect(0, 0, pageW, 24, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
+    doc.text('RELATÓRIO PARA O CONTABILISTA', margin, 11);
+    doc.setFontSize(9); doc.setTextColor(212, 175, 55);
+    doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
+  };
+  const colHeader = (y) => {
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
+    cols.forEach(c => doc.text(c.h, c.x, y));
+    doc.setDrawColor(200); doc.line(margin, y + 1.5, pageW - margin, y + 1.5);
+    return y + 6;
+  };
+
+  topBanner();
   let y = 32;
-  const headers = ['Nome', 'NIF', 'Salário', 'Faltas (J/I/B/A)'];
-  const xs = [margin, margin + 90, margin + 130, margin + 175];
-  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
-  headers.forEach((h, i) => doc.text(h, xs[i], y)); y += 2; doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 5;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0, 34, 68);
-  relContabRows.forEach(r => {
-    if (y > 195) { doc.addPage(); y = 20; }
-    const cells = [r.nome.slice(0, 48), r.nif, salarioContabTxt(r), `${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`];
-    cells.forEach((c, i) => doc.text(String(c), xs[i], y)); y += 7;
+  const grupos = relContabOrdered();
+  grupos.forEach(g => {
+    if (y > pageH - 24) { doc.addPage(); topBanner(); y = 32; }
+    // banda da empresa
+    doc.setFillColor(238, 242, 248); doc.rect(margin, y - 4, pageW - margin * 2, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(0, 51, 102);
+    doc.text(g.empresa, margin + 2, y + 1);
+    y += 8;
+    y = colHeader(y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0, 34, 68);
+    let zebra = false;
+    g.idxs.forEach(i => {
+      if (y > pageH - 16) { doc.addPage(); topBanner(); y = 32; y = colHeader(y); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0, 34, 68); }
+      if (zebra) { doc.setFillColor(247, 249, 252); doc.rect(margin, y - 4, pageW - margin * 2, 6, 'F'); }
+      zebra = !zebra;
+      const r = relContabRows[i];
+      const cells = [String(r.nome || '').slice(0, 42), r.salario || '', r.faltas || '', r.inicio || '', r.fim || '', String(r.obs || '').slice(0, 40)];
+      cells.forEach((c, k) => doc.text(String(c), cols[k].x, y));
+      y += 6;
+    });
+    y += 4;
   });
-  y += 4; doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
-  doc.text('Faltas: J=justificada I=injustificada B=baixa A=por admissão (quantidades em dias/horas do período). Estimativas de apoio à gestão. Não substituem contabilidade certificada nem software certificado pela AT.', margin, y);
-  pdfFooter(doc, pageW, doc.internal.pageSize.getHeight());
+  y += 2;
+  if (y > pageH - 14) { doc.addPage(); topBanner(); y = 32; }
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+  doc.text(doc.splitTextToSize('Documento de apoio à gestão para envio ao contabilista, agrupado por empresa cliente. Não substitui contabilidade certificada nem software certificado pela AT.', pageW - margin * 2), margin, y);
+  pdfFooter(doc, pageW, pageH);
   doc.save(`Relatorio_contabilista_${periodo}.pdf`);
   toast('PDF exportado.');
 }
 
-// PDF consolidado: 1 página por funcionário (cálculo completo) + página final de resumo de pagamentos
-function relContabConsolidadoPdf() {
+// PDF consolidado: 1 página por funcionário (recibo guardado) + página final de resumo de pagamentos.
+// Lê os recibos diretamente da subcolecção para não depender do modelo editável do relatório.
+async function relContabConsolidadoPdf() {
   if (relContabRows.length === 0) { toast('Gere o relatório primeiro.', true); return; }
-  const comRecibo = relContabRows.filter(r => r.temRecibo);
+  const periodo = document.getElementById('relContabModal').dataset.periodo || relContabMes || currentPeriodo();
+  showOverlay('A reunir recibos do período…');
+  const comRecibo = [];
+  try {
+    for (const r of relContabRows) {
+      if (!r.funcId) continue;
+      let recibo = null;
+      try { const d = await db.collection('funcionarios').doc(r.funcId).collection('recibos').doc(periodo).get(); if (d.exists) recibo = d.data(); } catch (err) { /* segue */ }
+      if (!recibo) continue;
+      const e = employees.find(x => x.id === r.funcId) || {};
+      const t = recibo.totais || null;
+      comRecibo.push({
+        nome: r.nome || e.nome || '—', nif: r.nif || e.nif || '—',
+        niss: e.niss || '—', categoria: e.categoria || e.funcao || '—',
+        faltas: r.faltas || '', reciboFull: recibo,
+        vencimento: t ? t.vencEfetivo : null, subsidios: t ? t.totalSub : null,
+        ajudas: t ? (num(t.ajudasCusto, 0) + num(t.ajudasCustoEstr, 0)) : null,
+        baseSS: t ? t.baseIncidencia : null, ssTrab: t ? t.ssTrab : null,
+        irs: t ? t.irs : null, liquido: t ? t.liquido : null,
+        custoEmpresa: t ? num(t.custoEmpresa, 0) : null, iliquido: t ? num(t.iliquido, 0) : null
+      });
+    }
+  } catch (err) {
+    hideOverlay(); toast('Erro ao reunir recibos: ' + friendlyError(err), true); return;
+  }
+  hideOverlay();
   if (comRecibo.length === 0) { toast('Nenhum recibo guardado neste período. Guarde os cálculos primeiro.', true); return; }
-  const periodo = document.getElementById('relContabModal').dataset.periodo || currentPeriodo();
+
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -4986,7 +5240,6 @@ function relContabConsolidadoPdf() {
     doc.text(sub, margin, 24.5);
   };
 
-  // Uma página por funcionário com recibo guardado
   comRecibo.forEach((r, idx) => {
     if (idx > 0) doc.addPage();
     header(`${periodoLabel(periodo)} · Funcionário ${idx + 1}/${comRecibo.length}`);
@@ -4995,7 +5248,7 @@ function relContabConsolidadoPdf() {
     doc.text(r.nome || '—', margin, y); y += 6;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120);
     doc.text(`NIF: ${r.nif || '—'} · NISS: ${r.niss || '—'} · ${r.categoria || '—'}`, margin, y); y += 4;
-    doc.text(`Faltas J/I/B/A: ${r.faltaJust}/${r.faltaInjust}/${r.faltaBaixa}/${r.faltaAdm}`, margin, y); y += 8;
+    doc.text(`Faltas: ${r.faltas || '—'}`, margin, y); y += 8;
 
     const rows = [];
     const rub = r.reciboFull && r.reciboFull.rubricas;
@@ -5025,7 +5278,6 @@ function relContabConsolidadoPdf() {
     pdfFooter(doc, pageW, pageH);
   });
 
-  // Página final: resumo de pagamentos a enviar ao contabilista
   doc.addPage();
   header(`${periodoLabel(periodo)} · Resumo de pagamentos`);
   let y = 40;
@@ -5099,6 +5351,8 @@ function bindFiscal() {
   document.getElementById('toolContabSave').addEventListener('click', salvarReciboContab);
   document.getElementById('relContabClose').addEventListener('click', () => closeModal('relContabModal'));
   document.getElementById('relContabCloseFoot').addEventListener('click', () => closeModal('relContabModal'));
+  document.getElementById('relContabSave').addEventListener('click', saveRelContab);
+  document.getElementById('relContabSync').addEventListener('click', syncRelContabFichas);
   document.getElementById('relContabExcel').addEventListener('click', relContabCsv);
   document.getElementById('relContabPdf').addEventListener('click', relContabPdf);
   document.getElementById('relContabConsolidado').addEventListener('click', relContabConsolidadoPdf);
