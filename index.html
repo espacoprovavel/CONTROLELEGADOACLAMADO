@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -1002,6 +1003,20 @@ footer strong { color: var(--ink); }
       <button class="btn btn-ghost" id="relContabExcel">📊 Exportar Excel/CSV</button>
       <button class="btn btn-ghost" id="relContabPdf">📄 Tabela PDF</button>
       <button class="btn btn-ghost" id="relContabConsolidado">📑 PDF Consolidado (pagamentos do mês)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="impPreviewModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📥 Importar do Excel — Pré-visualização</h2>
+      <button class="modal-close" id="impPreviewClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="impPreviewBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="impPreviewCancel">Cancelar</button>
+      <button class="btn btn-primary" id="impPreviewConfirm">✅ Confirmar e atualizar fichas</button>
     </div>
   </div>
 </div>
@@ -4886,6 +4901,242 @@ function brToYmd(s) {
   return '';
 }
 
+/* ============================================================
+   Importação de Excel (empresa + datas de contrato) — folha "MONICA OK"
+   ============================================================ */
+let impEntries = [];
+
+// Normaliza um nome para correspondência: maiúsculas, sem acentos, espaços colapsados.
+function impNormName(s) {
+  return (s == null ? '' : String(s))
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+// Converte valor de célula (Date, "YYYY-MM-DD", "dd/mm/aaaa") para "YYYY-MM-DD"; '' se vazio/inválido.
+function impDateToYmd(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return '';
+    const y = v.getFullYear();
+    const mo = String(v.getMonth() + 1).padStart(2, '0');
+    const d = String(v.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${d}`;
+  }
+  let s = String(v).trim();
+  if (!s) return '';
+  // ISO possivelmente com hora ou dígitos simples: 2025-6-1, 2025-06-01T00:00:00
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) {
+    const mo = m[2].padStart(2, '0'), d = m[3].padStart(2, '0');
+    if (parseInt(mo, 10) < 1 || parseInt(mo, 10) > 12 || parseInt(d, 10) < 1 || parseInt(d, 10) > 31) return '';
+    return `${m[1]}-${mo}-${d}`;
+  }
+  // dd/mm/aaaa (ou com - .) — delega no conversor existente
+  return brToYmd(s);
+}
+
+// Normaliza cabeçalho de coluna: minúsculas, sem acentos, espaços colapsados.
+function impNormHeader(s) {
+  return (s == null ? '' : String(s))
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+// Parseia uma matriz de linhas (arrays) no layout por secções "MONICA OK".
+// Devolve { entries: [{nome, empresa, inicioRaw, fimRaw}], warnings: [] }.
+function impParseRows(rows) {
+  const entries = [];
+  const warnings = [];
+  let empresa = '';
+  let inSection = false;   // true depois de ver o cabeçalho de colunas ("Funcionários")
+  let colIni = -1, colFim = -1;
+  const isTitle = (a) => /^[a-zçãáéíóúâêô]+\s+\d{4}$/i.test(a) || /^a\s+\d{4}$/i.test(a); // "Agosto 2026", "A 2026"
+
+  for (let i = 0; i < rows.length; i++) {
+    const raw = rows[i] || [];
+    const cells = raw.map(c => (c == null ? '' : (c instanceof Date ? c : String(c))));
+    const trimmed = cells.map(c => (c instanceof Date ? 'D' : String(c).trim()));
+    if (trimmed.every(c => c === '')) continue; // linha totalmente vazia
+    const a = (cells[0] instanceof Date) ? '' : String(cells[0] || '').trim();
+    const aNorm = impNormHeader(a);
+
+    // Cabeçalho de colunas?
+    if (aNorm.indexOf('funcion') === 0) {
+      colIni = -1; colFim = -1;
+      cells.forEach((c, idx) => {
+        const cl = impNormHeader(c instanceof Date ? '' : c);
+        if (cl.indexOf('inicio') >= 0 && cl.indexOf('contrato') >= 0) colIni = idx;
+        else if (cl.indexOf('fim') >= 0 && cl.indexOf('contrato') >= 0) colFim = idx;
+      });
+      inSection = true;
+      continue;
+    }
+
+    // Só a coluna A preenchida (restantes vazias)?
+    const onlyA = a !== '' && trimmed.slice(1).every(c => c === '');
+    if (onlyA) {
+      const next = rows[i + 1] || [];
+      const nextA = impNormHeader(next[0] instanceof Date ? '' : (next[0] == null ? '' : next[0]));
+      if (nextA.indexOf('funcion') === 0) { empresa = a; inSection = false; continue; } // cabeçalho de grupo (fiável)
+      if (a.indexOf(' - ') >= 0 && !isTitle(a)) { empresa = a; inSection = false; continue; } // cabeçalho de grupo por " - "
+      if (isTitle(a)) continue; // linha de título (mês)
+      if (inSection && empresa) { entries.push({ nome: a, empresa, inicioRaw: '', fimRaw: '' }); } // funcionário sem datas
+      continue;
+    }
+
+    // Linha de dados: nome em A + empresa atual conhecida
+    if (a && empresa && inSection) {
+      const inicioRaw = colIni >= 0 ? cells[colIni] : '';
+      const fimRaw = colFim >= 0 ? cells[colFim] : '';
+      entries.push({ nome: a, empresa, inicioRaw, fimRaw });
+    }
+  }
+  return { entries, warnings };
+}
+
+// Lê o ficheiro escolhido, parseia todas as folhas relevantes e mostra pré-visualização.
+async function impHandleFile(file) {
+  if (!isEditor()) { toast('Sem permissões para importar.', true); return; }
+  if (typeof XLSX === 'undefined') { toast('Serviço de leitura de Excel indisponível.', true); return; }
+  showOverlay('A ler ficheiro…');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+    // Folhas candidatas: as cujo conteúdo contém um cabeçalho "Inicio Contrato".
+    const parsedByName = new Map(); // nome normalizado -> {nome, empresa, inicio, fim}
+    const dupWarnings = [];
+    let usedSheets = 0;
+    wb.SheetNames.forEach(sn => {
+      const ws = wb.Sheets[sn];
+      if (!ws) return;
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+      // A folha só interessa se algures tiver "Inicio Contrato" num cabeçalho.
+      const hasIni = rows.some(r => (r || []).some(c => impNormHeader(c).indexOf('inicio') >= 0 && impNormHeader(c).indexOf('contrato') >= 0));
+      if (!hasIni) return;
+      usedSheets++;
+      // Reler com raw para preservar objetos Date fiáveis nas datas.
+      const rowsRaw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', cellDates: true });
+      const src = rowsRaw && rowsRaw.length ? rowsRaw : rows;
+      const { entries } = impParseRows(src);
+      entries.forEach(e => {
+        const key = impNormName(e.nome);
+        if (!key) return;
+        if (parsedByName.has(key)) dupWarnings.push(e.nome);
+        parsedByName.set(key, {
+          nome: e.nome,
+          empresa: (e.empresa || '').trim(),
+          inicio: impDateToYmd(e.inicioRaw),
+          fim: impDateToYmd(e.fimRaw)
+        });
+      });
+    });
+    if (usedSheets === 0) { hideOverlay(); toast('Não encontrei nenhuma folha com a coluna “Inicio Contrato”.', true); return; }
+
+    // Correspondência por nome com os funcionários do sistema.
+    const empByName = new Map();
+    employees.forEach(e => { const k = impNormName(e.nome); if (k) { if (!empByName.has(k)) empByName.set(k, e); } });
+
+    impEntries = Array.from(parsedByName.values()).map(e => {
+      const match = empByName.get(impNormName(e.nome));
+      return {
+        nome: e.nome, empresa: e.empresa, inicio: e.inicio, fim: e.fim,
+        funcId: match ? match.id : '', funcNome: match ? match.nome : '', found: !!match
+      };
+    });
+    impEntries.sort((a, b) => (a.empresa || '').localeCompare(b.empresa || '', 'pt') || impNormName(a.nome).localeCompare(impNormName(b.nome), 'pt'));
+    hideOverlay();
+    impShowPreview(dupWarnings);
+  } catch (err) {
+    hideOverlay();
+    toast('Erro ao ler o ficheiro: ' + friendlyError(err), true);
+  }
+}
+
+function impShowPreview(dupWarnings) {
+  const found = impEntries.filter(e => e.found);
+  const notFound = impEntries.filter(e => !e.found);
+  const rowsHtml = impEntries.map(e => {
+    const sys = e.found ? escapeHtml(e.funcNome) : '<span style="color:#b91c1c;">❌ não encontrado</span>';
+    return `<tr style="${e.found ? '' : 'background:#fef2f2;'}">
+      <td>${escapeHtml(e.nome)}</td>
+      <td>${sys}</td>
+      <td>${escapeHtml(e.empresa) || '—'}</td>
+      <td class="cell-mono">${escapeHtml(ymdToBr(e.inicio)) || '—'}</td>
+      <td class="cell-mono">${escapeHtml(ymdToBr(e.fim)) || '—'}</td>
+    </tr>`;
+  }).join('');
+  let html = `<div class="es-sub" style="margin-bottom:8px;">
+      <strong>${found.length}</strong> correspondência(s) · <strong>${notFound.length}</strong> não encontrado(s)
+    </div>`;
+  if (dupWarnings && dupWarnings.length) {
+    html += `<div class="es-sub" style="margin-bottom:8px;color:#92400e;">⚠ Nomes repetidos no Excel (fica a última leitura): ${escapeHtml(Array.from(new Set(dupWarnings)).join(', '))}</div>`;
+  }
+  html += `<div class="table-wrap"><table><thead><tr>
+      <th>Nome (Excel)</th><th>Funcionário no sistema</th><th>Empresa</th><th>Início</th><th>Fim</th>
+    </tr></thead><tbody>${rowsHtml || '<tr><td colspan="5">Nada para importar.</td></tr>'}</tbody></table></div>`;
+  if (notFound.length) {
+    html += `<div style="margin-top:12px;padding:10px 12px;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:4px;">
+      <strong style="color:#b91c1c;">Não encontrados (${notFound.length}) — corrija os nomes ou trate à mão:</strong>
+      <ul style="margin:6px 0 0;padding-left:20px;">${notFound.map(e => `<li>${escapeHtml(e.nome)}${e.empresa ? ' · ' + escapeHtml(e.empresa) : ''}</li>`).join('')}</ul>
+    </div>`;
+  }
+  document.getElementById('impPreviewBody').innerHTML = html;
+  const confirmBtn = document.getElementById('impPreviewConfirm');
+  if (confirmBtn) confirmBtn.disabled = found.length === 0;
+  openModal('impPreviewModal');
+}
+
+async function impConfirm() {
+  if (!isEditor()) { toast('Sem permissões para importar.', true); return; }
+  const found = impEntries.filter(e => e.found);
+  if (!found.length) { toast('Nada para atualizar.', true); return; }
+  showOverlay('A atualizar fichas…');
+  let n = 0;
+  const empresasNovas = [];
+  try {
+    for (const e of found) {
+      const data = {};
+      if (e.empresa) data.cliente = e.empresa;
+      if (e.inicio) data.adm = e.inicio;
+      if (e.fim) data.cess = e.fim;
+      if (Object.keys(data).length === 0) continue;
+      await db.collection('funcionarios').doc(e.funcId).set(data, { merge: true });
+      n++;
+    }
+    // Atualizar lista de empresas com as novas encontradas.
+    const atuais = (appListas.empresas || []).slice();
+    const existentes = new Set(atuais.map(x => x.toLowerCase()));
+    found.forEach(e => {
+      const emp = (e.empresa || '').trim();
+      if (emp && !existentes.has(emp.toLowerCase())) { atuais.push(emp); existentes.add(emp.toLowerCase()); empresasNovas.push(emp); }
+    });
+    if (empresasNovas.length) {
+      atuais.sort((a, b) => a.localeCompare(b, 'pt'));
+      try {
+        await db.collection('config').doc('listas').set({
+          empresas: atuais,
+          updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+          updated_by: currentUser ? currentUser.email : ''
+        }, { merge: true });
+        appListas.empresas = atuais;
+      } catch (errL) {
+        console.warn('Falha ao atualizar lista de empresas:', errL);
+      }
+    }
+    logAudit('import_excel', '', `${n} ficha(s)${empresasNovas.length ? ' · ' + empresasNovas.length + ' empresa(s) nova(s)' : ''}`);
+    closeModal('impPreviewModal');
+    toast(`${n} ficha(s) atualizada(s).${empresasNovas.length ? ' ' + empresasNovas.length + ' empresa(s) nova(s).' : ''}`);
+    // Re-gerar o relatório para refletir, se houver um mês carregado.
+    const per = document.getElementById('rc_periodo');
+    if (per && per.value) { await gerarRelContab(); }
+  } catch (err) {
+    toast('Erro ao atualizar fichas: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
 async function openRelContab() {
   if (!isMaster()) { toast('Funcionalidade reservada ao administrador master.', true); return; }
   const periodo = relContabMes || currentPeriodo();
@@ -4896,10 +5147,22 @@ async function openRelContab() {
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 2px;">
       <button class="btn btn-primary" id="rc_gerar">🔄 Gerar / Carregar</button>
+      ${isEditor() ? '<button class="btn btn-ghost" id="imp_btnExcel">📥 Importar Excel (empresa + datas)</button><input type="file" id="imp_file" accept=".xlsx,.csv" style="display:none">' : ''}
       <span id="rc_status" class="es-sub"></span>
     </div>
     <div id="rc_tabela" style="margin-top:12px;"><div class="es-sub">Escolha o mês e clique em “Gerar / Carregar”. Carrega o relatório guardado desse mês ou pré-preenche a partir das fichas dos funcionários ativos.</div></div>`;
   document.getElementById('rc_gerar').addEventListener('click', gerarRelContab);
+  if (isEditor()) {
+    const impBtn = document.getElementById('imp_btnExcel');
+    const impFile = document.getElementById('imp_file');
+    if (impBtn && impFile) {
+      impBtn.addEventListener('click', () => { impFile.value = ''; impFile.click(); });
+      impFile.addEventListener('change', (ev) => {
+        const f = ev.target.files && ev.target.files[0];
+        if (f) impHandleFile(f);
+      });
+    }
+  }
   document.getElementById('rc_historico').addEventListener('change', (ev) => {
     const m = ev.target.value;
     if (m) { document.getElementById('rc_periodo').value = m; gerarRelContab(); }
@@ -5356,6 +5619,9 @@ function bindFiscal() {
   document.getElementById('relContabExcel').addEventListener('click', relContabCsv);
   document.getElementById('relContabPdf').addEventListener('click', relContabPdf);
   document.getElementById('relContabConsolidado').addEventListener('click', relContabConsolidadoPdf);
+  document.getElementById('impPreviewClose').addEventListener('click', () => closeModal('impPreviewModal'));
+  document.getElementById('impPreviewCancel').addEventListener('click', () => closeModal('impPreviewModal'));
+  document.getElementById('impPreviewConfirm').addEventListener('click', impConfirm);
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
