@@ -655,6 +655,7 @@ footer strong { color: var(--ink); }
       <button class="btn btn-ghost" id="btnImport">📥 Importar</button>
       <button class="btn btn-gold" id="btnUsers">👥 Utilizadores</button>
       <button class="btn btn-gold" id="btnLogs">📋 Logs</button>
+      <button class="btn btn-gold" id="btnDedup">🧹 Corrigir duplicados</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
@@ -1021,6 +1022,20 @@ footer strong { color: var(--ink); }
   </div>
 </div>
 
+<div class="modal-backdrop" id="dedupModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🧹 Corrigir funcionários duplicados</h2>
+      <button class="modal-close" id="dedupClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="dedupBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="dedupCancel">Cancelar</button>
+      <button class="btn btn-danger" id="dedupApply" style="display:none;">✅ Aplicar correção</button>
+    </div>
+  </div>
+</div>
+
 <div id="toastWrap"></div>
 <div id="overlay"><div class="spinner"></div><div id="overlayMsg" style="font-family:'Montserrat';font-weight:600;"></div></div>
 
@@ -1161,6 +1176,7 @@ function applyRolePermissions() {
   show('btnImport', isEditor());
   show('btnUsers', isAdmin());
   show('btnLogs', isAdmin());
+  show('btnDedup', isAdmin());
   show('detailEdit', isEditor());
   show('detailDelete', isAdmin());
   applyMasterVisibility();
@@ -2085,6 +2101,194 @@ async function importJson(file) {
 }
 
 /* ============================================================
+   Corrigir funcionários duplicados (admin)
+   ------------------------------------------------------------
+   Uma importação antiga criou registos DUPLICADOS: para o mesmo
+   trabalhador ficaram 2 fichas — a original (com função e
+   subcolecções) e a importada (sem função). Esta ferramenta
+   funde os campos importados na ficha original e elimina o
+   duplicado, sempre com pré-visualização e confirmação.
+   ============================================================ */
+let dedupPlan = null; // guarda o plano calculado entre a pré-visualização e a aplicação
+
+// Etiquetas amigáveis para os campos preenchidos (mostradas na pré-visualização)
+const DEDUP_FIELD_LABELS = {
+  nome: 'Nome', nif: 'NIF', niss: 'NISS', morada: 'Morada', cp: 'Cód. Postal',
+  loc: 'Localidade', pais: 'País', tel: 'Telefone', email: 'Email',
+  passaporte: 'Passaporte', pass_val: 'Validade passaporte', cc: 'Cartão cidadão',
+  cc_val: 'Validade CC', cliente: 'Cliente', cli_pais: 'País do cliente',
+  nasc: 'Data nascimento', adm: 'Data admissão', cess: 'Data cessação',
+  estado: 'Estado', funcao: 'Função', venc: 'Vencimento', horario: 'Horário',
+  modo_pagamento: 'Modo pagamento', valor_hora: 'Valor/hora'
+};
+function dedupFieldLabel(k) { return DEDUP_FIELD_LABELS[k] || k; }
+
+// Normalizadores (iguais aos usados na importação)
+function dedupNormNif(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
+function dedupNormNome(v) {
+  return String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+}
+function dedupIsEmpty(v) { return v === undefined || v === null || String(v).trim() === ''; }
+function dedupTemFuncao(m) { return String(m && m.funcao || '').trim() !== ''; }
+function dedupShortId(id) { return String(id || '').slice(0, 6); }
+
+// Campos protegidos do principal: só são preenchidos se o principal os tiver vazios;
+// nunca são apagados/substituídos pelos dados importados.
+const DEDUP_PROTECTED = new Set(['funcao', 'venc', 'horario', 'modo_pagamento', 'valor_hora', 'nome']);
+
+// Constrói o plano a partir do array `employees` em memória.
+function buildDedupPlan() {
+  const groups = new Map();
+  employees.forEach(e => {
+    if (!e || dedupIsEmpty(e.nome)) return; // ignora entradas sem nome
+    const nif = dedupNormNif(e.nif);
+    const key = (nif && nif.length >= 8) ? nif : ('NOME:' + dedupNormNome(e.nome));
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  });
+
+  const trataveis = [];  // { principal, dups[], mergedFields, changed[] }
+  const manuais = [];    // { nome, nif, motivo, count }
+
+  groups.forEach(grupo => {
+    if (grupo.length < 2) return; // registo único: nunca é tocado
+    const keepers = grupo.filter(dedupTemFuncao);
+    const dups = grupo.filter(m => !dedupTemFuncao(m));
+
+    if (keepers.length === 1 && dups.length >= 1) {
+      const principal = keepers[0];
+      const mergedFields = {};
+      const changed = [];
+      dups.forEach(dup => {
+        Object.keys(dup).forEach(k => {
+          if (k === 'id') return; // nunca incluir o id no merged
+          const val = dup[k];
+          if (dedupIsEmpty(val)) return;
+          const cur = (k in mergedFields) ? mergedFields[k] : principal[k];
+          if (DEDUP_PROTECTED.has(k)) {
+            // campo protegido: só preenche se estiver vazio no principal
+            if (!dedupIsEmpty(cur)) return;
+          }
+          if (String(cur == null ? '' : cur) === String(val)) return; // sem alteração
+          mergedFields[k] = val;
+          if (!changed.includes(k)) changed.push(k);
+        });
+      });
+      trataveis.push({ principal, dups, mergedFields, changed });
+    } else {
+      // 0 com função (não há original claro) ou >1 com função (ambíguo) → revisão manual
+      const first = grupo[0];
+      const motivo = keepers.length === 0
+        ? 'Nenhum registo tem função — não há original claro.'
+        : (keepers.length + ' registos têm função — ambíguo.');
+      manuais.push({ nome: first.nome || '(sem nome)', nif: dedupNormNif(first.nif), motivo, count: grupo.length });
+    }
+  });
+
+  const totalEliminar = trataveis.reduce((s, g) => s + g.dups.length, 0);
+  return { trataveis, manuais, totalEliminar };
+}
+
+// Abre o modal com a pré-visualização (não escreve nada).
+function openDedup() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  const plan = buildDedupPlan();
+  dedupPlan = plan;
+
+  const applyBtn = document.getElementById('dedupApply');
+  let html = '';
+
+  if (plan.trataveis.length === 0 && plan.manuais.length === 0) {
+    html = '<p style="font-size:15px;">✅ Não foram encontrados duplicados.</p>';
+    applyBtn.style.display = 'none';
+  } else {
+    html += '<p style="font-size:15px;margin-bottom:14px;">'
+      + '<strong>' + plan.trataveis.length + '</strong> grupo(s) duplicado(s) · '
+      + '<strong>' + plan.totalEliminar + '</strong> registo(s) a eliminar · '
+      + '<strong>' + plan.manuais.length + '</strong> grupo(s) para revisão manual.'
+      + '</p>';
+
+    if (plan.trataveis.length > 0) {
+      html += '<table class="mini-table"><thead><tr>'
+        + '<th>Nome</th><th>NIF</th><th>Manter</th><th>Eliminar</th><th>Campos a preencher no principal</th>'
+        + '</tr></thead><tbody>';
+      plan.trataveis.forEach(g => {
+        const dupIds = g.dups.map(d => dedupShortId(d.id)).join(', ');
+        const campos = g.changed.length
+          ? g.changed.map(k => escapeHtml(dedupFieldLabel(k))).join(', ')
+          : '<span style="opacity:.6;">(nenhum — só elimina duplicado)</span>';
+        html += '<tr>'
+          + '<td>' + escapeHtml(g.principal.nome || '—') + '</td>'
+          + '<td>' + escapeHtml(dedupNormNif(g.principal.nif) || '—') + '</td>'
+          + '<td><code>' + escapeHtml(dedupShortId(g.principal.id)) + '</code></td>'
+          + '<td>' + g.dups.length + ' (<code>' + escapeHtml(dupIds) + '</code>)</td>'
+          + '<td>' + campos + '</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+      applyBtn.style.display = '';
+    } else {
+      applyBtn.style.display = 'none';
+    }
+
+    if (plan.manuais.length > 0) {
+      html += '<h3 style="margin:18px 0 8px;font-size:15px;">⚠️ Grupos para revisão manual</h3>';
+      html += '<ul style="margin:0 0 4px 18px;font-size:14px;line-height:1.7;">';
+      plan.manuais.forEach(m => {
+        html += '<li><strong>' + escapeHtml(m.nome) + '</strong>'
+          + (m.nif ? ' (NIF ' + escapeHtml(m.nif) + ')' : '')
+          + ' — ' + escapeHtml(m.count + ' registos. ' + m.motivo) + '</li>';
+      });
+      html += '</ul>';
+    }
+  }
+
+  document.getElementById('dedupBody').innerHTML = html;
+  openModal('dedupModal');
+}
+
+// Aplica a correção (só admin, com confirmação final).
+async function applyDedup() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  const plan = dedupPlan;
+  if (!plan || plan.trataveis.length === 0) { toast('Nada para aplicar.', true); return; }
+
+  if (!confirm('Vais eliminar ' + plan.totalEliminar + ' registo(s) duplicado(s). Esta acção não pode ser anulada. Continuar?')) return;
+
+  closeModal('dedupModal');
+  showOverlay('A corrigir duplicados…');
+  let done = 0, eliminados = 0, erros = 0;
+  const totalGrupos = plan.trataveis.length;
+
+  for (const g of plan.trataveis) {
+    try {
+      if (Object.keys(g.mergedFields).length > 0) {
+        await db.collection('funcionarios').doc(g.principal.id).set(g.mergedFields, { merge: true });
+      }
+      for (const dup of g.dups) {
+        await db.collection('funcionarios').doc(dup.id).delete();
+        eliminados++;
+      }
+    } catch (err) {
+      erros++;
+      console.warn('Falha ao corrigir grupo', g.principal && g.principal.id, err);
+    }
+    done++;
+    document.getElementById('overlayMsg').textContent = 'A corrigir duplicados… ' + done + '/' + totalGrupos;
+  }
+
+  hideOverlay();
+  dedupPlan = null;
+  await logAudit('dedup', '', totalGrupos + ' grupos, ' + eliminados + ' eliminados' + (erros ? (', ' + erros + ' erros') : ''));
+  if (erros) {
+    toast('Correção concluída com ' + erros + ' erro(s): ' + eliminados + ' duplicado(s) removido(s).', true);
+  } else {
+    toast('Correção concluída: ' + eliminados + ' duplicado(s) removido(s).');
+  }
+  // A lista atualiza-se automaticamente por snapshot.
+}
+
+/* ============================================================
    Utilizadores (admin)
    ============================================================ */
 async function openUsers() {
@@ -2247,6 +2451,7 @@ function bind() {
   document.getElementById('importFile').addEventListener('change', e => { if (e.target.files[0]) importJson(e.target.files[0]); e.target.value = ''; });
   document.getElementById('btnUsers').addEventListener('click', openUsers);
   document.getElementById('btnLogs').addEventListener('click', openLogs);
+  document.getElementById('btnDedup').addEventListener('click', openDedup);
   document.getElementById('searchInput').addEventListener('input', render);
 
   // Form modal
@@ -5639,6 +5844,9 @@ function bindFiscal() {
   document.getElementById('impPreviewClose').addEventListener('click', () => closeModal('impPreviewModal'));
   document.getElementById('impPreviewCancel').addEventListener('click', () => closeModal('impPreviewModal'));
   document.getElementById('impPreviewConfirm').addEventListener('click', impConfirm);
+  document.getElementById('dedupClose').addEventListener('click', () => closeModal('dedupModal'));
+  document.getElementById('dedupCancel').addEventListener('click', () => closeModal('dedupModal'));
+  document.getElementById('dedupApply').addEventListener('click', applyDedup);
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
