@@ -2679,19 +2679,40 @@ async function removerItemLista(tipo, valor) {
   }
 }
 
+// Valores já em uso nos funcionários (ex.: empresas/países importados que
+// não estão na lista gerida em Configurações) para os incluir nos menus.
+function listaValoresEmUso(tipo) {
+  const set = new Set();
+  const arr = (typeof employees !== 'undefined' && Array.isArray(employees)) ? employees : [];
+  const campos = tipo === 'empresas' ? ['cliente'] : (tipo === 'paises' ? ['pais', 'cli_pais', 'nacionalidade'] : []);
+  if (campos.length) {
+    arr.forEach(e => campos.forEach(f => {
+      const v = e && e[f];
+      if (v != null && String(v).trim() !== '') set.add(String(v).trim());
+    }));
+  }
+  return set;
+}
+
 function refreshListaSelects() {
   document.querySelectorAll('select[data-lista]').forEach(sel => {
     const tipo = sel.dataset.lista; // "paises" ou "empresas"
-    const lista = appListas[tipo] || [];
+    const base = appListas[tipo] || [];
     const previous = sel.value;
     // preserva opções legadas marcadas
     const legacyOpts = Array.from(sel.options).filter(o => o.dataset.legacy === '1');
+    const seen = new Set([...base, ...legacyOpts.map(o => o.value)]);
+    // acrescenta as empresas/países já em uso nos funcionários (importados)
+    const extra = Array.from(listaValoresEmUso(tipo)).filter(v => !seen.has(v)).sort((a, b) => a.localeCompare(b, 'pt'));
+    const combined = base.concat(extra);
+    // garante que o valor actualmente guardado no funcionário continua selecionável
+    if (previous && previous !== '__new__' && !seen.has(previous) && !combined.includes(previous)) combined.push(previous);
     sel.innerHTML = '';
     const blank = document.createElement('option');
     blank.value = ''; blank.textContent = '—';
     sel.appendChild(blank);
     legacyOpts.forEach(o => sel.appendChild(o));
-    lista.forEach(v => {
+    combined.forEach(v => {
       const opt = document.createElement('option');
       opt.value = v; opt.textContent = v;
       sel.appendChild(opt);
@@ -2701,7 +2722,7 @@ function refreshListaSelects() {
       add.value = '__new__'; add.textContent = '➕ Adicionar novo…';
       sel.appendChild(add);
     }
-    if (previous && (lista.includes(previous) || legacyOpts.some(o => o.value === previous))) sel.value = previous;
+    if (previous && Array.from(sel.options).some(o => o.value === previous)) sel.value = previous;
   });
 }
 
