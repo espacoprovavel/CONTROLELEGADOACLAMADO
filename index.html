@@ -2040,17 +2040,34 @@ async function importJson(file) {
   let data;
   try { data = JSON.parse(text); } catch (e) { toast('Ficheiro JSON inválido.', true); return; }
   if (!Array.isArray(data)) { toast('Formato inválido: esperado um array de funcionários.', true); return; }
-  if (!confirm(`Importar ${data.length} funcionário(s) para a base de dados?\n\nOs registos serão adicionados/actualizados no Firestore.`)) return;
+
+  // Resolver o id de cada registo: usa o id explícito; senão liga a um funcionário
+  // existente por NIF (só dígitos) ou, em falha, por nome normalizado; senão cria novo.
+  // Assim um ficheiro sem ids ACTUALIZA os existentes em vez de duplicar.
+  const normNif = v => String(v == null ? '' : v).replace(/\D/g, '');
+  const normNome = v => String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+  const resolved = data.map(emp => {
+    let id = emp.id, novo = false;
+    if (!id) {
+      const nif = normNif(emp.nif);
+      let ex = nif ? employees.find(e => normNif(e.nif) === nif) : null;
+      if (!ex) { const nm = normNome(emp.nome); ex = nm ? employees.find(e => normNome(e.nome) === nm) : null; }
+      if (ex) { id = ex.id; } else { id = uid(); novo = true; }
+    }
+    return { id, emp, novo };
+  });
+  const nNovos = resolved.filter(r => r.novo).length;
+  const nUpd = resolved.length - nNovos;
+  if (!confirm(`Importar ${data.length} registo(s)?\n\n• ${nUpd} vão ACTUALIZAR funcionários existentes (ligados por NIF/nome)\n• ${nNovos} vão ser criados como NOVOS\n\nContinuar?`)) return;
 
   showOverlay('A importar 0/' + data.length + '…');
   let done = 0;
   try {
     const chunkSize = 400;
-    for (let i = 0; i < data.length; i += chunkSize) {
+    for (let i = 0; i < resolved.length; i += chunkSize) {
       const batch = db.batch();
-      const slice = data.slice(i, i + chunkSize);
-      slice.forEach(emp => {
-        const id = emp.id || uid();
+      const slice = resolved.slice(i, i + chunkSize);
+      slice.forEach(({ id, emp }) => {
         const clean = Object.assign({}, emp); delete clean.id;
         batch.set(db.collection('funcionarios').doc(id), clean, { merge: true });
       });
@@ -2058,8 +2075,8 @@ async function importJson(file) {
       done += slice.length;
       document.getElementById('overlayMsg').textContent = `A importar ${done}/${data.length}…`;
     }
-    await logAudit('import', '', `${data.length} registos importados`);
-    toast(`${data.length} funcionário(s) importado(s).`);
+    await logAudit('import', '', `${data.length} registos (${nUpd} actualizados, ${nNovos} novos)`);
+    toast(`Importado: ${nUpd} actualizado(s), ${nNovos} novo(s).`);
   } catch (err) {
     toast('Erro na importação: ' + friendlyError(err), true);
   } finally {
