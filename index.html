@@ -656,6 +656,7 @@ footer strong { color: var(--ink); }
       <button class="btn btn-gold" id="btnUsers">👥 Utilizadores</button>
       <button class="btn btn-gold" id="btnLogs">📋 Logs</button>
       <button class="btn btn-gold" id="btnDedup">🧹 Corrigir duplicados</button>
+      <button class="btn btn-gold" id="btnNormEmp">🏢 Normalizar empresas</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
@@ -1036,6 +1037,20 @@ footer strong { color: var(--ink); }
   </div>
 </div>
 
+<div class="modal-backdrop" id="normEmpModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🏢 Normalizar nomes de empresas</h2>
+      <button class="modal-close" id="normEmpClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="normEmpBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="normEmpCancel">Cancelar</button>
+      <button class="btn btn-gold" id="normEmpApply" style="display:none;">✅ Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toastWrap"></div>
 <div id="overlay"><div class="spinner"></div><div id="overlayMsg" style="font-family:'Montserrat';font-weight:600;"></div></div>
 
@@ -1177,6 +1192,7 @@ function applyRolePermissions() {
   show('btnUsers', isAdmin());
   show('btnLogs', isAdmin());
   show('btnDedup', isAdmin());
+  show('btnNormEmp', isAdmin());
   show('detailEdit', isEditor());
   show('detailDelete', isAdmin());
   applyMasterVisibility();
@@ -2289,6 +2305,166 @@ async function applyDedup() {
 }
 
 /* ============================================================
+   Normalizar nomes de empresas (admin)
+   ------------------------------------------------------------
+   O campo "Empresa cliente" (cliente) foi importado com o mesmo
+   nome escrito de várias formas, o que baralha menus e
+   agrupamentos. Esta ferramenta unifica os nomes segundo um
+   mapa canónico e atualiza também a lista gerida em
+   Configurações, sempre com pré-visualização e confirmação.
+   ============================================================ */
+let normEmpPlan = null; // guarda o plano calculado entre a pré-visualização e a aplicação
+
+// Devolve o nome canónico para um valor de "Empresa cliente".
+// Normaliza o input só para comparar; o valor devolvido é o nome final.
+function canonEmpresa(v) {
+  const original = (v == null ? '' : String(v)).trim();
+  const n = original.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ').trim();
+  if (n.includes('cis') || n.includes('seppe') || n.includes('broek') || n.includes('broeck')) return 'Cis & Seppe Van den Broeck';
+  if (n.includes('querido')) return 'Queridos';
+  if (n.includes('risa')) return 'RISA BV';
+  if (n.includes('todas') && n.includes('geral')) return 'Todas Geral';
+  if (n.includes('adm')) return 'ADM / Loja';
+  if (n === '' || n === 'a 2026') return '';
+  return original;
+}
+
+// Calcula o plano: grupos por valor atual distinto + lista final de empresas.
+function buildNormEmpPlan() {
+  const grupos = new Map(); // valorAtual -> { atual, canon, count, muda }
+  let totalAlterar = 0;
+  const canonicos = new Set();
+
+  employees.forEach(e => {
+    const atual = (e.cliente || '').trim();
+    const canon = canonEmpresa(e.cliente);
+    if (canon) canonicos.add(canon);
+    const muda = canon !== atual;
+    if (muda) totalAlterar++;
+    const key = atual;
+    if (!grupos.has(key)) grupos.set(key, { atual, canon, count: 0, muda });
+    grupos.get(key).count++;
+  });
+
+  // Lista final = união das empresas já geridas + canónicos não-vazios resultantes
+  const listaFinal = Array.from(new Set(
+    (appListas.empresas || []).map(x => (x || '').trim()).filter(Boolean)
+      .concat(Array.from(canonicos))
+  )).sort((a, b) => a.localeCompare(b, 'pt'));
+
+  const gruposArr = Array.from(grupos.values())
+    .sort((a, b) => a.atual.localeCompare(b.atual, 'pt'));
+
+  return { grupos: gruposArr, totalAlterar, listaFinal, canonicos };
+}
+
+function openNormEmp() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  const plan = buildNormEmpPlan();
+  normEmpPlan = plan;
+
+  const applyBtn = document.getElementById('normEmpApply');
+  let html = '';
+
+  if (plan.totalAlterar === 0) {
+    html = '<p style="font-size:15px;">✅ Já está tudo normalizado.</p>';
+    applyBtn.style.display = 'none';
+  } else {
+    html += '<p style="font-size:15px;margin-bottom:14px;">'
+      + '<strong>' + plan.totalAlterar + '</strong> funcionário(s) vão ser atualizados.'
+      + '</p>';
+
+    html += '<table class="mini-table"><thead><tr>'
+      + '<th>Valor atual</th><th>→ Canónico</th><th>Nº de funcionários</th>'
+      + '</tr></thead><tbody>';
+    plan.grupos.forEach(g => {
+      const atualLbl = g.atual ? escapeHtml(g.atual) : '<span style="opacity:.6;">(vazio)</span>';
+      let canonLbl;
+      if (!g.canon) {
+        canonLbl = '<em>(limpar)</em>';
+      } else if (!g.muda) {
+        canonLbl = escapeHtml(g.canon) + ' <span style="opacity:.6;">(sem mudança)</span>';
+      } else {
+        canonLbl = escapeHtml(g.canon);
+      }
+      const rowStyle = g.muda ? ' style="font-weight:600;"' : '';
+      html += '<tr' + rowStyle + '>'
+        + '<td>' + atualLbl + '</td>'
+        + '<td>' + canonLbl + '</td>'
+        + '<td>' + g.count + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+
+    html += '<p style="font-size:14px;margin-top:14px;"><strong>Lista final de empresas:</strong> '
+      + (plan.listaFinal.length
+          ? plan.listaFinal.map(x => escapeHtml(x)).join(' · ')
+          : '<span style="opacity:.6;">(vazia)</span>')
+      + '</p>';
+
+    applyBtn.style.display = '';
+  }
+
+  document.getElementById('normEmpBody').innerHTML = html;
+  openModal('normEmpModal');
+}
+
+// Aplica a normalização (só admin, com confirmação final).
+async function applyNormEmp() {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  const plan = normEmpPlan;
+  if (!plan || plan.totalAlterar === 0) { toast('Nada para aplicar.', true); return; }
+
+  if (!confirm('Vais atualizar ' + plan.totalAlterar + ' funcionário(s) e a lista de empresas. Continuar?')) return;
+
+  closeModal('normEmpModal');
+  showOverlay('A normalizar empresas…');
+
+  // Lista de funcionários a alterar
+  const alterar = employees
+    .map(e => ({ id: e.id, canon: canonEmpresa(e.cliente) }))
+    .filter((x, i) => x.canon !== (employees[i].cliente || '').trim());
+
+  let done = 0, erros = 0;
+  const total = alterar.length;
+
+  try {
+    // Batches de <=400
+    for (let i = 0; i < alterar.length; i += 400) {
+      const slice = alterar.slice(i, i + 400);
+      const batch = db.batch();
+      slice.forEach(x => {
+        batch.set(db.collection('funcionarios').doc(x.id), { cliente: x.canon }, { merge: true });
+      });
+      await batch.commit();
+      done += slice.length;
+      document.getElementById('overlayMsg').textContent = 'A normalizar empresas… ' + done + '/' + total;
+    }
+
+    // Grava a lista de empresas (preservando paises)
+    await db.collection('config').doc('listas').set({
+      empresas: plan.listaFinal,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    }, { merge: true });
+    appListas.empresas = plan.listaFinal.slice();
+  } catch (err) {
+    hideOverlay();
+    console.warn('Falha ao normalizar empresas', err);
+    toast('Erro ao normalizar empresas: ' + friendlyError(err), true);
+    return;
+  }
+
+  hideOverlay();
+  normEmpPlan = null;
+  await logAudit('normalizar_empresas', '', total + ' funcionários atualizados; lista com ' + plan.listaFinal.length + ' empresa(s)');
+  toast('Empresas normalizadas: ' + total + ' funcionário(s) atualizado(s).');
+  // A lista/menus atualizam-se automaticamente por snapshot.
+}
+
+/* ============================================================
    Utilizadores (admin)
    ============================================================ */
 async function openUsers() {
@@ -2452,6 +2628,7 @@ function bind() {
   document.getElementById('btnUsers').addEventListener('click', openUsers);
   document.getElementById('btnLogs').addEventListener('click', openLogs);
   document.getElementById('btnDedup').addEventListener('click', openDedup);
+  document.getElementById('btnNormEmp').addEventListener('click', openNormEmp);
   document.getElementById('searchInput').addEventListener('input', render);
 
   // Form modal
@@ -5868,6 +6045,9 @@ function bindFiscal() {
   document.getElementById('dedupClose').addEventListener('click', () => closeModal('dedupModal'));
   document.getElementById('dedupCancel').addEventListener('click', () => closeModal('dedupModal'));
   document.getElementById('dedupApply').addEventListener('click', applyDedup);
+  document.getElementById('normEmpClose').addEventListener('click', () => closeModal('normEmpModal'));
+  document.getElementById('normEmpCancel').addEventListener('click', () => closeModal('normEmpModal'));
+  document.getElementById('normEmpApply').addEventListener('click', applyNormEmp);
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
