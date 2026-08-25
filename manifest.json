@@ -1,0 +1,17 @@
+{
+  "name": "Legado RH — Gestão de Funcionários",
+  "short_name": "Legado RH",
+  "description": "Sistema interno de gestão de funcionários da LEGADO ACLAMADO — UNIPESSOAL LDA.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#003366",
+  "theme_color": "#003366",
+  "lang": "pt-PT",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
