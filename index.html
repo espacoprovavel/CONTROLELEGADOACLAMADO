@@ -6103,6 +6103,15 @@ function bindFiscal() {
 }
 bindFiscal();
 </script>
+<!-- Botão flutuante de instalação do PWA -->
+<button id="pwaInstallBtn" style="display:none;position:fixed;right:16px;bottom:16px;z-index:9999;align-items:center;gap:8px;background:#003366;color:#fff;border:2px solid #d4af37;border-radius:30px;padding:12px 18px;font-weight:700;font-family:inherit;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;">📱 Instalar app</button>
+<div id="pwaHelpModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;color:#00224a;max-width:360px;width:100%;border-radius:14px;padding:22px;font-family:inherit;box-shadow:0 10px 40px rgba(0,0,0,.4);">
+    <h3 style="margin:0 0 12px;font-size:17px;">📱 Instalar no ecrã principal</h3>
+    <div id="pwaHelpText" style="font-size:14px;line-height:1.6;"></div>
+    <button id="pwaHelpClose" style="margin-top:18px;width:100%;background:#003366;color:#fff;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Percebi</button>
+  </div>
+</div>
 <script>
 // Regista o service worker (PWA / app instalável). Não bloqueia a app se falhar.
 if ('serviceWorker' in navigator) {
@@ -6110,6 +6119,35 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW não registado:', err));
   });
 }
+// Botão de instalação (funciona no Android/desktop via prompt nativo; iPhone mostra instruções)
+(function () {
+  let deferredPrompt = null;
+  const btn = document.getElementById('pwaInstallBtn');
+  const modal = document.getElementById('pwaHelpModal');
+  const helpText = document.getElementById('pwaHelpText');
+  const closeBtn = document.getElementById('pwaHelpClose');
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const show = () => { if (btn && !isStandalone()) btn.style.display = 'inline-flex'; };
+  const hide = () => { if (btn) btn.style.display = 'none'; };
+  function showHelp(html) { if (helpText) helpText.innerHTML = html; if (modal) modal.style.display = 'flex'; }
+  if (closeBtn) closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; show(); });
+  window.addEventListener('appinstalled', () => { hide(); deferredPrompt = null; });
+  // iPhone/iPad (Safari) nunca dispara beforeinstallprompt → mostra o botão com instruções
+  if (isIOS() && !isStandalone()) show();
+  if (btn) btn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { const r = await deferredPrompt.userChoice; if (r.outcome === 'accepted') hide(); } catch (e) {}
+      deferredPrompt = null;
+    } else if (isIOS()) {
+      showHelp('<strong>No iPhone/iPad (Safari):</strong><br>1. Toca no botão <strong>Partilhar</strong> (o quadrado com a seta ↑), em baixo.<br>2. Desliza e escolhe <strong>“Adicionar ao ecrã principal”</strong>.<br>3. Toca em <strong>Adicionar</strong>.<br><br><em>Tem de ser no Safari — não funciona dentro do WhatsApp/Instagram nem no Chrome do iPhone.</em>');
+    } else {
+      showHelp('<strong>No Android (Chrome):</strong><br>1. Abre o menu <strong>⋮</strong> (canto superior direito).<br>2. Escolhe <strong>“Instalar aplicação”</strong> ou <strong>“Adicionar ao ecrã principal”</strong>.<br><br><em>Se não aparecer, confirma que abriste no <strong>Chrome</strong> — não dentro do WhatsApp/Instagram.</em>');
+    }
+  });
+})();
 </script>
 </body>
 </html>
