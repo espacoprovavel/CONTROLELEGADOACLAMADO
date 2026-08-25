@@ -831,18 +831,19 @@ footer strong { color: var(--ink); }
     </div>
     <div class="modal-body">
       <table class="mini-table">
-        <thead><tr><th>Email</th><th>Nome</th><th>Role</th><th title="Acesso às funcionalidades de salários e cálculos">Master</th></tr></thead>
+        <thead><tr><th>Email</th><th>Nome</th><th>Role</th><th title="Acesso às funcionalidades de salários e cálculos">Master</th><th>Palavra-passe</th></tr></thead>
         <tbody id="usersBody"></tbody>
       </table>
-      <div class="form-section-title" style="margin-top:24px;">Adicionar perfil de utilizador</div>
-      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">A conta de autenticação cria-se no Firebase Console (Authentication → Add user). Aqui define-se o perfil/role. O <strong>UID</strong> obtém-se no Console após criar a conta.</p>
+      <div class="form-section-title" style="margin-top:24px;">Criar novo utilizador</div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">Cria aqui a conta de acesso (email + palavra-passe) e o perfil. A palavra-passe tem de ter pelo menos <strong>6 caracteres</strong>. Continuas com a tua sessão iniciada.</p>
       <div class="add-user-row">
-        <input type="text" id="newUserUid" placeholder="UID (do Firebase Authentication)">
         <input type="email" id="newUserEmail" placeholder="Email">
         <input type="text" id="newUserNome" placeholder="Nome">
+        <input type="text" id="newUserPass" placeholder="Palavra-passe (mín. 6)">
         <select id="newUserRole"><option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option></select>
       </div>
-      <button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">＋ Adicionar perfil</button>
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="newUserMaster"> Acesso <strong>master</strong> (salários e cálculos)</label>
+      <div><button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">＋ Criar utilizador</button></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="usersCloseFoot">Fechar</button>
@@ -1155,6 +1156,8 @@ function friendlyError(err) {
   const code = (err && err.code) || '';
   const map = {
     'auth/invalid-email': 'Email inválido.',
+    'auth/email-already-in-use': 'Já existe uma conta com esse email.',
+    'auth/weak-password': 'Palavra-passe demasiado fraca (mínimo 6 caracteres).',
     'auth/user-disabled': 'Esta conta foi desactivada.',
     'auth/user-not-found': 'Email ou palavra-passe incorrectos.',
     'auth/wrong-password': 'Email ou palavra-passe incorrectos.',
@@ -2474,10 +2477,10 @@ async function openUsers() {
 }
 async function renderUsers() {
   const body = document.getElementById('usersBody');
-  body.innerHTML = '<tr><td colspan="4">A carregar…</td></tr>';
+  body.innerHTML = '<tr><td colspan="5">A carregar…</td></tr>';
   try {
     const snap = await db.collection('users').get();
-    if (snap.empty) { body.innerHTML = '<tr><td colspan="4">Sem utilizadores.</td></tr>'; return; }
+    if (snap.empty) { body.innerHTML = '<tr><td colspan="5">Sem utilizadores.</td></tr>'; return; }
     body.innerHTML = snap.docs.map(d => {
       const u = d.data();
       const isSelf = currentUser && d.id === currentUser.uid;
@@ -2488,12 +2491,31 @@ async function renderUsers() {
         <td>${escapeHtml(u.nome)}</td>
         <td>${isSelf ? `<span class="role-badge role-admin">${escapeHtml(u.role)}</span>` : `<select data-uid="${d.id}" data-email="${escapeHtml(u.email)}" class="role-select">${sel}</select>`}</td>
         <td style="text-align:center;"><label style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="master-chk" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" ${isM ? 'checked' : ''}> ${isM ? '<span class="role-badge role-master">master</span>' : ''}</label></td>
+        <td style="text-align:center;"><button class="btn btn-ghost btn-sm user-reset" data-email="${escapeHtml(u.email)}" title="Enviar email para o utilizador definir nova palavra-passe">🔑 Repor</button></td>
       </tr>`;
     }).join('');
     body.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', e => changeRole(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
     body.querySelectorAll('.master-chk').forEach(c => c.addEventListener('change', e => setMaster(e.target.dataset.uid, e.target.checked, e.target.dataset.email)));
+    body.querySelectorAll('.user-reset').forEach(b => b.addEventListener('click', e => resetUserPassword(e.currentTarget.dataset.email)));
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="4">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
+  }
+}
+
+// Envia email de reposição de palavra-passe (o utilizador define a nova senha pelo link).
+async function resetUserPassword(email) {
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  if (!email) return;
+  if (!confirm(`Enviar email de reposição de palavra-passe para ${email}?\n\nO utilizador recebe um link para definir a nova senha.`)) return;
+  showOverlay('A enviar email…');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    await logAudit('user_pass', '', `reposição de palavra-passe enviada: ${email}`);
+    toast(`Email de reposição enviado para ${email}.`);
+  } catch (err) {
+    toast('Erro ao enviar email: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
   }
 }
 async function setMaster(uidVal, makeMaster, email) {
@@ -2525,24 +2547,38 @@ async function changeRole(uidVal, role, email) {
     hideOverlay();
   }
 }
+// Cria a conta de autenticação (email + palavra-passe) numa instância Firebase
+// SECUNDÁRIA, para o administrador atual NÃO ser desligado, e grava o perfil.
 async function addUser() {
-  const uidVal = document.getElementById('newUserUid').value.trim();
+  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
   const email = document.getElementById('newUserEmail').value.trim();
   const nome = document.getElementById('newUserNome').value.trim();
+  const pass = document.getElementById('newUserPass').value;
   const role = document.getElementById('newUserRole').value;
-  if (!uidVal || !email) { toast('Indique pelo menos o UID e o email.', true); return; }
-  showOverlay('A criar perfil…');
+  const master = document.getElementById('newUserMaster').checked;
+  if (!email || !pass) { toast('Indique o email e a palavra-passe.', true); return; }
+  if (pass.length < 6) { toast('A palavra-passe deve ter pelo menos 6 caracteres.', true); return; }
+  showOverlay('A criar utilizador…');
+  let secAuth = null;
   try {
-    await db.collection('users').doc(uidVal).set({ email, nome, role, created_at: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    await logAudit('user_role', uidVal, `perfil criado: ${email} (${role})`);
-    document.getElementById('newUserUid').value = '';
+    const secApp = firebase.apps.find(a => a.name === 'secondaryAuth') || firebase.initializeApp(firebaseConfig, 'secondaryAuth');
+    secAuth = secApp.auth();
+    await secAuth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+    const cred = await secAuth.createUserWithEmailAndPassword(email, pass);
+    const newUid = cred.user.uid;
+    await db.collection('users').doc(newUid).set({ email, nome, role, master, created_at: firebase.firestore.FieldValue.serverTimestamp() });
+    await secAuth.signOut();
+    await logAudit('user_create', newUid, `utilizador criado: ${email} (${role}${master ? ', master' : ''})`);
     document.getElementById('newUserEmail').value = '';
     document.getElementById('newUserNome').value = '';
+    document.getElementById('newUserPass').value = '';
     document.getElementById('newUserRole').value = 'viewer';
-    toast('Perfil de utilizador criado.');
+    document.getElementById('newUserMaster').checked = false;
+    toast(`Utilizador ${email} criado.`);
     await renderUsers();
   } catch (err) {
-    toast('Erro ao criar perfil: ' + friendlyError(err), true);
+    toast('Erro ao criar utilizador: ' + friendlyError(err), true);
+    try { if (secAuth) await secAuth.signOut(); } catch (e) {}
   } finally {
     hideOverlay();
   }
