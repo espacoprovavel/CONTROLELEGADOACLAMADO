@@ -85,12 +85,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      // Cada utilizador pode ler o SEU próprio perfil (necessário para o login
+      // determinar o role); só o master vê a lista completa e faz alterações.
+      allow read: if isMaster() || (isAuth() && request.auth.uid == userId);
+      allow write: if isMaster();
     }
 
     match /audit_logs/{logId} {
-      allow read: if isAdmin();
+      allow read: if isMaster();
       allow create: if isAuth();
       allow update, delete: if false;
     }

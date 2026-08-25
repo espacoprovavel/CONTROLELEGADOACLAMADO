@@ -1199,8 +1199,8 @@ function applyRolePermissions() {
   const show = (id, cond) => { const el = document.getElementById(id); if (el) el.style.display = cond ? '' : 'none'; };
   show('btnNew', isEditor());
   show('btnImport', isEditor());
-  show('btnUsers', isAdmin());
-  show('btnLogs', isAdmin());
+  show('btnUsers', isMaster());
+  show('btnLogs', isMaster());
   show('btnDedup', isAdmin());
   show('btnNormEmp', isAdmin());
   show('detailEdit', isEditor());
@@ -2478,7 +2478,7 @@ async function applyNormEmp() {
    Utilizadores (admin)
    ============================================================ */
 async function openUsers() {
-  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   openModal('usersModal');
   await renderUsers();
 }
@@ -2511,7 +2511,7 @@ async function renderUsers() {
 
 // Envia email de reposição de palavra-passe (o utilizador define a nova senha pelo link).
 async function resetUserPassword(email) {
-  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   if (!email) return;
   if (!confirm(`Enviar email de reposição de palavra-passe para ${email}?\n\nO utilizador recebe um link para definir a nova senha.`)) return;
   showOverlay('A enviar email…');
@@ -2526,6 +2526,7 @@ async function resetUserPassword(email) {
   }
 }
 async function setMaster(uidVal, makeMaster, email) {
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   showOverlay('A actualizar acesso master…');
   try {
     await db.collection('users').doc(uidVal).update({ master: makeMaster });
@@ -2541,6 +2542,7 @@ async function setMaster(uidVal, makeMaster, email) {
   }
 }
 async function changeRole(uidVal, role, email) {
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   showOverlay('A actualizar perfil…');
   try {
     await db.collection('users').doc(uidVal).update({ role: role });
@@ -2557,7 +2559,7 @@ async function changeRole(uidVal, role, email) {
 // Cria a conta de autenticação (email + palavra-passe) numa instância Firebase
 // SECUNDÁRIA, para o administrador atual NÃO ser desligado, e grava o perfil.
 async function addUser() {
-  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   const email = document.getElementById('newUserEmail').value.trim();
   const nome = document.getElementById('newUserNome').value.trim();
   const pass = document.getElementById('newUserPass').value;
@@ -2595,7 +2597,7 @@ async function addUser() {
    Logs (admin)
    ============================================================ */
 async function openLogs() {
-  if (!isAdmin()) { toast('Apenas administradores.', true); return; }
+  if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   openModal('logsModal');
   const body = document.getElementById('logsBody');
   body.innerHTML = '<tr><td colspan="4">A carregar…</td></tr>';
