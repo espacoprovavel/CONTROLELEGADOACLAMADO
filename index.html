@@ -6144,7 +6144,13 @@ if ('serviceWorker' in navigator) {
       try { const r = await deferredPrompt.userChoice; if (r.outcome === 'accepted') hide(); } catch (e) {}
       deferredPrompt = null;
     } else if (isIOS()) {
-      showHelp('<strong>No iPhone/iPad (Safari):</strong><br>1. Toca no botão <strong>Partilhar</strong> (o quadrado com a seta ↑), em baixo.<br>2. Desliza e escolhe <strong>“Adicionar ao ecrã principal”</strong>.<br>3. Toca em <strong>Adicionar</strong>.<br><br><em>Tem de ser no Safari — não funciona dentro do WhatsApp/Instagram nem no Chrome do iPhone.</em>');
+      const ua = window.navigator.userAgent;
+      const outro = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS/.test(ua) ? 'Edge' : (/Safari/.test(ua) ? null : 'este navegador');
+      if (outro) {
+        showHelp('<strong>Estás no ' + outro + ' (iPhone).</strong><br><br>No iPhone, a instalação no ecrã principal é feita pelo <strong>Safari</strong> (é uma limitação da Apple, não da app).<br><br>1. Toca no menu <strong>Partilhar</strong> do ' + outro + ' e, se existir, escolhe <strong>“Adicionar ao ecrã principal”</strong>.<br>2. Se NÃO aparecer, abre este site no <strong>Safari</strong>: copia o link e cola no Safari.<br>3. No Safari: <strong>Partilhar ↑ → “Adicionar ao ecrã principal” → Adicionar</strong>.');
+      } else {
+        showHelp('<strong>No iPhone/iPad (Safari):</strong><br>1. Toca no botão <strong>Partilhar</strong> (o quadrado com a seta ↑), em baixo.<br>2. Desliza e escolhe <strong>“Adicionar ao ecrã principal”</strong>.<br>3. Toca em <strong>Adicionar</strong>.<br><br><em>Tem de ser no Safari (não dentro do WhatsApp/Instagram).</em>');
+      }
     } else {
       showHelp('<strong>No Android (Chrome):</strong><br>1. Abre o menu <strong>⋮</strong> (canto superior direito).<br>2. Escolhe <strong>“Instalar aplicação”</strong> ou <strong>“Adicionar ao ecrã principal”</strong>.<br><br><em>Se não aparecer, confirma que abriste no <strong>Chrome</strong> — não dentro do WhatsApp/Instagram.</em>');
     }
