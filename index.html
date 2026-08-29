@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <title>Legado RH — Gestão de Funcionários</title>
 <meta name="description" content="Sistema interno de gestão de funcionários da LEGADO ACLAMADO — UNIPESSOAL LDA.">
 <!-- PWA / app instalável -->
@@ -25,6 +26,7 @@
 <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 <style>
 :root {
+  color-scheme: light;
   --bg: #f5f7fa;
   --bg-alt: #e8edf3;
   --ink: #002244;
@@ -42,6 +44,20 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Garante texto escuro e legível nos campos, mesmo com o telemóvel em modo
+   escuro ou com preenchimento automático (corrige letras/nomes "apagados"). */
+input, select, textarea {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background-color: #fff;
+  opacity: 1;
+}
+input::placeholder, textarea::placeholder { color: #8a94a3; -webkit-text-fill-color: #8a94a3; opacity: 1; }
+input:-webkit-autofill, input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+}
 
 body {
   font-family: 'Poppins', system-ui, sans-serif;
