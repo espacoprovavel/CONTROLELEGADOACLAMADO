@@ -390,6 +390,9 @@ footer strong { color: var(--ink); }
 .legal-banner strong { color: var(--accent); }
 
 /* ---------- Navegação por áreas ---------- */
+.brand-edit { background: rgba(255,255,255,0.12); border: none; border-radius: 6px; cursor: pointer; font-size: 13px; padding: 2px 6px; vertical-align: middle; margin-left: 4px; }
+.brand-edit:hover { background: rgba(255,255,255,0.28); }
+
 /* Barra de separadores: bem visível e sempre fixa no topo */
 .area-nav {
   background: var(--accent-deep); border-bottom: 3px solid var(--gold);
@@ -673,13 +676,13 @@ footer strong { color: var(--ink); }
 <!-- Boot splash -->
 <div id="bootLoading">
   <div class="spinner"></div>
-  <div style="font-family:'Montserrat';font-weight:700;">A iniciar Legado RH…</div>
+  <div style="font-family:'Montserrat';font-weight:700;" data-marca="boot">A iniciar Legado RH…</div>
 </div>
 
 <!-- Login -->
 <div id="loginScreen">
   <div class="login-card">
-    <div class="login-logo">LEGADO ACLAMADO<span class="deep">UNIPESSOAL LDA</span></div>
+    <div class="login-logo" data-marca="login">LEGADO ACLAMADO<span class="deep">UNIPESSOAL LDA</span></div>
     <div class="login-sub">Sistema de Gestão de Funcionários</div>
     <div class="login-error" id="loginError"></div>
     <form id="loginForm">
@@ -705,10 +708,10 @@ footer strong { color: var(--ink); }
   <header>
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-logo">LA</div>
+        <div class="brand-logo" data-marca="sigla">LA</div>
         <div>
-          <h1>Legado RH</h1>
-          <div class="sub">LEGADO ACLAMADO — UNIPESSOAL LDA</div>
+          <h1><span data-marca="app">Legado RH</span> <button type="button" class="brand-edit" id="btnMarca" title="Alterar o nome da app e da empresa" aria-label="Alterar o nome da app e da empresa">✏️</button></h1>
+          <div class="sub" data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</div>
         </div>
       </div>
       <div class="header-right">
@@ -801,7 +804,7 @@ footer strong { color: var(--ink); }
   <input type="file" id="pxZipInput" accept=".zip,application/zip" style="display:none;">
 
   <footer>
-    <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
+    <div><strong data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
       <span class="ver">v3.2</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
@@ -1171,6 +1174,27 @@ footer strong { color: var(--ink); }
 </div>
 
 <div id="toastWrap"></div>
+<!-- Modal: nome da app e da empresa (aparece no topo, no rodapé, no ecrã de entrada e nos PDFs) -->
+<div class="modal-backdrop" id="marcaModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>✏️ Nome da app e da empresa</h2>
+      <button class="modal-close" id="marcaClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;">Muda aqui os nomes que aparecem no topo, no rodapé, no ecrã de entrada e nos PDFs. A alteração aparece para todos os utilizadores.</p>
+      <div class="cfg-field" style="margin-bottom:10px;"><label for="mk_app">Nome da app</label><input type="text" id="mk_app" maxlength="40" placeholder="Legado RH"></div>
+      <div class="cfg-field" style="margin-bottom:10px;"><label for="mk_empresa">Nome da empresa</label><input type="text" id="mk_empresa" maxlength="80" placeholder="LEGADO ACLAMADO — UNIPESSOAL LDA"></div>
+      <div class="cfg-field"><label for="mk_sigla">Sigla do logótipo (até 3 letras)</label><input type="text" id="mk_sigla" maxlength="3" placeholder="LA"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="marcaReset">Repor original</button>
+      <button class="btn btn-ghost" id="marcaCancel">Cancelar</button>
+      <button class="btn btn-primary" id="marcaSave">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: importar pasta (ZIP do Google Drive) para as pastas dos funcionários -->
 <div class="modal-backdrop" id="pxImportModal">
   <div class="modal">
@@ -1207,6 +1231,79 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+/* ---------- Marca: nome da app, da empresa e sigla (editáveis) ----------
+   Guardado em config/marca e numa cópia local (para o ecrã de entrada, que
+   aparece antes de haver sessão, já mostrar o nome certo). */
+const MARCA_PADRAO = { app: 'Legado RH', empresa: 'LEGADO ACLAMADO — UNIPESSOAL LDA', sigla: 'LA' };
+let MARCA = Object.assign({}, MARCA_PADRAO);
+try { const g = JSON.parse(localStorage.getItem('legado_marca') || 'null'); if (g) MARCA = Object.assign({}, MARCA_PADRAO, g); } catch (e) { /* sem armazenamento local */ }
+function marcaLimpa(d) {
+  d = d || {};
+  return {
+    app: String(d.app || '').trim() || MARCA_PADRAO.app,
+    empresa: String(d.empresa || '').trim() || MARCA_PADRAO.empresa,
+    sigla: String(d.sigla || '').trim().slice(0, 3) || MARCA_PADRAO.sigla,
+  };
+}
+function applyMarca() {
+  const m = MARCA;
+  document.title = `${m.app} — Gestão de Funcionários`;
+  document.querySelectorAll('[data-marca]').forEach(el => {
+    const k = el.dataset.marca;
+    if (k === 'app') el.textContent = m.app;
+    else if (k === 'empresa') el.textContent = m.empresa;
+    else if (k === 'sigla') el.textContent = m.sigla;
+    else if (k === 'boot') el.textContent = `A iniciar ${m.app}…`;
+    else if (k === 'login') {
+      const i = m.empresa.indexOf(' — ');
+      el.innerHTML = i > 0 ? `${escapeHtml(m.empresa.slice(0, i))}<span class="deep">${escapeHtml(m.empresa.slice(i + 3))}</span>` : escapeHtml(m.empresa);
+    }
+  });
+  const meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (meta) meta.setAttribute('content', m.app);
+}
+let unsubscribeMarca = null;
+function subscribeMarca() {
+  if (unsubscribeMarca) unsubscribeMarca();
+  unsubscribeMarca = db.collection('config').doc('marca').onSnapshot(doc => {
+    MARCA = marcaLimpa(doc.exists ? doc.data() : null);
+    try { localStorage.setItem('legado_marca', JSON.stringify(MARCA)); } catch (e) { /* sem armazenamento local */ }
+    applyMarca();
+  }, err => console.warn('Marca:', err && err.code));
+}
+function openMarca() {
+  if (!isEditor()) { toast('Sem permissões para alterar.', true); return; }
+  document.getElementById('mk_app').value = MARCA.app;
+  document.getElementById('mk_empresa').value = MARCA.empresa;
+  document.getElementById('mk_sigla').value = MARCA.sigla;
+  openModal('marcaModal');
+}
+async function saveMarca() {
+  if (!isEditor()) { toast('Sem permissões para alterar.', true); return; }
+  const nova = marcaLimpa({
+    app: document.getElementById('mk_app').value,
+    empresa: document.getElementById('mk_empresa').value,
+    sigla: document.getElementById('mk_sigla').value,
+  });
+  if (!confirm(`Tem a certeza que quer mudar os nomes para:\n\nApp: ${nova.app}\nEmpresa: ${nova.empresa}\nSigla: ${nova.sigla}\n\nA alteração aparece para todos os utilizadores.`)) return;
+  showOverlay('A guardar…');
+  try {
+    await db.collection('config').doc('marca').set(Object.assign({}, nova, {
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+      updated_by: currentUser ? currentUser.email : ''
+    }));
+    MARCA = nova;
+    try { localStorage.setItem('legado_marca', JSON.stringify(MARCA)); } catch (e) { /* sem armazenamento local */ }
+    applyMarca();
+    await logAudit('marca', '', `nomes alterados: ${nova.app} / ${nova.empresa} / ${nova.sigla}`);
+    closeModal('marcaModal');
+    toast('Nomes atualizados.');
+  } catch (err) {
+    toast('Erro ao guardar: ' + friendlyError(err), true);
+  } finally { hideOverlay(); }
+}
+applyMarca(); // mostra logo o nome guardado neste aparelho (antes de iniciar sessão)
+
 // Offline: guarda no aparelho os dados já lidos (funcionários, pastas, documentos)
 // e envia as alterações feitas sem Internet quando a ligação voltar.
 try { db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Persistência offline indisponível:', err && err.code)); } catch (e) { /* navegador sem suporte */ }
@@ -1333,6 +1430,7 @@ function applyRolePermissions() {
   show('btnNew', isEditor());
   show('btnImport', isEditor());
   show('btnUsers', isMaster());
+  show('btnMarca', isEditor());
   show('btnLogs', isMaster());
   show('btnDedup', isAdmin());
   show('btnNormEmp', isAdmin());
@@ -2154,7 +2252,7 @@ function drawEmployeePdf(doc, e) {
   doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
   doc.text('FICHA DE FUNCIONÁRIO', margin, 13);
   doc.setFontSize(9); doc.setTextColor(...C.gold);
-  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.text(MARCA.empresa, margin, 19);
   doc.setTextColor(255,255,255); doc.setFont('helvetica','normal');
   doc.text('Documento confidencial · Uso interno', margin, 24.5);
   let y = 40;
@@ -2913,6 +3011,16 @@ function bind() {
 
   // Users modal
   document.getElementById('usersClose').addEventListener('click', () => closeModal('usersModal'));
+  // Nome da app / empresa
+  document.getElementById('btnMarca').addEventListener('click', openMarca);
+  document.getElementById('marcaClose').addEventListener('click', () => closeModal('marcaModal'));
+  document.getElementById('marcaCancel').addEventListener('click', () => closeModal('marcaModal'));
+  document.getElementById('marcaSave').addEventListener('click', saveMarca);
+  document.getElementById('marcaReset').addEventListener('click', () => {
+    document.getElementById('mk_app').value = MARCA_PADRAO.app;
+    document.getElementById('mk_empresa').value = MARCA_PADRAO.empresa;
+    document.getElementById('mk_sigla').value = MARCA_PADRAO.sigla;
+  });
   document.getElementById('usersCloseFoot').addEventListener('click', () => closeModal('usersModal'));
   document.getElementById('addUserBtn').addEventListener('click', addUser);
 
@@ -3629,6 +3737,82 @@ function pxNaPasta(pais, empresa) {
   return employees.filter(e => empresa ? (pxPais(e) === pais && pxEmpresa(e) === empresa) : pxPais(e) === pais);
 }
 
+/* ---------- Unificação: Vleeshandel / Cis & Seppe / Cis Van Den Broeken ----------
+   São a mesma empresa. Passa tudo para um só nome, uma única vez (marca em
+   config/migracoes), quando alguém com acesso abre a app: fichas dos
+   funcionários, lista de empresas, pastas e folhas/relatórios da contabilidade. */
+const CIS_SEPPE = 'Cis & Seppe Van den Broeck';
+function ehCisSeppe(v) {
+  const n = pxNorm(v);
+  return !!n && (n.includes('vleeshandel') || n.includes('seppe') || n.includes('broeck') || n.includes('broek') || /(^|[^a-z])cis([^a-z]|$)/.test(n));
+}
+let pxMigracaoIniciada = false;
+async function migrarCisSeppe() {
+  if (pxMigracaoIniciada || !temAcesso() || !employees.length) return;
+  pxMigracaoIniciada = true;
+  try {
+    const flag = await db.collection('config').doc('migracoes').get();
+    if (flag.exists && flag.data() && flag.data().cis_seppe_v1) return;
+    // 1) Fichas dos funcionários
+    const alvo = employees.filter(e => ehCisSeppe(e.cliente) && e.cliente !== CIS_SEPPE);
+    for (let i = 0; i < alvo.length; i += 400) {
+      const b = db.batch();
+      alvo.slice(i, i + 400).forEach(e => b.set(db.collection('funcionarios').doc(e.id), { cliente: CIS_SEPPE }, { merge: true }));
+      await b.commit();
+    }
+    // 2) Lista de empresas (menus)
+    const lst = await db.collection('config').doc('listas').get();
+    const empLst = lst.exists && lst.data() && Array.isArray(lst.data().empresas) ? lst.data().empresas : null;
+    if (empLst) {
+      const nova = [];
+      empLst.forEach(x => { const y = ehCisSeppe(x) ? CIS_SEPPE : x; if (!nova.includes(y)) nova.push(y); });
+      if (JSON.stringify(nova) !== JSON.stringify(empLst)) await db.collection('config').doc('listas').set({ empresas: nova }, { merge: true });
+    }
+    // 3) Pastas criadas à mão
+    const est = pxEstClone();
+    let mudouEst = false;
+    Object.keys(est).forEach(p => {
+      const arr = [];
+      est[p].forEach(x => { const y = ehCisSeppe(x) ? CIS_SEPPE : x; if (y !== x) mudouEst = true; if (!arr.includes(y)) arr.push(y); });
+      est[p] = arr;
+    });
+    if (mudouEst) await pxSaveEstrutura(est, `unificação ${CIS_SEPPE}`);
+    // 4) Folhas e relatórios da contabilidade já guardados
+    const cs = await db.collection('contabilidade').get();
+    for (const d of cs.docs) {
+      const data = d.data() || {};
+      let mudou = false;
+      const upd = {};
+      if (Array.isArray(data.linhas)) {
+        upd.linhas = data.linhas.map(l => {
+          if (l && ehCisSeppe(l.empresa) && l.empresa !== CIS_SEPPE) { mudou = true; return Object.assign({}, l, { empresa: CIS_SEPPE }); }
+          return l;
+        });
+      }
+      if (Array.isArray(data.grupos)) {
+        const out = [];
+        data.grupos.forEach(g => {
+          const nome = ehCisSeppe(g.nome) ? CIS_SEPPE : g.nome;
+          if (nome !== g.nome) mudou = true;
+          const ja = nome === CIS_SEPPE ? out.find(x => x.nome === CIS_SEPPE) : null;
+          if (ja) { ja.linhas = (ja.linhas || []).concat(g.linhas || []); mudou = true; }
+          else out.push(Object.assign({}, g, { nome }));
+        });
+        upd.grupos = out;
+      }
+      if (mudou) await d.ref.update(upd);
+    }
+    await db.collection('config').doc('migracoes').set({
+      cis_seppe_v1: { feito_em: firebase.firestore.FieldValue.serverTimestamp(), por: currentUser ? currentUser.email : '', funcionarios: alvo.length }
+    }, { merge: true });
+    logAudit('migracao', '', `${CIS_SEPPE}: Vleeshandel/Cis & Seppe unificados (${alvo.length} funcionário(s))`);
+    if (alvo.length) toast(`Empresas unificadas: ${alvo.length} funcionário(s) passaram para "${CIS_SEPPE}".`);
+  } catch (err) {
+    pxMigracaoIniciada = false; // tenta de novo na próxima atualização
+    console.warn('Unificação Cis & Seppe:', err);
+  }
+}
+
 // Nova pasta: sem país → novo país; com país → nova empresa dentro dele
 async function pxNovaPasta(pais) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
@@ -3771,6 +3955,7 @@ function pxGo(p) {
   renderPastas();
 }
 function pxOnEmployeesChanged() {
+  migrarCisSeppe(); // só faz algo uma vez (ver config/migracoes)
   const area = document.getElementById('areaPastas');
   if (!area || area.style.display === 'none') return;
   renderPastas();
@@ -5016,7 +5201,7 @@ function contabPdf() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
     doc.text('FOLHA PARA CONTABILIDADE', margin, 11);
     doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-    doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(mes)}`, margin, 18);
+    doc.text(`${MARCA.empresa} · ${periodoLabel(mes)}`, margin, 18);
   };
   // Colunas (landscape): Funcionários / Salários / Faltas / Início / Fim / Observação
   const cols = [
@@ -5190,7 +5375,7 @@ function wireProforma() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
     doc.text('PRÓ-FORMA (INTERNO)', margin, 12);
     doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-    doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 18.5);
+    doc.text(MARCA.empresa, margin, 18.5);
     doc.setFillColor(224, 192, 96); doc.rect(0, 26, pageW, 8, 'F');
     doc.setTextColor(122, 92, 0); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
     doc.text('DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA', pageW / 2, 31.5, { align: 'center' });
@@ -5641,7 +5826,7 @@ function gerarReciboPdf(tipo) {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
   doc.text(tipo === 'simples' ? 'RECIBO DE VENCIMENTO (RESUMO)' : 'RECIBO DE VENCIMENTO', margin, 13);
   doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.text(MARCA.empresa, margin, 19);
   doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
   doc.text(`Período: ${periodoLabel(periodo)}`, margin, 24.5);
   let y = 40;
@@ -6135,7 +6320,7 @@ function gerarReciboContabPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
   doc.text('RECIBO DE VENCIMENTO', margin, 13);
   doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-  doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+  doc.text(MARCA.empresa, margin, 19);
   doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
   doc.text('Formato contabilista (rubricas com código)', margin, 24.5);
   let y = 40;
@@ -6755,7 +6940,7 @@ function relContabPdf() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
     doc.text('RELATÓRIO PARA O CONTABILISTA', margin, 11);
     doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-    doc.text(`LEGADO ACLAMADO — UNIPESSOAL LDA · ${periodoLabel(periodo)}`, margin, 18);
+    doc.text(`${MARCA.empresa} · ${periodoLabel(periodo)}`, margin, 18);
   };
   const colHeader = (y) => {
     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 51, 102);
@@ -6839,7 +7024,7 @@ async function relContabConsolidadoPdf() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
     doc.text('RELATÓRIO DE PAGAMENTOS', margin, 13);
     doc.setFontSize(9); doc.setTextColor(212, 175, 55);
-    doc.text('LEGADO ACLAMADO — UNIPESSOAL LDA', margin, 19);
+    doc.text(MARCA.empresa, margin, 19);
     doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
     doc.text(sub, margin, 24.5);
   };
@@ -6977,9 +7162,10 @@ function bindFiscal() {
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
-    if (user) { subscribeConfig(); subscribeListas(); pxSubscribeEstrutura(); }
+    if (user) { subscribeConfig(); subscribeListas(); pxSubscribeEstrutura(); subscribeMarca(); }
     else {
       pxUnsubscribeEstrutura();
+      if (unsubscribeMarca) { unsubscribeMarca(); unsubscribeMarca = null; }
       if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; } appConfig = null;
       if (unsubscribeListas) { unsubscribeListas(); unsubscribeListas = null; } appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
     }
