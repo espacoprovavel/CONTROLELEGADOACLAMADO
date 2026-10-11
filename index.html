@@ -118,7 +118,7 @@ h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
 .pass-wrap input { padding-right: 42px; }
 .pass-toggle {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; font-size: 16px; padding: 6px; opacity: 0.65;
+  background: none; border: none; cursor: pointer; font-family: 'Poppins'; font-size: 12.5px; font-weight: 600; color: var(--accent); padding: 6px; opacity: 0.85;
 }
 .pass-toggle:hover { opacity: 1; }
 .login-error {
@@ -196,8 +196,9 @@ body:not(.is-master) .master-only { display: none !important; }
 }
 .search-box input:focus { outline: none; border-color: var(--accent); background: #fff; }
 .search-box::before {
-  content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-  font-size: 14px; opacity: 0.6;
+  content: ''; position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; opacity: 0.55;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23002244' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat center / contain;
 }
 
 /* ---------- Buttons ---------- */
@@ -369,7 +370,15 @@ footer strong { color: var(--ink); }
 }
 .doc-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
 .doc-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.doc-icon { font-size: 26px; flex-shrink: 0; }
+.doc-icon { flex-shrink: 0; }
+/* Etiqueta do tipo de ficheiro (substitui ícones) */
+.ftype { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; height: 30px; padding: 0 6px; border-radius: 6px; background: #e8edf3; color: var(--accent); font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 10.5px; letter-spacing: 0.6px; }
+.ftype-pdf { background: #fbe9e9; color: #a32929; }
+.ftype-img { background: #e6f1ea; color: #23703f; }
+.ftype-ficha { background: #fff4d6; color: #7a5b00; }
+.flag:empty { display: none; }
+.px-search-ico { display: inline-flex; color: var(--ink-soft); }
+.brand-edit svg { display: block; color: #fff; }
 .doc-name { font-family: 'Montserrat'; font-weight: 700; font-size: 14px; color: var(--ink); word-break: break-word; }
 .doc-meta { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
 .doc-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
@@ -596,23 +605,24 @@ footer strong { color: var(--ink); }
 
 /* ---------- Pastas (explorador tipo Drive) ---------- */
 .px-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
-.px-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; color: var(--ink); flex: 1; min-width: 0; }
+.px-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; color: var(--ink); flex: 1 1 340px; min-width: 0; }
 .px-crumbs button { background: none; border: none; font: inherit; color: var(--accent); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
 .px-crumbs button:hover { background: var(--bg-alt); }
 .px-crumbs .sep { color: var(--ink-soft); font-weight: 400; padding: 0 2px; }
 .px-crumbs .cur { padding: 4px 6px; }
-.px-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.px-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .px-section-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-soft); margin: 18px 0 8px; font-weight: 600; }
-.px-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.px-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 12px; }
 .px-card { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; box-shadow: var(--shadow); text-align: left; font: inherit; color: var(--ink); width: 100%; min-width: 0; }
 .px-card:hover { border-color: var(--accent); background: #f9fbfe; }
-.px-ico { font-size: 22px; flex-shrink: 0; }
+.px-ico { flex-shrink: 0; display: inline-flex; }
 .px-txt { min-width: 0; flex: 1; }
 .px-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .px-sub { font-size: 11.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .px-file { cursor: default; }
-.px-fbtns { display: flex; gap: 4px; flex-shrink: 0; }
-.px-fbtns button { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; cursor: pointer; font-size: 13px; }
+.px-fbtns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
+.px-fbtns button { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; cursor: pointer; font-family: 'Poppins'; font-size: 12px; font-weight: 600; color: var(--accent); }
+.px-fbtns button[data-px-doc="del"] { color: var(--red); }
 .px-fbtns button:hover { border-color: var(--accent); }
 .px-empty { padding: 26px; text-align: center; color: var(--ink-soft); background: var(--card); border: 1px dashed var(--line); border-radius: 12px; }
 .px-imp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -661,7 +671,8 @@ footer strong { color: var(--ink); }
   .px-avatar { width: 52px; height: 52px; font-size: 18px; }
   .px-badge { width: 24px; height: 24px; font-size: 15px; }
   .px-tile .px-name { font-size: 13.5px; }
-  .px-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .px-grid { grid-template-columns: 1fr; gap: 8px; }
+  .px-actions { justify-content: stretch; }
   .px-card { padding: 10px; gap: 8px; }
   .px-ico { font-size: 19px; }
   .px-name { font-size: 13px; }
@@ -694,7 +705,7 @@ footer strong { color: var(--ink); }
         <label for="loginPass">Palavra-passe</label>
         <div class="pass-wrap">
           <input type="password" id="loginPass" autocomplete="current-password" required>
-          <button type="button" class="pass-toggle" id="passToggle" aria-label="Mostrar palavra-passe">👁</button>
+          <button type="button" class="pass-toggle" id="passToggle" aria-label="Mostrar palavra-passe">Mostrar</button>
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-login" id="loginBtn">Entrar</button>
@@ -710,7 +721,7 @@ footer strong { color: var(--ink); }
       <div class="brand">
         <div class="brand-logo" data-marca="sigla">LA</div>
         <div>
-          <h1><span data-marca="app">Legado RH</span> <button type="button" class="brand-edit" id="btnMarca" title="Alterar o nome da app e da empresa" aria-label="Alterar o nome da app e da empresa">✏️</button></h1>
+          <h1><span data-marca="app">Legado RH</span> <button type="button" class="brand-edit" id="btnMarca" title="Alterar o nome da app e da empresa" aria-label="Alterar o nome da app e da empresa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></h1>
           <div class="sub" data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</div>
         </div>
       </div>
@@ -732,9 +743,9 @@ footer strong { color: var(--ink); }
   <!-- Navegação por áreas -->
   <nav class="area-nav">
     <div class="area-nav-inner">
-      <button class="area-tab active" data-area="pastas">📁 Pastas</button>
-      <button class="area-tab" data-area="funcionarios">👥 Funcionários</button>
-      <button class="area-tab" data-area="empresa">🏢 Empresa</button>
+      <button class="area-tab active" data-area="pastas">Pastas</button>
+      <button class="area-tab" data-area="funcionarios">Funcionários</button>
+      <button class="area-tab" data-area="empresa">Empresa</button>
     </div>
   </nav>
 
@@ -742,7 +753,7 @@ footer strong { color: var(--ink); }
   <div class="legal-banner">
     <strong>Estimativas de apoio à gestão.</strong> Não substituem contabilidade certificada nem software de faturação certificado pela AT.
   </div>
-  <div class="offline-banner" id="offlineBanner" hidden>📴 Sem Internet — estás a ver os dados guardados neste aparelho. As alterações são enviadas quando a ligação voltar.</div>
+  <div class="offline-banner" id="offlineBanner" hidden>Sem Internet — estás a ver os dados guardados neste aparelho. As alterações são enviadas quando a ligação voltar.</div>
 
   <!-- ÁREA: PASTAS (página inicial) — País › Empresa › Funcionário -->
   <div class="container area-view px-area" id="areaPastas">
@@ -750,7 +761,7 @@ footer strong { color: var(--ink); }
       <h1 class="px-title">Pastas</h1>
       <p class="px-subtitle">Documentos organizados por país, empresa e funcionário</p>
       <div class="px-search">
-        <span aria-hidden="true">🔎</span>
+        <span class="px-search-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
         <input type="search" id="pxSearch" placeholder="Procurar funcionário por nome, NIF ou empresa…" aria-label="Procurar funcionário">
       </div>
     </div>
@@ -767,20 +778,20 @@ footer strong { color: var(--ink); }
         <button type="button" class="active" data-estado="ativo">Ativos</button>
         <button type="button" data-estado="inativo">Inativos</button>
       </div>
-      <button class="btn btn-primary" id="btnNew">＋ Novo Funcionário</button>
-      <button class="btn btn-ghost" id="btnPdfAll">📄 PDF Todos</button>
-      <button class="btn btn-ghost" id="btnZipAll">🗜️ ZIP Completo</button>
-      <button class="btn btn-ghost" id="btnBackup">💾 Backup JSON</button>
-      <button class="btn btn-ghost" id="btnImport">📥 Importar</button>
-      <button class="btn btn-gold" id="btnUsers">👥 Utilizadores</button>
-      <button class="btn btn-gold" id="btnLogs">📋 Logs</button>
-      <button class="btn btn-gold" id="btnDedup">🧹 Corrigir duplicados</button>
-      <button class="btn btn-gold" id="btnNormEmp">🏢 Normalizar empresas</button>
+      <button class="btn btn-primary" id="btnNew">+ Novo Funcionário</button>
+      <button class="btn btn-ghost" id="btnPdfAll">PDF Todos</button>
+      <button class="btn btn-ghost" id="btnZipAll">ZIP Completo</button>
+      <button class="btn btn-ghost" id="btnBackup">Backup JSON</button>
+      <button class="btn btn-ghost" id="btnImport">Importar</button>
+      <button class="btn btn-gold" id="btnUsers">Utilizadores</button>
+      <button class="btn btn-gold" id="btnLogs">Logs</button>
+      <button class="btn btn-gold" id="btnDedup">Corrigir duplicados</button>
+      <button class="btn btn-gold" id="btnNormEmp">Normalizar empresas</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
     <div class="toolbar master-only" style="margin-top:-12px;">
-      <button class="btn btn-ghost" id="btnRelContab">📤 Relatório p/ Contabilista</button>
+      <button class="btn btn-ghost" id="btnRelContab">Relatório p/ Contabilista</button>
     </div>
 
     <div id="groupsWrap"></div>
@@ -789,14 +800,14 @@ footer strong { color: var(--ink); }
   <!-- ÁREA: EMPRESA -->
   <div class="container area-view" id="areaEmpresa" style="display:none;">
     <div class="toolbar">
-      <button class="btn btn-primary active" id="btnEmpDash" data-emp-tab="dashboard">📊 Dashboard</button>
-      <button class="btn btn-ghost" id="btnEmpIva" data-emp-tab="iva">🧾 IVA</button>
-      <button class="btn btn-ghost" id="btnEmpDespesas" data-emp-tab="despesas">💸 Despesas</button>
-      <button class="btn btn-ghost" id="btnEmpContab" data-emp-tab="contab">📋 Contabilidade</button>
-      <button class="btn btn-ghost" id="btnEmpIrc" data-emp-tab="irc">🏛️ IRC</button>
-      <button class="btn btn-ghost" id="btnEmpProforma" data-emp-tab="proforma">📄 Pró-formas</button>
-      <button class="btn btn-gold" id="btnEmpConfig" data-emp-tab="config">⚙️ Configurações</button>
-      <button class="btn btn-ghost" id="btnExportAll" style="margin-left:auto;">💾 Exportar todos os dados</button>
+      <button class="btn btn-primary active" id="btnEmpDash" data-emp-tab="dashboard">Dashboard</button>
+      <button class="btn btn-ghost" id="btnEmpIva" data-emp-tab="iva">IVA</button>
+      <button class="btn btn-ghost" id="btnEmpDespesas" data-emp-tab="despesas">Despesas</button>
+      <button class="btn btn-ghost" id="btnEmpContab" data-emp-tab="contab">Contabilidade</button>
+      <button class="btn btn-ghost" id="btnEmpIrc" data-emp-tab="irc">IRC</button>
+      <button class="btn btn-ghost" id="btnEmpProforma" data-emp-tab="proforma">Pró-formas</button>
+      <button class="btn btn-gold" id="btnEmpConfig" data-emp-tab="config">Configurações</button>
+      <button class="btn btn-ghost" id="btnExportAll" style="margin-left:auto;">Exportar todos os dados</button>
     </div>
     <div id="empContent"></div>
   </div>
@@ -806,7 +817,7 @@ footer strong { color: var(--ink); }
   <footer>
     <div><strong data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
-      <span class="ver">v3.2</span> · ☁️ Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+      <span class="ver">v3.2</span> · Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
   </footer>
 </div>
@@ -877,8 +888,8 @@ footer strong { color: var(--ink); }
             <div class="field"><label for="f_horario">Horário semanal (h)</label><input type="number" id="f_horario" step="1" min="0" value="40"></div>
             <div class="field"><label for="f_modo_pagamento">Modo de pagamento</label>
               <select id="f_modo_pagamento">
-                <option value="salario_horas_extra">💼 Salário fixo + horas extra</option>
-                <option value="so_horas">🕐 Só por horas</option>
+                <option value="salario_horas_extra">Salário fixo + horas extra</option>
+                <option value="so_horas">Só por horas</option>
               </select>
             </div>
             <div class="field" id="f_valor_hora_wrap" style="display:none;"><label for="f_valor_hora">Valor/hora (€)</label><input type="number" id="f_valor_hora" step="0.01" min="0"></div>
@@ -918,7 +929,7 @@ footer strong { color: var(--ink); }
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="formCancel">Cancelar</button>
-      <button class="btn btn-primary" id="formSave">💾 Guardar</button>
+      <button class="btn btn-primary" id="formSave">Guardar</button>
     </div>
   </div>
 </div>
@@ -932,13 +943,13 @@ footer strong { color: var(--ink); }
     </div>
     <div class="modal-body" id="detailBody"></div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" id="detailPdf">📄 PDF</button>
-      <button class="btn btn-primary master-only" id="detailSalary">💶 Processar Salário</button>
-      <button class="btn btn-primary master-only" id="detailContab">📑 Cálculo Contabilista</button>
-      <button class="btn btn-primary" id="detailFaltas">🗓️ Faltas / Baixas</button>
-      <button class="btn btn-primary" id="detailA1">🌍 A1 / Contrato</button>
-      <button class="btn btn-gold" id="detailEdit">✏️ Editar</button>
-      <button class="btn btn-danger" id="detailDelete">🗑️ Eliminar</button>
+      <button class="btn btn-ghost" id="detailPdf">PDF</button>
+      <button class="btn btn-primary master-only" id="detailSalary">Processar Salário</button>
+      <button class="btn btn-primary master-only" id="detailContab">Cálculo Contabilista</button>
+      <button class="btn btn-primary" id="detailFaltas">Faltas / Baixas</button>
+      <button class="btn btn-primary" id="detailA1">A1 / Contrato</button>
+      <button class="btn btn-gold" id="detailEdit">Editar</button>
+      <button class="btn btn-danger" id="detailDelete">Eliminar</button>
     </div>
   </div>
 </div>
@@ -947,7 +958,7 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="usersModal">
   <div class="modal narrow">
     <div class="modal-head">
-      <h2>👥 Gestão de Utilizadores</h2>
+      <h2>Gestão de Utilizadores</h2>
       <button class="modal-close" id="usersClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
@@ -964,7 +975,7 @@ footer strong { color: var(--ink); }
         <select id="newUserRole"><option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option></select>
       </div>
       <label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="newUserMaster"> Acesso <strong>master</strong> (salários e cálculos)</label>
-      <div><button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">＋ Criar utilizador</button></div>
+      <div><button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">+ Criar utilizador</button></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="usersCloseFoot">Fechar</button>
@@ -976,7 +987,7 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="logsModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>📋 Logs de Auditoria</h2>
+      <h2>Logs de Auditoria</h2>
       <button class="modal-close" id="logsClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
@@ -991,7 +1002,7 @@ footer strong { color: var(--ink); }
       </table>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" id="logsCsvBtn">📄 Exportar CSV</button>
+      <button class="btn btn-ghost" id="logsCsvBtn">Exportar CSV</button>
       <button class="btn btn-ghost" id="logsCloseFoot">Fechar</button>
     </div>
   </div>
@@ -1018,9 +1029,9 @@ footer strong { color: var(--ink); }
     <div class="modal-body" id="salaryBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="salaryCancel">Fechar</button>
-      <button class="btn btn-ghost" id="salaryPdfSimples">📄 Recibo simples (contabilista)</button>
-      <button class="btn btn-ghost" id="salaryPdfCompleto">📄 Recibo completo</button>
-      <button class="btn btn-primary" id="salarySave">💾 Guardar no histórico</button>
+      <button class="btn btn-ghost" id="salaryPdfSimples">Recibo simples (contabilista)</button>
+      <button class="btn btn-ghost" id="salaryPdfCompleto">Recibo completo</button>
+      <button class="btn btn-primary" id="salarySave">Guardar no histórico</button>
     </div>
   </div>
 </div>
@@ -1049,7 +1060,7 @@ footer strong { color: var(--ink); }
     <div class="modal-body" id="a1Body"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="a1Cancel">Cancelar</button>
-      <button class="btn btn-primary" id="a1Save">💾 Guardar</button>
+      <button class="btn btn-primary" id="a1Save">Guardar</button>
     </div>
   </div>
 </div>
@@ -1058,7 +1069,7 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="toolHorasModal">
   <div class="modal narrow">
     <div class="modal-head">
-      <h2>🕐 Calculadora de Horas</h2>
+      <h2>Calculadora de Horas</h2>
       <button class="modal-close" id="toolHorasClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
@@ -1068,7 +1079,7 @@ footer strong { color: var(--ink); }
         <div class="cfg-field"><label>Valor/hora (€) <span class="hint">deixe vazio p/ calcular</span></label><input type="number" step="any" id="th_vh" placeholder="auto"></div>
         <div class="cfg-field"><label>Salário base (€) <span class="hint">se valor/hora vazio</span></label><input type="number" step="any" id="th_base" value="920"></div>
       </div>
-      <button class="btn btn-primary" id="th_calc">🧮 Calcular</button>
+      <button class="btn btn-primary" id="th_calc">Calcular</button>
       <div id="th_result" style="margin-top:16px;"></div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" id="toolHorasCloseFoot">Fechar</button></div>
@@ -1079,7 +1090,7 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="toolSimplesModal">
   <div class="modal narrow">
     <div class="modal-head">
-      <h2>➖ Cálculo Simplificado (salário − faltas)</h2>
+      <h2>Cálculo Simplificado (salário − faltas)</h2>
       <button class="modal-close" id="toolSimplesClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
@@ -1089,7 +1100,7 @@ footer strong { color: var(--ink); }
         <div class="cfg-field"><label>Faltas (dias)</label><input type="number" step="any" id="ts_dias" value="0"></div>
         <div class="cfg-field"><label>Faltas (horas)</label><input type="number" step="any" id="ts_horas" value="0"></div>
       </div>
-      <button class="btn btn-primary" id="ts_calc">🧮 Calcular</button>
+      <button class="btn btn-primary" id="ts_calc">Calcular</button>
       <div id="ts_result" style="margin-top:16px;"></div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" id="toolSimplesCloseFoot">Fechar</button></div>
@@ -1100,14 +1111,14 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="toolContabModal">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="toolContabTitle">📑 Cálculo Completo (Contabilista)</h2>
+      <h2 id="toolContabTitle">Cálculo Completo (Contabilista)</h2>
       <button class="modal-close" id="toolContabClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="toolContabBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="toolContabCloseFoot">Fechar</button>
-      <button class="btn btn-ghost" id="toolContabPdf">📄 Recibo PDF</button>
-      <button class="btn btn-primary" id="toolContabSave" style="display:none;">💾 Guardar recibo</button>
+      <button class="btn btn-ghost" id="toolContabPdf">Recibo PDF</button>
+      <button class="btn btn-primary" id="toolContabSave" style="display:none;">Guardar recibo</button>
     </div>
   </div>
 </div>
@@ -1116,17 +1127,17 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="relContabModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>📤 Relatório para o Contabilista</h2>
+      <h2>Relatório para o Contabilista</h2>
       <button class="modal-close" id="relContabClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="relContabBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="relContabCloseFoot">Fechar</button>
-      <button class="btn btn-primary" id="relContabSave">💾 Guardar relatório</button>
-      <button class="btn btn-ghost" id="relContabSync">📤 Atualizar fichas dos funcionários</button>
-      <button class="btn btn-ghost" id="relContabExcel">📊 Exportar Excel/CSV</button>
-      <button class="btn btn-ghost" id="relContabPdf">📄 Tabela PDF</button>
-      <button class="btn btn-ghost" id="relContabConsolidado">📑 PDF Consolidado (pagamentos do mês)</button>
+      <button class="btn btn-primary" id="relContabSave">Guardar relatório</button>
+      <button class="btn btn-ghost" id="relContabSync">Atualizar fichas dos funcionários</button>
+      <button class="btn btn-ghost" id="relContabExcel">Exportar Excel/CSV</button>
+      <button class="btn btn-ghost" id="relContabPdf">Tabela PDF</button>
+      <button class="btn btn-ghost" id="relContabConsolidado">PDF Consolidado (pagamentos do mês)</button>
     </div>
   </div>
 </div>
@@ -1134,13 +1145,13 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="impPreviewModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>📥 Importar do Excel — Pré-visualização</h2>
+      <h2>Importar do Excel — Pré-visualização</h2>
       <button class="modal-close" id="impPreviewClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="impPreviewBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="impPreviewCancel">Cancelar</button>
-      <button class="btn btn-primary" id="impPreviewConfirm">✅ Confirmar e atualizar fichas</button>
+      <button class="btn btn-primary" id="impPreviewConfirm">Confirmar e atualizar fichas</button>
     </div>
   </div>
 </div>
@@ -1148,13 +1159,13 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="dedupModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>🧹 Corrigir funcionários duplicados</h2>
+      <h2>Corrigir funcionários duplicados</h2>
       <button class="modal-close" id="dedupClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="dedupBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="dedupCancel">Cancelar</button>
-      <button class="btn btn-danger" id="dedupApply" style="display:none;">✅ Aplicar correção</button>
+      <button class="btn btn-danger" id="dedupApply" style="display:none;">Aplicar correção</button>
     </div>
   </div>
 </div>
@@ -1162,13 +1173,13 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="normEmpModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>🏢 Normalizar nomes de empresas</h2>
+      <h2>Normalizar nomes de empresas</h2>
       <button class="modal-close" id="normEmpClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="normEmpBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="normEmpCancel">Cancelar</button>
-      <button class="btn btn-gold" id="normEmpApply" style="display:none;">✅ Aplicar</button>
+      <button class="btn btn-gold" id="normEmpApply" style="display:none;">Aplicar</button>
     </div>
   </div>
 </div>
@@ -1178,7 +1189,7 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="marcaModal">
   <div class="modal narrow">
     <div class="modal-head">
-      <h2>✏️ Nome da app e da empresa</h2>
+      <h2>Nome da app e da empresa</h2>
       <button class="modal-close" id="marcaClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
@@ -1190,7 +1201,7 @@ footer strong { color: var(--ink); }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="marcaReset">Repor original</button>
       <button class="btn btn-ghost" id="marcaCancel">Cancelar</button>
-      <button class="btn btn-primary" id="marcaSave">💾 Guardar</button>
+      <button class="btn btn-primary" id="marcaSave">Guardar</button>
     </div>
   </div>
 </div>
@@ -1199,13 +1210,13 @@ footer strong { color: var(--ink); }
 <div class="modal-backdrop" id="pxImportModal">
   <div class="modal">
     <div class="modal-head">
-      <h2>📥 Importar pasta (ZIP)</h2>
+      <h2>Importar pasta (ZIP)</h2>
       <button class="modal-close" id="pxImportClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body" id="pxImportBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="pxImportCancel">Cancelar</button>
-      <button class="btn btn-primary" id="pxImportApply">✅ Importar documentos</button>
+      <button class="btn btn-primary" id="pxImportApply">Importar documentos</button>
     </div>
   </div>
 </div>
@@ -1412,9 +1423,9 @@ function getGroup(emp) {
   return 'Outros';
 }
 const GROUPS = [
-  { key: 'Bélgica',  flag: '🇧🇪' },
-  { key: 'Portugal', flag: '🇵🇹' },
-  { key: 'Outros',   flag: '🌐' }
+  { key: 'Bélgica',  flag: '' },
+  { key: 'Portugal', flag: '' },
+  { key: 'Outros',   flag: '' }
 ];
 
 /* ---------- Permissions ---------- */
@@ -1515,7 +1526,7 @@ async function loadRole(user) {
       currentRole = 'admin'; // acesso total para todos os utilizadores com perfil
     } else {
       currentRole = 'viewer';
-      toast('Esta conta ainda não tem acesso. Peça ao utilizador master para a criar em 👥 Utilizadores.', true);
+      toast('Esta conta ainda não tem acesso. Peça ao utilizador master para a criar em Utilizadores.', true);
     }
   } catch (err) {
     currentRole = 'viewer';
@@ -1613,7 +1624,7 @@ function empRowHtml(e) {
           <td data-label="Função">${escapeHtml(e.funcao)}</td>
           <td data-label="Cliente">${escapeHtml(e.cliente) || '—'}</td>
           <td data-label="Estado">${e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>'}</td>
-          <td data-label="Docs">${e.doc_count ? '<span class="docbadge">📎 ' + e.doc_count + '</span>' : '—'}</td>
+          <td data-label="Docs">${e.doc_count ? '<span class="docbadge">' + e.doc_count + '</span>' : '—'}</td>
           <td data-label="Acções"><div class="row-actions">
             <button class="btn btn-ghost btn-sm act-view" data-id="${e.id}">Ver</button>
             <button class="btn btn-ghost btn-sm act-pdf" data-id="${e.id}">PDF</button>
@@ -1633,15 +1644,15 @@ function subTableHtml(list, q) {
 
 // Bandeiras conhecidas para os países geridos; resto fica com globo
 const PAIS_FLAGS = {
-  'Portugal': '🇵🇹', 'Bélgica': '🇧🇪', 'Belgica': '🇧🇪', 'França': '🇫🇷', 'Franca': '🇫🇷',
-  'Espanha': '🇪🇸', 'Alemanha': '🇩🇪', 'Luxemburgo': '🇱🇺', 'Países Baixos': '🇳🇱',
-  'Paises Baixos': '🇳🇱', 'Suíça': '🇨🇭', 'Suica': '🇨🇭', 'Reino Unido': '🇬🇧',
-  'Irlanda': '🇮🇪', 'Itália': '🇮🇹', 'Italia': '🇮🇹', 'Polónia': '🇵🇱',
-  'Polonia': '🇵🇱', 'Suécia': '🇸🇪', 'Suecia': '🇸🇪'
+  'Portugal': '', 'Bélgica': '', 'Belgica': '', 'França': '', 'Franca': '',
+  'Espanha': '', 'Alemanha': '', 'Luxemburgo': '', 'Países Baixos': '',
+  'Paises Baixos': '', 'Suíça': '', 'Suica': '', 'Reino Unido': '',
+  'Irlanda': '', 'Itália': '', 'Italia': '', 'Polónia': '',
+  'Polonia': '', 'Suécia': '', 'Suecia': ''
 };
 function flagFor(pais) {
-  if (!pais) return '🌐';
-  return PAIS_FLAGS[pais] || '🌐';
+  if (!pais) return '';
+  return PAIS_FLAGS[pais] || '';
 }
 
 // Estado de colapso e filtro entre re-renders
@@ -1877,8 +1888,8 @@ function viewDetail(id) {
     <div class="detail-head"><span class="dname">${escapeHtml(e.nome)}</span> ${badge}</div>
     <div class="detail-idline">ID: ${escapeHtml(e.id)} · ${escapeHtml(getGroup(e))} · NIF: ${escapeHtml(e.nif)}</div>
     <div class="ficha-tabs" role="tablist">
-      <button type="button" class="ficha-tab active" data-ficha-tab="controle" role="tab" aria-selected="true">📋 Controle</button>
-      <button type="button" class="ficha-tab" data-ficha-tab="faltas" role="tab" aria-selected="false">🗓️ Faltas e Baixas</button>
+      <button type="button" class="ficha-tab active" data-ficha-tab="controle" role="tab" aria-selected="true">Controle</button>
+      <button type="button" class="ficha-tab" data-ficha-tab="faltas" role="tab" aria-selected="false">Faltas e Baixas</button>
     </div>
     <div class="ficha-tab-pane active" data-ficha-pane="controle">
       <div class="detail-section"><div class="form-section-title">1 · Dados Pessoais</div><div class="detail-grid">
@@ -1896,7 +1907,7 @@ function viewDetail(id) {
         ${detailItem('Telemóvel', e.tel)}${detailItem('Email', e.email)}${detailItem('Morada', e.morada)}${detailItem('Código postal', e.cp)}${detailItem('Localidade', e.loc)}${detailItem('País', e.pais)}
       </div></div>
       <div class="detail-section"><div class="form-section-title">4 · Contrato de Trabalho</div><div class="detail-grid">
-        ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}${detailItem('Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? '🕐 Só por horas' : '💼 Salário fixo + horas extra')}${((e.modo_pagamento || '') === 'so_horas') ? detailItem('Valor/hora (€)', (e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '') : ''}
+        ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}${detailItem('Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? 'Só por horas' : 'Salário fixo + horas extra')}${((e.modo_pagamento || '') === 'so_horas') ? detailItem('Valor/hora (€)', (e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '') : ''}
       </div></div>
       <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
         ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
@@ -1912,9 +1923,9 @@ function viewDetail(id) {
       </div></div>
       <div class="detail-section docs-section">
         <div class="form-section-title">Documentos Anexados <span class="docs-count" id="docsCount">(0)</span></div>
-        ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">📎 Adicionar documento(s)</button></div>' : ''}
+        ${isEditor() ? '<div class="doc-toolbar"><button class="btn btn-primary btn-sm act-doc-add">Adicionar documento(s)</button></div>' : ''}
         <div class="doc-list" id="docsList"><div class="doc-empty">A carregar…</div></div>
-        <button class="btn btn-ghost btn-sm act-doc-zip">📦 Descarregar todos em ZIP</button>
+        <button class="btn btn-ghost btn-sm act-doc-zip">Descarregar todos em ZIP</button>
       </div>
     </div>
     <div class="ficha-tab-pane" data-ficha-pane="faltas">
@@ -1974,9 +1985,8 @@ function formatBytes(n) {
 }
 function docIcon(format) {
   const f = (format || '').toLowerCase();
-  if (f === 'pdf') return '📄';
-  if (['jpg','jpeg','png','gif','webp','bmp'].includes(f)) return '🖼';
-  return '📎';
+  const cls = f === 'pdf' ? 'ftype-pdf' : (['jpg','jpeg','png','gif','webp','bmp'].includes(f) ? 'ftype-img' : '');
+  return `<span class="ftype ${cls}">${escapeHtml((f || 'doc').toUpperCase().slice(0, 4))}</span>`;
 }
 function isImageFormat(format) {
   return ['jpg','jpeg','png','gif','webp','bmp'].includes((format || '').toLowerCase());
@@ -2043,7 +2053,7 @@ function renderDocs(docs) {
   list.innerHTML = docs.map(d => {
     const name = docFullName(d);
     const delBtn = isAdmin()
-      ? `<button class="btn btn-danger btn-sm act-doc-del" data-docid="${d.id}" data-filename="${escapeHtml(name)}" data-size="${d.bytes != null ? d.bytes : ''}">🗑 Eliminar</button>`
+      ? `<button class="btn btn-danger btn-sm act-doc-del" data-docid="${d.id}" data-filename="${escapeHtml(name)}" data-size="${d.bytes != null ? d.bytes : ''}">Eliminar</button>`
       : '';
     return `<div class="doc-card">
       <div class="doc-info">
@@ -2054,8 +2064,8 @@ function renderDocs(docs) {
         </div>
       </div>
       <div class="doc-actions">
-        <button class="btn btn-ghost btn-sm act-doc-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">👁 Ver</button>
-        <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">⬇ Descarregar</button>
+        <button class="btn btn-ghost btn-sm act-doc-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">Ver</button>
+        <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">Descarregar</button>
         ${delBtn}
       </div>
     </div>`;
@@ -2122,7 +2132,7 @@ function viewDocument(url, format, filename) {
       .then(blob => { viewerObjectUrl = URL.createObjectURL(blob); body.innerHTML = `<iframe src="${viewerObjectUrl}" title="${escapeHtml(filename)}"></iframe>`; })
       .catch(() => {
         body.innerHTML = navigator.onLine === false
-          ? '<div class="doc-empty">📴 Este documento ainda não foi guardado neste aparelho para uso offline.</div>'
+          ? '<div class="doc-empty">Este documento ainda não foi guardado neste aparelho para uso offline.</div>'
           : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
       });
   }
@@ -2513,7 +2523,7 @@ function openDedup() {
   let html = '';
 
   if (plan.trataveis.length === 0 && plan.manuais.length === 0) {
-    html = '<p style="font-size:15px;">✅ Não foram encontrados duplicados.</p>';
+    html = '<p style="font-size:15px;">Não foram encontrados duplicados.</p>';
     applyBtn.style.display = 'none';
   } else {
     html += '<p style="font-size:15px;margin-bottom:14px;">'
@@ -2546,7 +2556,7 @@ function openDedup() {
     }
 
     if (plan.manuais.length > 0) {
-      html += '<h3 style="margin:18px 0 8px;font-size:15px;">⚠️ Grupos para revisão manual</h3>';
+      html += '<h3 style="margin:18px 0 8px;font-size:15px;">Grupos para revisão manual</h3>';
       html += '<ul style="margin:0 0 4px 18px;font-size:14px;line-height:1.7;">';
       plan.manuais.forEach(m => {
         html += '<li><strong>' + escapeHtml(m.nome) + '</strong>'
@@ -2667,7 +2677,7 @@ function openNormEmp() {
   let html = '';
 
   if (plan.totalAlterar === 0) {
-    html = '<p style="font-size:15px;">✅ Já está tudo normalizado.</p>';
+    html = '<p style="font-size:15px;">Já está tudo normalizado.</p>';
     applyBtn.style.display = 'none';
   } else {
     html += '<p style="font-size:15px;margin-bottom:14px;">'
@@ -2786,7 +2796,7 @@ async function renderUsers() {
         <td>${escapeHtml(u.nome)}</td>
         <td>${isSelf ? `<span class="role-badge role-admin">${escapeHtml(u.role)}</span>` : `<select data-uid="${d.id}" data-email="${escapeHtml(u.email)}" class="role-select">${sel}</select>`}</td>
         <td style="text-align:center;"><label style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="master-chk" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" ${isM ? 'checked' : ''}> ${isM ? '<span class="role-badge role-master">master</span>' : ''}</label></td>
-        <td style="text-align:center;"><button class="btn btn-ghost btn-sm user-reset" data-email="${escapeHtml(u.email)}" title="Enviar email para o utilizador definir nova palavra-passe">🔑 Repor</button></td>
+        <td style="text-align:center;"><button class="btn btn-ghost btn-sm user-reset" data-email="${escapeHtml(u.email)}" title="Enviar email para o utilizador definir nova palavra-passe">Repor</button></td>
       </tr>`;
     }).join('');
     body.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', e => changeRole(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
@@ -2948,6 +2958,7 @@ function bind() {
   document.getElementById('passToggle').addEventListener('click', () => {
     const inp = document.getElementById('loginPass');
     inp.type = inp.type === 'password' ? 'text' : 'password';
+    document.getElementById('passToggle').textContent = inp.type === 'password' ? 'Mostrar' : 'Ocultar';
   });
   document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
@@ -2975,7 +2986,7 @@ function bind() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => updateValBadge(id, id + '_badge'));
   });
-  // Selects ligados a listas: tratamento da opção "➕ Adicionar novo…"
+  // Selects ligados a listas: tratamento da opção "Adicionar novo…"
   ['f_nacionalidade', 'f_pais', 'f_cli_pais', 'f_cliente'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -3245,7 +3256,7 @@ function refreshListaSelects() {
     });
     if (isAdmin()) {
       const add = document.createElement('option');
-      add.value = '__new__'; add.textContent = '➕ Adicionar novo…';
+      add.value = '__new__'; add.textContent = 'Adicionar novo…';
       sel.appendChild(add);
     }
     if (previous && Array.from(sel.options).some(o => o.value === previous)) sel.value = previous;
@@ -3303,7 +3314,7 @@ function renderListaBloco(tipo, titulo, itens, podeEditar) {
     : itens.map(v => `
         <div class="list-mgmt-row">
           <span class="lm-val">${escapeHtml(v)}</span>
-          <button type="button" class="lm-del" data-lista-del="${escapeHtml(tipo)}" data-valor="${escapeHtml(v)}" ${podeEditar ? '' : 'disabled'} title="Remover">🗑</button>
+          <button type="button" class="lm-del" data-lista-del="${escapeHtml(tipo)}" data-valor="${escapeHtml(v)}" ${podeEditar ? '' : 'disabled'} title="Remover">Remover</button>
         </div>`).join('');
   return `
     <div>
@@ -3312,7 +3323,7 @@ function renderListaBloco(tipo, titulo, itens, podeEditar) {
         ${linhas}
         <div class="list-mgmt-add">
           <input type="text" placeholder="Novo ${tipo === 'paises' ? 'país' : 'empresa'}…" data-lista-input="${escapeHtml(tipo)}" ${podeEditar ? '' : 'disabled'}>
-          <button type="button" class="btn btn-primary btn-sm" data-lista-add="${escapeHtml(tipo)}" ${podeEditar ? '' : 'disabled'}>➕ Adicionar</button>
+          <button type="button" class="btn btn-primary btn-sm" data-lista-add="${escapeHtml(tipo)}" ${podeEditar ? '' : 'disabled'}>Adicionar</button>
         </div>
       </div>
     </div>`;
@@ -3668,7 +3679,7 @@ function subscribeConfig() {
 }
 
 /* ============================================================
-   📁 PASTAS — explorador tipo Drive
+   PASTAS — explorador tipo Drive
    Ativos: País › Empresa › Funcionário › (Ficha PDF + documentos)
    Ex-colaboradores (inativos): mesma estrutura dentro de uma pasta própria.
    As pastas derivam de cli_pais (país de destacamento) e cliente (empresa).
@@ -3882,7 +3893,7 @@ async function pxEliminarPasta(pais, empresa) {
   const nome = empresa || pais;
   const dentro = pxNaPasta(pais, empresa);
   if (dentro.length) {
-    alert(`A pasta "${nome}" tem ${dentro.length} funcionário(s) (incluindo ex-colaboradores).\n\nPara a eliminar, primeiro muda-os de pasta (✏️ Editar dados ou ✏️ Renomear) ou elimina as fichas.`);
+    alert(`A pasta "${nome}" tem ${dentro.length} funcionário(s) (incluindo ex-colaboradores).\n\nPara a eliminar, primeiro muda-os de pasta (Editar dados ou Renomear) ou elimina as fichas.`);
     return;
   }
   const est = pxEstClone();
@@ -3922,7 +3933,7 @@ async function pxGuardarOffline(emps, label) {
       catch (e) { falhas++; }
       setMsg(`A guardar documentos… ${ok + falhas}/${urls.length}`);
     });
-    toast(`📶 ${label}: ${emps.length} ficha(s) e ${ok} documento(s) disponíveis offline neste aparelho.` + (falhas ? ` ${falhas} não foram guardados.` : ''), falhas > 0);
+    toast(`${label}: ${emps.length} ficha(s) e ${ok} documento(s) disponíveis offline neste aparelho.` + (falhas ? ` ${falhas} não foram guardados.` : ''), falhas > 0);
   } catch (err) {
     toast('Erro ao preparar uso offline: ' + friendlyError(err), true);
   } finally { hideOverlay(); }
@@ -3980,11 +3991,11 @@ function pxFolderSvg(ex) {
   const corpo = ex ? '#8a94a3' : '#003366', aba = ex ? '#c3cad4' : '#D4AF37';
   return `<svg class="px-folder-ico" viewBox="0 0 64 52" aria-hidden="true"><path d="M4 9a5 5 0 0 1 5-5h15l6 6h25a5 5 0 0 1 5 5v3H4z" fill="${aba}"/><rect x="2" y="14" width="60" height="36" rx="6" fill="${corpo}"/></svg>`;
 }
-// Cartão grande: pasta (país/empresa/ex-colaboradores) ou funcionário (iniciais)
-function pxCard(i, ico, nome, sub) {
-  const visual = ico === '👤'
+// Cartão grande: pasta (pais/empresa/ex) ou funcionário (func, com iniciais)
+function pxCard(i, tipo, nome, sub) {
+  const visual = tipo === 'func'
     ? `<span class="px-avatar">${escapeHtml(pxInitials(nome))}</span>`
-    : `<span class="px-folder-wrap">${pxFolderSvg(ico === '🗂️')}${ico === '🌍' || ico === '🏢' ? `<span class="px-badge">${ico}</span>` : ''}</span>`;
+    : `<span class="px-folder-wrap">${pxFolderSvg(tipo === 'ex')}</span>`;
   return `<button type="button" class="px-tile" data-px-i="${i}" title="${escapeHtml(nome)}">${visual}<span class="px-name">${escapeHtml(nome)}</span><span class="px-sub">${escapeHtml(sub)}</span></button>`;
 }
 function pxBtn(action, label, cls) { return `<button type="button" class="btn ${cls || 'btn-ghost'}" data-px-act="${action}">${label}</button>`; }
@@ -4001,9 +4012,9 @@ function renderPastas() {
     const res = pxSearchMatches(termo);
     pxCrumbs = [];
     pxItems = res.map(e => Object.assign(pxPathOf(e), { limparPesquisa: true }));
-    root.innerHTML = `<div class="px-head"><button type="button" class="px-back" data-px-act="limpar-pesquisa" title="Voltar" aria-label="Limpar pesquisa e voltar">←</button><div class="px-crumbs"><span class="cur">🔎 ${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
+    root.innerHTML = `<div class="px-head"><button type="button" class="px-back" data-px-act="limpar-pesquisa" title="Voltar" aria-label="Limpar pesquisa e voltar">←</button><div class="px-crumbs"><span class="cur">${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
       + (res.length
-        ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e))).join('') + '</div>'
+        ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e))).join('') + '</div>'
         : '<div class="px-empty">Nenhum funcionário encontrado.</div>');
     return;
   }
@@ -4014,8 +4025,8 @@ function renderPastas() {
 
   // Breadcrumb
   pxCrumbs = [{ scope: 'ativos' }];
-  const labels = ['🏠 Início'];
-  if (scope === 'ex') { pxCrumbs.push({ scope: 'ex' }); labels.push('🗂️ ' + PX_EX); }
+  const labels = ['Início'];
+  if (scope === 'ex') { pxCrumbs.push({ scope: 'ex' }); labels.push('' + PX_EX); }
   if (pais) { pxCrumbs.push({ scope, pais }); labels.push(pais); }
   if (empresa) { pxCrumbs.push({ scope, pais, empresa }); labels.push(empresa); }
   let emp = null;
@@ -4043,20 +4054,20 @@ function renderPastas() {
         if (pxPath.funcId === funcId) renderPastas();
       }, err => toast('Erro ao carregar documentos: ' + friendlyError(err), true));
     }
-    if (isEditor()) actions += pxBtn('editar', '✏️ Editar dados', 'btn-primary');
-    actions += pxBtn('ficha', '📄 Gerar PDF');
-    actions += pxBtn('detalhe', '📋 Ficha completa');
-    if (isEditor()) actions += pxBtn('upload', '📎 Anexar ficheiros');
-    actions += pxBtn('zip-func', '⬇️ Download pasta');
-    actions += pxBtn('offline', '📶 Guardar offline');
-    if (isAdmin()) actions += pxBtn('eliminar-ficha', '🗑 Eliminar ficha', 'btn-danger');
-    const ficha = `<div class="px-card px-file"><span class="px-ico">📋</span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">⬇️</button></span></div>`;
+    if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
+    actions += pxBtn('ficha', 'Gerar PDF');
+    actions += pxBtn('detalhe', 'Ficha completa');
+    if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
+    actions += pxBtn('zip-func', 'Download pasta');
+    actions += pxBtn('offline', 'Guardar offline');
+    if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
+    const ficha = `<div class="px-card px-file"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
     let docsHtml;
     if (pxDocs === null) docsHtml = '<div class="px-empty">A carregar documentos…</div>';
-    else if (!pxDocs.length) docsHtml = `<div class="px-empty">Ainda não há documentos nesta pasta.${isEditor() ? ' Usa <strong>📎 Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
+    else if (!pxDocs.length) docsHtml = `<div class="px-empty">Ainda não há documentos nesta pasta.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
     else docsHtml = '<div class="px-grid">' + pxDocs.map((d, i) => {
       const nome = docFullName(d);
-      return `<div class="px-card px-file"><span class="px-ico">${isImageFormat(d.format) ? '🖼️' : '📄'}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns"><button type="button" data-px-doc="view" data-px-d="${i}" title="Ver">👁</button><button type="button" data-px-doc="down" data-px-d="${i}" title="Descarregar">⬇️</button>${isAdmin() ? `<button type="button" data-px-doc="del" data-px-d="${i}" title="Eliminar">🗑</button>` : ''}</span></div>`;
+      return `<div class="px-card px-file"><span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns"><button type="button" data-px-doc="view" data-px-d="${i}" title="Ver">Ver</button><button type="button" data-px-doc="down" data-px-d="${i}" title="Descarregar">Descarregar</button>${isAdmin() ? `<button type="button" data-px-doc="del" data-px-d="${i}" title="Eliminar">Eliminar</button>` : ''}</span></div>`;
     }).join('') + '</div>';
     body = `<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title">Documentos</div>${docsHtml}`;
   } else {
@@ -4065,32 +4076,32 @@ function renderPastas() {
     if (empresa) {
       // ----- Funcionários da empresa -----
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
-      if (isEditor() && scope === 'ativos') actions += pxBtn('novo-aqui', '＋ Novo funcionário aqui', 'btn-primary');
-      actions += pxBtn('zip-empresa', '⬇️ Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
-      actions += pxBtn('offline', '📶 Guardar offline');
+      if (isEditor() && scope === 'ativos') actions += pxBtn('novo-aqui', '+ Novo funcionário aqui', 'btn-primary');
+      actions += pxBtn('zip-empresa', 'Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('offline', 'Guardar offline');
       if (scope === 'ativos' && empresa !== PX_SEM_EMP) {
-        if (isEditor()) actions += pxBtn('renomear', '✏️ Renomear pasta');
-        if (isAdmin()) actions += pxBtn('eliminar-pasta', '🗑 Eliminar pasta', 'btn-danger');
+        if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
+        if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
       pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
       body = emps.length
-        ? '<div class="px-grid-big">' + emps.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
-        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>＋ Novo funcionário aqui</strong> para criar a primeira ficha.' : ''}</div>`;
+        ? '<div class="px-grid-big">' + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
+        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>+ Novo funcionário aqui</strong> para criar a primeira ficha.' : ''}</div>`;
     } else if (pais) {
       // ----- Empresas do país (+ pastas de empresa criadas à mão) -----
       const extras = scope === 'ativos' ? ((window.pxEstrutura || {})[pais] || []) : [];
       const grupos = pxMergeKeys(pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa), extras);
-      if (isEditor() && scope === 'ativos' && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '＋ Nova empresa', 'btn-primary');
-      actions += pxBtn('zip-pais', '⬇️ Download país', isEditor() && scope === 'ativos' ? 'btn-ghost' : 'btn-primary');
-      actions += pxBtn('offline', '📶 Guardar offline');
+      if (isEditor() && scope === 'ativos' && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '+ Nova empresa', 'btn-primary');
+      actions += pxBtn('zip-pais', 'Download país', isEditor() && scope === 'ativos' ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('offline', 'Guardar offline');
       if (scope === 'ativos' && pais !== PX_SEM_PAIS) {
-        if (isEditor()) actions += pxBtn('renomear', '✏️ Renomear pasta');
-        if (isAdmin()) actions += pxBtn('eliminar-pasta', '🗑 Eliminar pasta', 'btn-danger');
+        if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
+        if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
       pxItems = grupos.map(([emp]) => ({ scope, pais, empresa: emp }));
       body = grupos.length
-        ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, arr.length ? `${arr.length} funcionário${arr.length === 1 ? '' : 's'}` : 'Pasta vazia')).join('') + '</div>'
-        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>＋ Nova empresa</strong> para criar uma pasta de empresa.' : ''}</div>`;
+        ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, 'empresa', emp, arr.length ? `${arr.length} funcionário${arr.length === 1 ? '' : 's'}` : 'Pasta vazia')).join('') + '</div>'
+        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>+ Nova empresa</strong> para criar uma pasta de empresa.' : ''}</div>`;
     } else {
       // ----- Raiz (Ativos) ou raiz dos Ex-colaboradores: países -----
       const est = scope === 'ativos' ? (window.pxEstrutura || {}) : {};
@@ -4098,19 +4109,19 @@ function renderPastas() {
       pxItems = grupos.map(([p]) => ({ scope, pais: p }));
       let cards = grupos.map(([p, arr], i) => {
         const nEmp = new Set(arr.map(pxEmpresa).concat(est[p] || [])).size;
-        return pxCard(i, scope === 'ex' ? '🗂️' : '🌍', p, `${nEmp} empresa${nEmp === 1 ? '' : 's'} · ${arr.length} funcionário${arr.length === 1 ? '' : 's'}`);
+        return pxCard(i, scope === 'ex' ? 'ex' : 'pais', p, `${nEmp} empresa${nEmp === 1 ? '' : 's'} · ${arr.length} funcionário${arr.length === 1 ? '' : 's'}`);
       }).join('');
       if (scope === 'ativos') {
         const nEx = pxList('ex').length;
         pxItems.push({ scope: 'ex' });
-        cards += pxCard(pxItems.length - 1, '🗂️', PX_EX, `${nEx} funcionário${nEx === 1 ? '' : 's'} inativo${nEx === 1 ? '' : 's'}`);
-        if (isEditor()) actions += pxBtn('nova-pasta', '＋ Nova pasta (país)', 'btn-primary');
-        actions += pxBtn('zip-geral', '⬇️ Download geral', isEditor() ? 'btn-ghost' : 'btn-primary');
-        if (isEditor()) actions += pxBtn('import', '📥 Importar pasta (ZIP)');
-        actions += pxBtn('offline', '📶 Guardar tudo offline');
+        cards += pxCard(pxItems.length - 1, 'ex', PX_EX, `${nEx} funcionário${nEx === 1 ? '' : 's'} inativo${nEx === 1 ? '' : 's'}`);
+        if (isEditor()) actions += pxBtn('nova-pasta', '+ Nova pasta (país)', 'btn-primary');
+        actions += pxBtn('zip-geral', 'Download geral', isEditor() ? 'btn-ghost' : 'btn-primary');
+        if (isEditor()) actions += pxBtn('import', 'Importar pasta (ZIP)');
+        actions += pxBtn('offline', 'Guardar tudo offline');
       } else {
-        actions += pxBtn('zip-ex', '⬇️ Download ex-colaboradores', 'btn-primary');
-        actions += pxBtn('offline', '📶 Guardar offline');
+        actions += pxBtn('zip-ex', 'Download ex-colaboradores', 'btn-primary');
+        actions += pxBtn('offline', 'Guardar offline');
       }
       body = cards ? `<div class="px-grid-big">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
       if (scope === 'ativos') body += `<div class="px-sub" style="margin-top:12px;white-space:normal;">As pastas organizam-se pelo <strong>País de destacamento</strong> e pela <strong>Empresa cliente</strong> de cada funcionário. Quem não tiver estes campos preenchidos aparece em “${PX_SEM_PAIS}” / “${PX_SEM_EMP}”.</div>`;
@@ -4332,8 +4343,8 @@ async function pxImportZip(file) {
   const ok = linhas.filter(l => l.match.status === 'ok').length;
   const rows = linhas.map((l, i) => {
     const pasta = l.segs[l.segs.length - 1];
-    const aviso = l.match.status === 'ambiguous' ? '<div class="px-imp-path">⚠️ vários funcionários possíveis — escolhe</div>'
-      : l.match.status === 'none' ? '<div class="px-imp-path">❌ não encontrado — escolhe ou ignora</div>' : '';
+    const aviso = l.match.status === 'ambiguous' ? '<div class="px-imp-path">vários funcionários possíveis — escolhe</div>'
+      : l.match.status === 'none' ? '<div class="px-imp-path">não encontrado — escolhe ou ignora</div>' : '';
     const ign = l.ignorados.length ? `<div class="px-imp-path">${l.ignorados.length} ignorado(s) (formato não suportado)</div>` : '';
     return `<tr><td><strong>${escapeHtml(pasta)}</strong><div class="px-imp-path">${escapeHtml(l.key)}</div></td>`
       + `<td style="white-space:nowrap;">${l.files.length} ficheiro(s)${ign}</td>`
@@ -4530,7 +4541,7 @@ function renderDashboard() {
   </div>
   <div class="empresa-section">
     <h2>Parâmetros em vigor</h2>
-    <div class="es-sub">Valores actuais usados nos cálculos. Editáveis em ⚙️ Configurações. Vigentes desde ${escapeHtml(cfg.vigente_desde || '—')}.</div>
+    <div class="es-sub">Valores actuais usados nos cálculos. Editáveis em Configurações. Vigentes desde ${escapeHtml(cfg.vigente_desde || '—')}.</div>
     <div class="dash-grid">
       <div class="dash-card"><div class="dc-lbl">SS trabalhador</div><div class="dc-val">${pct(cfg.ss_trabalhador)}</div></div>
       <div class="dash-card"><div class="dc-lbl">SS entidade</div><div class="dc-val">${pct(cfg.ss_entidade)}</div></div>
@@ -4620,11 +4631,11 @@ function renderIva() {
       <input type="number" step="any" id="${kind}_base" placeholder="Base €">
       <input type="number" step="any" id="${kind}_taxa" placeholder="Taxa %" list="ivaTaxasList">
       <input type="number" step="any" id="${kind}_iva" placeholder="IVA € (auto)">
-      <button class="btn btn-primary btn-sm" data-add-${kind}="1">＋</button>
+      <button class="btn btn-primary btn-sm" data-add-${kind}="1">+</button>
     </div>` : '';
   return `
   <div class="empresa-section">
-    <h2>🧾 Estimador de IVA (trimestral)</h2>
+    <h2>Estimador de IVA (trimestral)</h2>
     <div class="es-sub">Registo de faturas emitidas (IVA liquidado) e recebidas (IVA dedutível), por taxa. Apuramento por trimestre. Carregamento de ficheiros: a app extrai texto e a utilizadora confirma os valores (sem IA — opcional/fase seguinte).</div>
     <datalist id="ivaTaxasList">${taxas.map(t => `<option value="${t.valor}">${escapeHtml(t.nome)}</option>`).join('')}</datalist>
     <div class="calc-input-grid">
@@ -4651,7 +4662,7 @@ function renderIva() {
       <div class="calc-line total"><span class="cl-label">${r.saldo >= 0 ? 'IVA A ENTREGAR' : 'IVA A RECUPERAR'}</span><span class="cl-formula">Liquidado − dedutível</span><span class="cl-value">${eur(r.saldo >= 0 ? r.aEntregar : r.aRecuperar)}</span></div>
     </div>
     <div class="calc-warn-box" style="margin-top:12px;">Declaração periódica do ${ivaState.trimestre}.º trimestre de ${ivaState.ano}: <strong>${prazoIvaTrimestre(ivaState.ano, ivaState.trimestre)}</strong> (regime trimestral; o pagamento segue habitualmente até ao dia 25).</div>
-    ${isEditor() ? '<div class="calc-actions"><button class="btn btn-primary" id="iva_save">💾 Guardar trimestre</button></div>' : ''}
+    ${isEditor() ? '<div class="calc-actions"><button class="btn btn-primary" id="iva_save">Guardar trimestre</button></div>' : ''}
   </div>`;
 }
 
@@ -4700,11 +4711,11 @@ function renderDespesas() {
         <div class="cfg-field"><label>Valor (€)</label><input type="number" step="any" id="desp_valor" placeholder="0,00"></div>
         <div class="cfg-field"><label>Categoria</label><select id="desp_categoria">${catOpts}</select></div>
       </div>
-      <div class="calc-actions"><button class="btn btn-primary" id="desp_upload">📎 Anexar fatura</button></div>
+      <div class="calc-actions"><button class="btn btn-primary" id="desp_upload">Anexar fatura</button></div>
     </div>` : '';
   return `
   <div class="empresa-section">
-    <h2>💸 Despesas da empresa</h2>
+    <h2>Despesas da empresa</h2>
     <div class="es-sub">Faturas de gastos/despesas da empresa, organizadas por mês. Não estão associadas a nenhum funcionário.</div>
     <div class="calc-input-grid">
       <div class="cfg-field"><label>Mês</label><input type="month" id="desp_mes" value="${escapeHtml(mes)}"></div>
@@ -4713,7 +4724,7 @@ function renderDespesas() {
     ${form}
     <div class="cfg-group">
       <div class="cfg-group-title">Faturas de <span id="desp_mes_label">${escapeHtml(periodoLabel(mes))}</span> <span id="desp_count" class="es-sub" style="font-weight:normal;"></span></div>
-      <button class="btn btn-ghost btn-sm" id="desp_csv">📊 Exportar CSV do mês</button>
+      <button class="btn btn-ghost btn-sm" id="desp_csv">Exportar CSV do mês</button>
       <div id="desp_list" style="margin-top:12px;"><div class="doc-empty">A carregar…</div></div>
     </div>
     <div class="calc-result">
@@ -4853,7 +4864,7 @@ function renderDespesasList() {
     if (d.created_by) partes.push(escapeHtml(d.created_by));
     const valorTxt = d.valor == null ? '—' : eur(num(d.valor, 0));
     const delBtn = isAdmin()
-      ? `<button class="btn btn-danger btn-sm act-desp-del" data-id="${d.id}" data-desc="${escapeHtml(d.descricao || name)}">🗑 Eliminar</button>`
+      ? `<button class="btn btn-danger btn-sm act-desp-del" data-id="${d.id}" data-desc="${escapeHtml(d.descricao || name)}">Eliminar</button>`
       : '';
     return `<div class="doc-card">
       <div class="doc-info">
@@ -4864,8 +4875,8 @@ function renderDespesasList() {
         </div>
       </div>
       <div class="doc-actions">
-        <button class="btn btn-ghost btn-sm act-desp-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">👁 Ver</button>
-        <button class="btn btn-ghost btn-sm act-desp-dl" data-url="${escapeHtml(d.url)}">⬇ Descarregar</button>
+        <button class="btn btn-ghost btn-sm act-desp-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">Ver</button>
+        <button class="btn btn-ghost btn-sm act-desp-dl" data-url="${escapeHtml(d.url)}">Descarregar</button>
         ${delBtn}
       </div>
     </div>`;
@@ -4935,19 +4946,19 @@ function renderContab() {
   const mes = contabModel.mes || currentPeriodo();
   const editor = isEditor();
   const btns = editor ? `
-      <button class="btn btn-primary" id="contab_save">💾 Guardar</button>
-      <button class="btn btn-ghost" id="contab_pdf">📄 Imprimir PDF</button>
-      <button class="btn btn-ghost" id="contab_csv">📊 CSV</button>
-      <button class="btn btn-ghost" id="contab_copy">📋 Copiar do mês anterior</button>
-      <button class="btn btn-gold" id="contab_add_emp">➕ Adicionar empresa</button>`
+      <button class="btn btn-primary" id="contab_save">Guardar</button>
+      <button class="btn btn-ghost" id="contab_pdf">Imprimir PDF</button>
+      <button class="btn btn-ghost" id="contab_csv">CSV</button>
+      <button class="btn btn-ghost" id="contab_copy">Copiar do mês anterior</button>
+      <button class="btn btn-gold" id="contab_add_emp">Adicionar empresa</button>`
     : `
-      <button class="btn btn-ghost" id="contab_pdf">📄 Imprimir PDF</button>
-      <button class="btn btn-ghost" id="contab_csv">📊 CSV</button>`;
+      <button class="btn btn-ghost" id="contab_pdf">Imprimir PDF</button>
+      <button class="btn btn-ghost" id="contab_csv">CSV</button>`;
   return `
   <div class="empresa-section" id="contab_root">
-    <h2>📋 Folha para a contabilidade</h2>
+    <h2>Folha para a contabilidade</h2>
     <div class="es-sub">Folha mensal preenchida manualmente, agrupada por empresa-cliente. Independente dos cálculos de salários. Escolha o mês, preencha as linhas e clique em Guardar.</div>
-    <div class="contab-dirty-note" id="contab_dirty">Tem alterações não guardadas. Não se esqueça de clicar em 💾 Guardar.</div>
+    <div class="contab-dirty-note" id="contab_dirty">Tem alterações não guardadas. Não se esqueça de clicar em Guardar.</div>
     <div class="contab-toolbar">
       <div class="contab-mes-field">
         <label for="contab_mes">Mês</label>
@@ -4965,7 +4976,7 @@ function renderContabGrupos() {
   const admin = isAdmin();
   const grupos = contabModel.grupos || [];
   if (!grupos.length) {
-    return `<div class="contab-empty">Ainda não há empresas neste mês. Clica em ➕ Adicionar empresa${editor ? ' ou 📋 Copiar do mês anterior' : ''}.</div>`;
+    return `<div class="contab-empty">Ainda não há empresas neste mês. Clica em Adicionar empresa${editor ? ' ou Copiar do mês anterior' : ''}.</div>`;
   }
   return grupos.map(g => {
     const linhas = g.linhas || [];
@@ -4977,11 +4988,11 @@ function renderContabGrupos() {
         <td><input type="text" value="${escapeHtml(l.inicio || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="inicio" placeholder="dd/mm/aaaa"${editor ? '' : ' readonly'}></td>
         <td><input type="text" value="${escapeHtml(l.fim || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="fim" placeholder="dd/mm/aaaa"${editor ? '' : ' readonly'}></td>
         <td><input type="text" value="${escapeHtml(l.obs || '')}" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" data-field="obs" placeholder="Observação"${editor ? '' : ' readonly'}></td>
-        <td class="contab-col-acao">${editor ? `<button class="contab-del-row" data-action="del-linha" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" title="Eliminar linha">🗑</button>` : ''}</td>
-      </tr>`).join('') : `<tr class="contab-row-empty"><td colspan="7">Sem funcionários nesta empresa.${editor ? ' Clica em ➕ Adicionar funcionário.' : ''}</td></tr>`;
+        <td class="contab-col-acao">${editor ? `<button class="contab-del-row" data-action="del-linha" data-gid="${escapeHtml(g.id)}" data-lid="${escapeHtml(l.id)}" title="Eliminar linha">Remover</button>` : ''}</td>
+      </tr>`).join('') : `<tr class="contab-row-empty"><td colspan="7">Sem funcionários nesta empresa.${editor ? ' Clica em Adicionar funcionário.' : ''}</td></tr>`;
     const headActions = editor ? `
-        <button class="btn btn-primary btn-sm" data-action="add-linha" data-gid="${escapeHtml(g.id)}">➕ Adicionar funcionário</button>
-        ${admin ? `<button class="btn btn-danger btn-sm" data-action="del-empresa" data-gid="${escapeHtml(g.id)}">🗑 Eliminar empresa</button>` : ''}` : '';
+        <button class="btn btn-primary btn-sm" data-action="add-linha" data-gid="${escapeHtml(g.id)}">Adicionar funcionário</button>
+        ${admin ? `<button class="btn btn-danger btn-sm" data-action="del-empresa" data-gid="${escapeHtml(g.id)}">Eliminar empresa</button>` : ''}` : '';
     return `
     <div class="contab-grupo" data-gid="${escapeHtml(g.id)}">
       <div class="contab-grupo-head">
@@ -5135,7 +5146,7 @@ async function contabCopyPrev() {
     }));
     contabSetDirty(true);
     contabRerenderBody();
-    toast(`Copiado de ${periodoLabel(prev)}. Revê e clica em 💾 Guardar.`);
+    toast(`Copiado de ${periodoLabel(prev)}. Revê e clica em Guardar.`);
   } catch (err) {
     toast(friendlyError(err), true);
   }
@@ -5281,14 +5292,14 @@ function contabCsv() {
 function renderIrc() {
   return `
   <div class="empresa-section">
-    <h2>🏛️ Estimador de IRC</h2>
+    <h2>Estimador de IRC</h2>
     <div class="es-sub">Lucro tributável, taxa ${pct(appConfig.irc_taxa)} (ou PME ${pct(appConfig.irc_pme_taxa)} nos primeiros ${eur(appConfig.irc_pme_limite)}), derrama e pagamentos por conta.</div>
     <div class="calc-input-grid">
       <div class="cfg-field"><label>Rendimentos (€)</label><input type="number" step="any" id="irc_rend" value="0"></div>
       <div class="cfg-field"><label>Gastos dedutíveis (€)</label><input type="number" step="any" id="irc_gastos" value="0"></div>
       <div class="cfg-field"><label>Aplicar taxa PME?</label><select id="irc_pme"><option value="sim" ${appConfig.irc_pme_ativo ? 'selected' : ''}>Sim</option><option value="nao" ${!appConfig.irc_pme_ativo ? 'selected' : ''}>Não</option></select></div>
     </div>
-    <button class="btn btn-primary" id="irc_calc">🧮 Calcular</button>
+    <button class="btn btn-primary" id="irc_calc">Calcular</button>
     <div id="irc_result" style="margin-top:16px;"></div>
   </div>`;
 }
@@ -5323,7 +5334,7 @@ function renderProforma() {
   const taxas = (appConfig.iva_taxas || []);
   return `
   <div class="empresa-section">
-    <h2>📄 Pró-formas internos</h2>
+    <h2>Pró-formas internos</h2>
     <div class="es-sub">Documento de gestão interna e negociação. Não simula faturas certificadas nem numeração da AT.</div>
     <div class="calc-warn-box" style="background:#fff3cd;border-color:#e0c060;color:#7a5c00;font-weight:600;text-align:center;">DOCUMENTO SEM VALOR FISCAL — NÃO É FATURA CERTIFICADA</div>
     <div class="calc-input-grid">
@@ -5339,7 +5350,7 @@ function renderProforma() {
         <input type="number" step="any" id="pf_qtd" placeholder="Qtd" value="1">
         <input type="number" step="any" id="pf_preco" placeholder="Preço unit. €">
         <input type="number" step="any" id="pf_taxa" placeholder="IVA %" list="pfTaxasList" value="23">
-        <button class="btn btn-primary btn-sm" id="pf_add">＋</button>
+        <button class="btn btn-primary btn-sm" id="pf_add">+</button>
       </div>
       ${proformaLinhas.length === 0 ? '<div class="es-sub">Sem linhas.</div>' : `<div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Qtd</th><th>Preço</th><th>IVA</th><th>Subtotal</th><th></th></tr></thead><tbody>${proformaLinhas.map((l, i) => `<tr><td>${escapeHtml(l.desc)}</td><td>${num(l.qtd, 0)}</td><td>${eur(num(l.preco, 0))}</td><td>${pct(num(l.taxa, 0))}</td><td>${eur(num(l.qtd, 0) * num(l.preco, 0))}</td><td><button class="cfg-del-btn" data-del-pf="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`}
     </div>
@@ -5348,7 +5359,7 @@ function renderProforma() {
       <div class="calc-line"><span class="cl-label">IVA</span><span class="cl-formula">Por linha</span><span class="cl-value">${eur(t.iva)}</span></div>
       <div class="calc-line total"><span class="cl-label">TOTAL</span><span class="cl-formula">Base + IVA</span><span class="cl-value">${eur(t.total)}</span></div>
     </div>
-    <div class="calc-actions"><button class="btn btn-primary" id="pf_pdf">📄 Exportar pró-forma PDF</button></div>
+    <div class="calc-actions"><button class="btn btn-primary" id="pf_pdf">Exportar pró-forma PDF</button></div>
   </div>`;
 }
 function wireProforma() {
@@ -5430,7 +5441,7 @@ function renderConfig() {
 
   return `
   <div class="empresa-section">
-    <h2>⚙️ Configurações</h2>
+    <h2>Configurações</h2>
     <div class="es-sub">Todos os valores são editáveis e guardados no Firestore. Os cálculos lêem sempre estes valores no momento do cálculo. Cada recibo guardado fixa as taxas usadas — recibos já emitidos nunca são recalculados.</div>
 
     <div class="cfg-group">
@@ -5466,7 +5477,7 @@ function renderConfig() {
     <div class="cfg-group">
       <div class="cfg-group-title">Taxas de IVA</div>
       <div id="ivaRows">${ivaRows}</div>
-      <button class="btn btn-ghost btn-sm" id="addIvaBtn">＋ Adicionar taxa</button>
+      <button class="btn btn-ghost btn-sm" id="addIvaBtn">+ Adicionar taxa</button>
     </div>
 
     <div class="cfg-group">
@@ -5486,13 +5497,13 @@ function renderConfig() {
         <thead><tr><th>Situação</th><th>Dependentes</th><th>Remuneração até (€)</th><th>Taxa (%)</th><th></th></tr></thead>
         <tbody id="irsRows">${irsRows}</tbody>
       </table>
-      <button class="btn btn-ghost btn-sm" id="addIrsBtn" style="margin-top:10px;">＋ Adicionar linha</button>
+      <button class="btn btn-ghost btn-sm" id="addIrsBtn" style="margin-top:10px;">+ Adicionar linha</button>
     </div>
 
     <div id="listasMgmtWrap">${renderListasMgmt()}</div>
 
     <div class="calc-actions">
-      <button class="btn btn-primary" id="cfgSaveBtn">💾 Guardar configuração</button>
+      <button class="btn btn-primary" id="cfgSaveBtn">Guardar configuração</button>
       <button class="btn btn-danger" id="cfgResetBtn">↺ Repor valores 2026 de origem</button>
     </div>
     <div class="es-sub" style="margin-top:14px;">Vigente desde ${escapeHtml(c.vigente_desde || '—')} · Última alteração por ${escapeHtml(c.updated_by || '—')}.</div>
@@ -5665,8 +5676,8 @@ async function openSalary(emp) {
   const isSoHoras = modoPag === 'so_horas';
   const valorHoraFunc = num(emp.valor_hora, 0);
   const modoBadge = isSoHoras
-    ? `🕐 Modo: Só por horas — Valor/hora: ${eur(valorHoraFunc)}`
-    : `💼 Modo: Salário fixo + horas extra`;
+    ? `Modo: Só por horas — Valor/hora: ${eur(valorHoraFunc)}`
+    : `Modo: Salário fixo + horas extra`;
   document.getElementById('salaryBody').innerHTML = `
     <div class="es-sub" style="margin-bottom:6px;">${modoBadge}</div>
     <div class="es-sub" style="margin-bottom:14px;">Cálculo determinístico com os parâmetros vigentes (${escapeHtml(appConfig.vigente_desde || '—')}). Cada parcela mostra a fórmula e a taxa.</div>
@@ -5695,7 +5706,7 @@ async function openSalary(emp) {
       <div class="cfg-field"><label>Nº de dependentes</label><input type="number" id="sal_dep" value="0"></div>
     </div>
     <div id="sal_faltas_info"></div>
-    <button class="btn btn-primary" id="sal_calc_btn">🧮 Calcular</button>
+    <button class="btn btn-primary" id="sal_calc_btn">Calcular</button>
     <div id="sal_result" style="margin-top:18px;"></div>`;
   document.getElementById('sal_sit').value = situacaoFromEmp(emp);
   const modoToggleEl = document.getElementById('sal_modo_toggle');
@@ -5724,7 +5735,7 @@ function refreshFaltasInfoSalary() {
   if (resumo.diasSemSubsidio > 0 || resumo.diasDesconto > 0) {
     info.innerHTML = `<div class="calc-warn-box">Faltas em ${periodoLabel(periodo)}: <strong>${resumo.diasDesconto.toFixed(2)} dia(s)</strong> com desconto (${eur(resumo.valorDesconto)}) · <strong>${resumo.diasSemSubsidio.toFixed(2)} dia(s)</strong> sem subsídio de refeição.${resumo.complemento > 0 ? ' Complemento CCT: ' + eur(resumo.complemento) + '.' : ''}</div>`;
   } else {
-    info.innerHTML = `<div class="es-sub">Sem faltas registadas em ${periodoLabel(periodo)}. (Registe faltas no botão 🗓️ Faltas / Baixas.)</div>`;
+    info.innerHTML = `<div class="es-sub">Sem faltas registadas em ${periodoLabel(periodo)}. (Registe faltas no botão Faltas / Baixas.)</div>`;
   }
 }
 
@@ -5774,7 +5785,7 @@ function runSalaryCalc() {
       <span class="cl-value">${eur(l.value)}</span>
     </div>`).join('');
   document.getElementById('sal_result').innerHTML = `
-    ${res.irsVazia ? '<div class="calc-warn-box">⚠️ Tabela de IRS vazia — a retenção foi calculada a 0 %. Adicione a tabela oficial em ⚙️ Configurações para obter a retenção correcta.</div>' : ''}
+    ${res.irsVazia ? '<div class="calc-warn-box">Tabela de IRS vazia — a retenção foi calculada a 0 %. Adicione a tabela oficial em Configurações para obter a retenção correcta.</div>' : ''}
     <div class="calc-result">${linesHtml}</div>
     <div class="calc-warn-box" style="margin-top:14px;">Subsídios de férias/Natal: a SS incide sobre estes subsídios; o IRS pode não incidir até ao mínimo de existência (${eur(appConfig.irs_minimo_existencia)}/ano). Subsídio de doença (baixa) é pago pela Segurança Social (55 % a 75 % da remuneração de referência), <strong>não pela empresa</strong> — esta app apenas informa.</div>`;
   document.getElementById('salaryPdfSimples').dataset.ready = '1';
@@ -5917,7 +5928,7 @@ function faltasBodyHtml() {
         <div class="cfg-field" id="fa_compl_wrap" style="display:none;"><label>Complemento CCT (empresa)?</label><select id="fa_compl"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
         <div class="cfg-field" id="fa_complpct_wrap" style="display:none;"><label>% complemento</label><input type="number" step="any" id="fa_compl_pct" value="0"></div>
       </div>
-      <button class="btn btn-primary" id="fa_add_btn">＋ Registar falta</button>
+      <button class="btn btn-primary" id="fa_add_btn">+ Registar falta</button>
     </div>` : ''}
     <div id="fa_list"><div class="es-sub">A carregar…</div></div>`;
 }
@@ -6226,7 +6237,7 @@ function openToolContab(emp) {
   contabCtx = { emp: emp || null };
   const base = emp ? num(emp.venc, 920) : 920;
   const hm = num(appConfig.horas_mes, 173.33);
-  document.getElementById('toolContabTitle').textContent = emp ? `📑 Cálculo Completo — ${emp.nome}` : '📑 Cálculo Completo (Contabilista)';
+  document.getElementById('toolContabTitle').textContent = emp ? `Cálculo Completo — ${emp.nome}` : 'Cálculo Completo (Contabilista)';
   document.getElementById('toolContabBody').innerHTML = `
     <div class="es-sub" style="margin-bottom:14px;">Replica o formato dos recibos reais (rubricas com código). Cada parcela mostra fórmula e taxa. Parâmetros vigentes desde ${escapeHtml(appConfig.vigente_desde || '—')}.</div>
     <div class="calc-input-grid">
@@ -6250,7 +6261,7 @@ function openToolContab(emp) {
       <div class="cfg-field"><label>Cód 21 · Duodécimo Natal?</label><select id="tc_natal"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
       <div class="cfg-field"><label>Subsídios férias/Natal no IRS?</label><select id="tc_subirs"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
     </div>
-    <button class="btn btn-primary" id="tc_calc">🧮 Calcular</button>
+    <button class="btn btn-primary" id="tc_calc">Calcular</button>
     <div id="tc_result" style="margin-top:16px;"></div>`;
   if (emp) document.getElementById('tc_sit').value = situacaoFromEmp(emp);
   document.getElementById('tc_calc').addEventListener('click', runToolContab);
@@ -6295,7 +6306,7 @@ function runToolContab() {
       <span class="cl-value">${eur(x.value)}</span>
     </div>`).join('');
   document.getElementById('tc_result').innerHTML = `
-    ${r.irsVazia ? '<div class="calc-warn-box">⚠️ <strong>Tabela de IRS não carregada</strong> — a retenção NÃO é assumida (0,00). Carregue a tabela oficial em 🏢 Empresa → ⚙️ Configurações.</div>' : ''}
+    ${r.irsVazia ? '<div class="calc-warn-box"><strong>Tabela de IRS não carregada</strong> — a retenção NÃO é assumida (0,00). Carregue a tabela oficial em Empresa → Configurações.</div>' : ''}
     <div class="calc-result">
       ${rub}
       <div class="calc-line subtotal"><span class="cl-label">Valor ilíquido</span><span class="cl-formula">Soma das rubricas</span><span class="cl-value">${eur(r.iliquido)}</span></div>
@@ -6583,7 +6594,7 @@ function impShowPreview(dupWarnings) {
   const found = impEntries.filter(e => e.found);
   const notFound = impEntries.filter(e => !e.found);
   const rowsHtml = impEntries.map(e => {
-    const sys = e.found ? escapeHtml(e.funcNome) : '<span style="color:#b91c1c;">❌ não encontrado</span>';
+    const sys = e.found ? escapeHtml(e.funcNome) : '<span style="color:#b91c1c;">não encontrado</span>';
     return `<tr style="${e.found ? '' : 'background:#fef2f2;'}">
       <td>${escapeHtml(e.nome)}</td>
       <td>${sys}</td>
@@ -6596,7 +6607,7 @@ function impShowPreview(dupWarnings) {
       <strong>${found.length}</strong> correspondência(s) · <strong>${notFound.length}</strong> não encontrado(s)
     </div>`;
   if (dupWarnings && dupWarnings.length) {
-    html += `<div class="es-sub" style="margin-bottom:8px;color:#92400e;">⚠ Nomes repetidos no Excel (fica a última leitura): ${escapeHtml(Array.from(new Set(dupWarnings)).join(', '))}</div>`;
+    html += `<div class="es-sub" style="margin-bottom:8px;color:#92400e;">Nomes repetidos no Excel (fica a última leitura): ${escapeHtml(Array.from(new Set(dupWarnings)).join(', '))}</div>`;
   }
   html += `<div class="table-wrap"><table><thead><tr>
       <th>Nome (Excel)</th><th>Funcionário no sistema</th><th>Empresa</th><th>Início</th><th>Fim</th>
@@ -6672,8 +6683,8 @@ async function openRelContab() {
       <div class="cfg-field"><label>Histórico (meses guardados)</label><select id="rc_historico"><option value="">— meses guardados —</option></select></div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 2px;">
-      <button class="btn btn-primary" id="rc_gerar">🔄 Gerar / Carregar</button>
-      ${isEditor() ? '<button class="btn btn-ghost" id="imp_btnExcel">📥 Importar Excel (empresa + datas)</button><input type="file" id="imp_file" accept=".xlsx,.csv" style="display:none">' : ''}
+      <button class="btn btn-primary" id="rc_gerar">Gerar / Carregar</button>
+      ${isEditor() ? '<button class="btn btn-ghost" id="imp_btnExcel">Importar Excel (empresa + datas)</button><input type="file" id="imp_file" accept=".xlsx,.csv" style="display:none">' : ''}
       <span id="rc_status" class="es-sub"></span>
     </div>
     <div id="rc_tabela" style="margin-top:12px;"><div class="es-sub">Escolha o mês e clique em “Gerar / Carregar”. Carrega o relatório guardado desse mês ou pré-preenche a partir das fichas dos funcionários ativos.</div></div>`;
@@ -6787,7 +6798,7 @@ function renderRelContab() {
   });
   const keys = Array.from(groups.keys()).filter(k => k !== '__none__').sort((a, b) => a.localeCompare(b, 'pt'));
   if (groups.has('__none__')) keys.push('__none__');
-  let html = `<div class="es-sub" style="margin-bottom:8px;">${periodoLabel(relContabMes)} · ${relContabRows.length} funcionário(s) · ${keys.length} empresa(s). Edite os valores e use <strong>💾 Guardar relatório</strong> no rodapé.</div>`;
+  let html = `<div class="es-sub" style="margin-bottom:8px;">${periodoLabel(relContabMes)} · ${relContabRows.length} funcionário(s) · ${keys.length} empresa(s). Edite os valores e use <strong>Guardar relatório</strong> no rodapé.</div>`;
   keys.forEach(key => {
     const idxs = groups.get(key);
     const label = key === '__none__' ? 'Sem empresa cliente' : empGroupLabel(key, idxs);
@@ -6830,7 +6841,7 @@ function updateRcStatus() {
   if (!el) return;
   if (relContabDirty) { el.innerHTML = '<span style="color:#b8860b;font-weight:600;">● alterações por guardar</span>'; return; }
   el.innerHTML = relContabSaved
-    ? '<span style="color:#1a7f37;font-weight:600;">✔ guardado</span>'
+    ? '<span style="color:#1a7f37;font-weight:600;">guardado</span>'
     : '<span style="color:#5a6b80;">novo (ainda não guardado)</span>';
 }
 
@@ -7174,10 +7185,10 @@ function bindFiscal() {
 bindFiscal();
 </script>
 <!-- Botão flutuante de instalação do PWA -->
-<button id="pwaInstallBtn" style="display:none;position:fixed;right:16px;bottom:16px;z-index:9999;align-items:center;gap:8px;background:#003366;color:#fff;border:2px solid #d4af37;border-radius:30px;padding:12px 18px;font-weight:700;font-family:inherit;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;">📱 Instalar app</button>
+<button id="pwaInstallBtn" style="display:none;position:fixed;right:16px;bottom:16px;z-index:9999;align-items:center;gap:8px;background:#003366;color:#fff;border:2px solid #d4af37;border-radius:30px;padding:12px 18px;font-weight:700;font-family:inherit;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;">Instalar app</button>
 <div id="pwaHelpModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;color:#00224a;max-width:360px;width:100%;border-radius:14px;padding:22px;font-family:inherit;box-shadow:0 10px 40px rgba(0,0,0,.4);">
-    <h3 style="margin:0 0 12px;font-size:17px;">📱 Instalar no ecrã principal</h3>
+    <h3 style="margin:0 0 12px;font-size:17px;">Instalar no ecrã principal</h3>
     <div id="pwaHelpText" style="font-size:14px;line-height:1.6;"></div>
     <button id="pwaHelpClose" style="margin-top:18px;width:100%;background:#003366;color:#fff;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Percebi</button>
   </div>
