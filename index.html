@@ -638,7 +638,9 @@ footer strong { color: var(--ink); }
 
 /* Rodapé sempre no fundo da página */
 #appScreen { flex-direction: column; min-height: 100vh; }
-#appScreen > header, #appScreen > nav, #appScreen > .legal-banner, #appScreen > .area-view, #appScreen > footer { width: 100%; }
+#appScreen > header, #appScreen > nav, #appScreen > .legal-banner, #appScreen > .offline-banner, #appScreen > .area-view, #appScreen > footer { width: 100%; }
+.offline-banner { background: #4a5462; color: #fff; text-align: center; font-size: 13px; padding: 9px 16px; }
+.offline-banner[hidden] { display: none; }
 #appScreen > footer { margin-top: auto; }
 
 @media (max-width: 600px) {
@@ -735,6 +737,7 @@ footer strong { color: var(--ink); }
   <div class="legal-banner">
     <strong>Estimativas de apoio à gestão.</strong> Não substituem contabilidade certificada nem software de faturação certificado pela AT.
   </div>
+  <div class="offline-banner" id="offlineBanner" hidden>📴 Sem Internet — estás a ver os dados guardados neste aparelho. As alterações são enviadas quando a ligação voltar.</div>
 
   <!-- ÁREA: PASTAS (página inicial) — País › Empresa › Funcionário -->
   <div class="container area-view px-area" id="areaPastas">
@@ -1202,6 +1205,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+// Offline: guarda no aparelho os dados já lidos (funcionários, pastas, documentos)
+// e envia as alterações feitas sem Internet quando a ligação voltar.
+try { db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Persistência offline indisponível:', err && err.code)); } catch (e) { /* navegador sem suporte */ }
 
 const CLOUDINARY_CLOUD_NAME = 'dlhbrckt6';
 const CLOUDINARY_UPLOAD_PRESET = 'legado_documentos';
@@ -1994,17 +2000,38 @@ async function saveDocumentMetadata(funcId, funcNome, info) {
   }
 }
 
+let viewerObjectUrl = null;
 function viewDocument(url, format, filename) {
   document.getElementById('viewerTitle').textContent = filename || 'Documento';
   const body = document.getElementById('viewerBody');
-  body.innerHTML = isImageFormat(format)
-    ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(filename)}">`
-    : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
+  if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
+  if (isImageFormat(format)) {
+    body.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(filename)}">`;
+  } else {
+    // PDF: obtém o ficheiro (da cache quando offline) e mostra-o a partir de uma cópia local
+    body.innerHTML = '<div class="doc-empty">A abrir documento…</div>';
+    fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then(blob => { viewerObjectUrl = URL.createObjectURL(blob); body.innerHTML = `<iframe src="${viewerObjectUrl}" title="${escapeHtml(filename)}"></iframe>`; })
+      .catch(() => {
+        body.innerHTML = navigator.onLine === false
+          ? '<div class="doc-empty">📴 Este documento ainda não foi guardado neste aparelho para uso offline.</div>'
+          : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
+      });
+  }
   openModal('viewerModal');
 }
 
-function downloadDocument(url) {
-  window.open(attachmentUrl(url), '_blank');
+// Descarrega o ficheiro (também offline, se estiver guardado); recorre ao link direto em último caso.
+async function downloadDocument(url, filename) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    saveAs(blob, filename || (url.split('/').pop() || 'documento'));
+  } catch (e) {
+    if (navigator.onLine === false) { toast('Sem Internet: este documento ainda não está guardado offline.', true); return; }
+    window.open(attachmentUrl(url), '_blank');
+  }
 }
 
 async function deleteDocument(funcId, funcNome, docId, filename, size) {
@@ -2798,7 +2825,8 @@ function bind() {
   document.getElementById('btnDedup').addEventListener('click', openDedup);
   document.getElementById('btnNormEmp').addEventListener('click', openNormEmp);
   document.getElementById('searchInput').addEventListener('input', render);
-  document.getElementById('pxSearch').addEventListener('input', renderPastas);
+  // renderPastas está definido no segundo bloco <script>: referência tardia (só ao escrever)
+  document.getElementById('pxSearch').addEventListener('input', () => renderPastas());
 
   // Form modal
   document.getElementById('formClose').addEventListener('click', () => closeModal('formModal'));
@@ -3037,6 +3065,10 @@ function listaValoresEmUso(tipo) {
       if (v != null && String(v).trim() !== '') set.add(String(v).trim());
     }));
   }
+  // Pastas criadas na área Pastas (mesmo ainda vazias)
+  const est = window.pxEstrutura || {};
+  if (tipo === 'paises') Object.keys(est).forEach(p => set.add(p));
+  if (tipo === 'empresas') Object.values(est).forEach(arrEmp => (arrEmp || []).forEach(x => set.add(x)));
   return set;
 }
 
@@ -3507,6 +3539,170 @@ let pxDocsFor = null;
 let pxBound = false;
 let pxImportPlan = null;
 
+/* ---------- Estrutura de pastas criadas à mão (config/pastas) ----------
+   { estrutura: { 'Portugal': ['Queridos', …], 'Bélgica': […] } }
+   As pastas mostradas = as que vêm dos dados dos funcionários + estas
+   (permite ter pastas novas ainda vazias). Em window para ser lida também
+   pelos menus do formulário (listaValoresEmUso). */
+window.pxEstrutura = window.pxEstrutura || {};
+let pxEstruturaUnsub = null;
+function pxSubscribeEstrutura() {
+  pxUnsubscribeEstrutura();
+  pxEstruturaUnsub = db.collection('config').doc('pastas').onSnapshot(doc => {
+    const d = doc.exists ? doc.data() : null;
+    window.pxEstrutura = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
+    pxOnEmployeesChanged();
+  }, err => console.warn('Pastas:', err && err.code));
+}
+function pxUnsubscribeEstrutura() {
+  if (pxEstruturaUnsub) { pxEstruturaUnsub(); pxEstruturaUnsub = null; }
+  window.pxEstrutura = {};
+}
+function pxEstClone() {
+  const o = {};
+  Object.entries(window.pxEstrutura || {}).forEach(([k, v]) => { o[k] = Array.isArray(v) ? v.slice() : []; });
+  return o;
+}
+async function pxSaveEstrutura(est, motivo) {
+  await db.collection('config').doc('pastas').set({
+    estrutura: est,
+    updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+    updated_by: currentUser ? currentUser.email : ''
+  });
+  logAudit('pastas', '', motivo);
+}
+// Junta às pastas vindas dos dados as pastas criadas à mão (vazias)
+function pxMergeKeys(grupos, extras) {
+  const m = new Map(grupos);
+  (extras || []).forEach(k => { if (k && !m.has(k)) m.set(k, []); });
+  return Array.from(m.entries()).sort((a, b) => {
+    const sa = a[0].startsWith('('), sb = b[0].startsWith('(');
+    return sa === sb ? pxSortPt(a[0], b[0]) : (sa ? 1 : -1);
+  });
+}
+function pxNomeValido(s) {
+  s = String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
+  if (!s || s.startsWith('(')) return '';
+  return s.slice(0, 80);
+}
+function pxNaPasta(pais, empresa) {
+  return employees.filter(e => empresa ? (pxPais(e) === pais && pxEmpresa(e) === empresa) : pxPais(e) === pais);
+}
+
+// Nova pasta: sem país → novo país; com país → nova empresa dentro dele
+async function pxNovaPasta(pais) {
+  if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  const nome = pxNomeValido(prompt(pais ? `Nome da nova empresa dentro de "${pais}":` : 'Nome do novo país:'));
+  if (!nome) return;
+  const est = pxEstClone();
+  const n = pxNorm(nome);
+  if (pais) {
+    const existe = (est[pais] || []).some(x => pxNorm(x) === n) || employees.some(e => pxPais(e) === pais && pxNorm(pxEmpresa(e)) === n);
+    if (existe) { toast('Já existe uma pasta com esse nome.', true); return; }
+    est[pais] = (est[pais] || []).concat([nome]);
+  } else {
+    const existe = Object.keys(est).some(k => pxNorm(k) === n) || employees.some(e => pxNorm(pxPais(e)) === n);
+    if (existe) { toast('Já existe uma pasta com esse nome.', true); return; }
+    est[nome] = [];
+  }
+  showOverlay('A criar pasta…');
+  try {
+    await pxSaveEstrutura(est, `pasta criada: ${pais ? pais + ' › ' : ''}${nome}`);
+    window.pxEstrutura = est;
+    toast(`Pasta "${nome}" criada.`);
+    renderPastas();
+  } catch (err) {
+    toast('Erro ao criar pasta: ' + friendlyError(err), true);
+  } finally { hideOverlay(); }
+}
+
+// Renomear pasta: muda o país/empresa de todos os funcionários lá dentro
+async function pxRenomearPasta(pais, empresa) {
+  if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
+  const atual = empresa || pais;
+  const novo = pxNomeValido(prompt(`Novo nome para a pasta "${atual}":`, atual));
+  if (!novo || novo === atual) return;
+  const afetados = pxNaPasta(pais, empresa);
+  if (!confirm(`Renomear a pasta "${atual}" para "${novo}"?\n\n${afetados.length} funcionário(s) desta pasta (incluindo ex-colaboradores) passam a ter ${empresa ? 'a empresa' : 'o país'} "${novo}".`)) return;
+  showOverlay('A renomear pasta…');
+  try {
+    const campo = empresa ? 'cliente' : 'cli_pais';
+    for (let i = 0; i < afetados.length; i += 400) {
+      const b = db.batch();
+      afetados.slice(i, i + 400).forEach(e => b.set(db.collection('funcionarios').doc(e.id), { [campo]: novo }, { merge: true }));
+      await b.commit();
+    }
+    const est = pxEstClone();
+    if (empresa) {
+      const arr = (est[pais] || []).filter(x => x !== empresa);
+      if (!arr.includes(novo)) arr.push(novo);
+      est[pais] = arr;
+    } else {
+      const subs = est[pais] || [];
+      delete est[pais];
+      est[novo] = Array.from(new Set([].concat(est[novo] || [], subs)));
+    }
+    await pxSaveEstrutura(est, `pasta renomeada: ${atual} → ${novo} (${afetados.length} funcionário(s))`);
+    window.pxEstrutura = est;
+    pxPath = empresa ? Object.assign({}, pxPath, { empresa: novo }) : Object.assign({}, pxPath, { pais: novo });
+    toast('Pasta renomeada.');
+    renderPastas();
+  } catch (err) {
+    toast('Erro ao renomear: ' + friendlyError(err), true);
+  } finally { hideOverlay(); }
+}
+
+// Eliminar pasta: só quando está vazia (nunca apaga funcionários)
+async function pxEliminarPasta(pais, empresa) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar pastas.', true); return; }
+  const nome = empresa || pais;
+  const dentro = pxNaPasta(pais, empresa);
+  if (dentro.length) {
+    alert(`A pasta "${nome}" tem ${dentro.length} funcionário(s) (incluindo ex-colaboradores).\n\nPara a eliminar, primeiro muda-os de pasta (✏️ Editar dados ou ✏️ Renomear) ou elimina as fichas.`);
+    return;
+  }
+  const est = pxEstClone();
+  const subs = !empresa ? (est[pais] || []).length : 0;
+  if (!confirm(`Eliminar a pasta vazia "${nome}"?${subs ? `\n\nInclui ${subs} pasta(s) de empresa vazia(s).` : ''}`)) return;
+  if (empresa) est[pais] = (est[pais] || []).filter(x => x !== empresa);
+  else delete est[pais];
+  showOverlay('A eliminar pasta…');
+  try {
+    await pxSaveEstrutura(est, `pasta eliminada: ${empresa ? pais + ' › ' : ''}${nome}`);
+    window.pxEstrutura = est;
+    toast('Pasta eliminada.');
+    pxGo(empresa ? { scope: 'ativos', pais } : {});
+  } catch (err) {
+    toast('Erro ao eliminar pasta: ' + friendlyError(err), true);
+  } finally { hideOverlay(); }
+}
+
+// Guarda neste aparelho as fichas e os documentos de uma pasta para uso offline
+async function pxGuardarOffline(emps, label) {
+  if (!emps.length) { toast('Não há funcionários nesta pasta.', true); return; }
+  if (navigator.onLine === false) { toast('Precisas de Internet para preparar o uso offline.', true); return; }
+  const setMsg = m => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = m; };
+  showOverlay('A preparar uso offline…');
+  try {
+    const urls = [];
+    let lidos = 0;
+    await pxRunLimited(emps, 5, async e => {
+      const snap = await db.collection('funcionarios').doc(e.id).collection('documentos').get();
+      snap.docs.forEach(d => { const u = d.data().url; if (u) urls.push(u); });
+      setMsg(`A ler pastas… ${++lidos}/${emps.length}`);
+    });
+    let ok = 0, falhas = 0;
+    await pxRunLimited(urls, 4, async u => {
+      try { const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); await r.blob(); ok++; }
+      catch (e) { falhas++; }
+      setMsg(`A guardar documentos… ${ok + falhas}/${urls.length}`);
+    });
+    toast(`📶 ${label}: ${emps.length} ficha(s) e ${ok} documento(s) disponíveis offline neste aparelho.` + (falhas ? ` ${falhas} não foram guardados.` : ''), falhas > 0);
+  } catch (err) {
+    toast('Erro ao preparar uso offline: ' + friendlyError(err), true);
+  } finally { hideOverlay(); }
+}
+
 function pxPais(e) { return String(e.cli_pais || '').trim() || PX_SEM_PAIS; }
 function pxEmpresa(e) { return String(e.cliente || '').trim() || PX_SEM_EMP; }
 function pxIsEx(e) { return (e.estado || 'ativo') !== 'ativo'; }
@@ -3626,6 +3822,8 @@ function renderPastas() {
     actions += pxBtn('detalhe', '📋 Ficha completa');
     if (isEditor()) actions += pxBtn('upload', '📎 Anexar ficheiros');
     actions += pxBtn('zip-func', '⬇️ Download pasta');
+    actions += pxBtn('offline', '📶 Guardar offline');
+    if (isAdmin()) actions += pxBtn('eliminar-ficha', '🗑 Eliminar ficha', 'btn-danger');
     const ficha = `<div class="px-card px-file"><span class="px-ico">📋</span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">⬇️</button></span></div>`;
     let docsHtml;
     if (pxDocs === null) docsHtml = '<div class="px-empty">A carregar documentos…</div>';
@@ -3643,34 +3841,50 @@ function renderPastas() {
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
       if (isEditor() && scope === 'ativos') actions += pxBtn('novo-aqui', '＋ Novo funcionário aqui', 'btn-primary');
       actions += pxBtn('zip-empresa', '⬇️ Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('offline', '📶 Guardar offline');
+      if (scope === 'ativos' && empresa !== PX_SEM_EMP) {
+        if (isEditor()) actions += pxBtn('renomear', '✏️ Renomear pasta');
+        if (isAdmin()) actions += pxBtn('eliminar-pasta', '🗑 Eliminar pasta', 'btn-danger');
+      }
       pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
       body = emps.length
         ? '<div class="px-grid-big">' + emps.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
-        : '<div class="px-empty">Sem funcionários nesta empresa.</div>';
+        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>＋ Novo funcionário aqui</strong> para criar a primeira ficha.' : ''}</div>`;
     } else if (pais) {
-      // ----- Empresas do país -----
-      const grupos = pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa);
-      actions += pxBtn('zip-pais', '⬇️ Download país', 'btn-primary');
+      // ----- Empresas do país (+ pastas de empresa criadas à mão) -----
+      const extras = scope === 'ativos' ? ((window.pxEstrutura || {})[pais] || []) : [];
+      const grupos = pxMergeKeys(pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa), extras);
+      if (isEditor() && scope === 'ativos' && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '＋ Nova empresa', 'btn-primary');
+      actions += pxBtn('zip-pais', '⬇️ Download país', isEditor() && scope === 'ativos' ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('offline', '📶 Guardar offline');
+      if (scope === 'ativos' && pais !== PX_SEM_PAIS) {
+        if (isEditor()) actions += pxBtn('renomear', '✏️ Renomear pasta');
+        if (isAdmin()) actions += pxBtn('eliminar-pasta', '🗑 Eliminar pasta', 'btn-danger');
+      }
       pxItems = grupos.map(([emp]) => ({ scope, pais, empresa: emp }));
       body = grupos.length
-        ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, `${arr.length} funcionário${arr.length === 1 ? '' : 's'}`)).join('') + '</div>'
-        : '<div class="px-empty">Sem empresas neste país.</div>';
+        ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, arr.length ? `${arr.length} funcionário${arr.length === 1 ? '' : 's'}` : 'Pasta vazia')).join('') + '</div>'
+        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>＋ Nova empresa</strong> para criar uma pasta de empresa.' : ''}</div>`;
     } else {
       // ----- Raiz (Ativos) ou raiz dos Ex-colaboradores: países -----
-      const grupos = pxGroup(list, pxPais);
+      const est = scope === 'ativos' ? (window.pxEstrutura || {}) : {};
+      const grupos = pxMergeKeys(pxGroup(list, pxPais), Object.keys(est));
       pxItems = grupos.map(([p]) => ({ scope, pais: p }));
       let cards = grupos.map(([p, arr], i) => {
-        const nEmp = new Set(arr.map(pxEmpresa)).size;
+        const nEmp = new Set(arr.map(pxEmpresa).concat(est[p] || [])).size;
         return pxCard(i, scope === 'ex' ? '🗂️' : '🌍', p, `${nEmp} empresa${nEmp === 1 ? '' : 's'} · ${arr.length} funcionário${arr.length === 1 ? '' : 's'}`);
       }).join('');
       if (scope === 'ativos') {
         const nEx = pxList('ex').length;
         pxItems.push({ scope: 'ex' });
         cards += pxCard(pxItems.length - 1, '🗂️', PX_EX, `${nEx} funcionário${nEx === 1 ? '' : 's'} inativo${nEx === 1 ? '' : 's'}`);
-        actions += pxBtn('zip-geral', '⬇️ Download geral', 'btn-primary');
+        if (isEditor()) actions += pxBtn('nova-pasta', '＋ Nova pasta (país)', 'btn-primary');
+        actions += pxBtn('zip-geral', '⬇️ Download geral', isEditor() ? 'btn-ghost' : 'btn-primary');
         if (isEditor()) actions += pxBtn('import', '📥 Importar pasta (ZIP)');
+        actions += pxBtn('offline', '📶 Guardar tudo offline');
       } else {
         actions += pxBtn('zip-ex', '⬇️ Download ex-colaboradores', 'btn-primary');
+        actions += pxBtn('offline', '📶 Guardar offline');
       }
       body = cards ? `<div class="px-grid-big">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
       if (scope === 'ativos') body += `<div class="px-sub" style="margin-top:12px;white-space:normal;">As pastas organizam-se pelo <strong>País de destacamento</strong> e pela <strong>Empresa cliente</strong> de cada funcionário. Quem não tiver estes campos preenchidos aparece em “${PX_SEM_PAIS}” / “${PX_SEM_EMP}”.</div>`;
@@ -3697,7 +3911,7 @@ function pxOnClick(ev) {
     const d = (pxDocs || [])[+t.dataset.pxD]; if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
     if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d));
-    else if (t.dataset.pxDoc === 'down') downloadDocument(d.url);
+    else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'del' && emp) deleteDocument(emp.id, emp.nome, d.id, docFullName(d), d.bytes);
     return;
   }
@@ -3708,6 +3922,20 @@ function pxOnClick(ev) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
     case 'limpar-pesquisa': { const s = document.getElementById('pxSearch'); if (s) s.value = ''; renderPastas(); break; }
+    case 'nova-pasta': pxNovaPasta(pais || null); break;
+    case 'renomear': pxRenomearPasta(pais, empresa || null); break;
+    case 'eliminar-pasta': pxEliminarPasta(pais, empresa || null); break;
+    case 'eliminar-ficha': if (emp) deleteEmployee(emp.id); break;
+    case 'offline': {
+      let alvo, label;
+      if (emp) { alvo = [emp]; label = emp.nome; }
+      else if (empresa) { alvo = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa); label = empresa; }
+      else if (pais) { alvo = pxList(scope).filter(e => pxPais(e) === pais); label = pais; }
+      else if (scope === 'ex') { alvo = pxList('ex'); label = PX_EX; }
+      else { alvo = employees.slice(); label = 'Todas as pastas'; }
+      pxGuardarOffline(alvo, label);
+      break;
+    }
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
     case 'novo-aqui':
@@ -6706,8 +6934,9 @@ function bindFiscal() {
 
   // Carregar config quando há sessão
   auth.onAuthStateChanged(user => {
-    if (user) { subscribeConfig(); subscribeListas(); }
+    if (user) { subscribeConfig(); subscribeListas(); pxSubscribeEstrutura(); }
     else {
+      pxUnsubscribeEstrutura();
       if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; } appConfig = null;
       if (unsubscribeListas) { unsubscribeListas(); unsubscribeListas = null; } appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
     }
@@ -6725,6 +6954,11 @@ bindFiscal();
   </div>
 </div>
 <script>
+// Aviso de "Sem Internet"
+(function () {
+  const upd = () => { const b = document.getElementById('offlineBanner'); if (b) b.hidden = navigator.onLine !== false; };
+  window.addEventListener('online', upd); window.addEventListener('offline', upd); upd();
+})();
 // Regista o service worker (PWA / app instalável). Não bloqueia a app se falhar.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
