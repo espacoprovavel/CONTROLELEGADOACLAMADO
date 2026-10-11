@@ -588,6 +588,41 @@ footer strong { color: var(--ink); }
 .list-mgmt-add { display: flex; gap: 8px; margin-top: 6px; }
 .list-mgmt-add input { flex: 1; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 14px; }
 .list-mgmt-empty { font-size: 12.5px; color: var(--ink-soft); font-style: italic; padding: 6px 2px; }
+
+/* ---------- Pastas (explorador tipo Drive) ---------- */
+.px-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+.px-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; color: var(--ink); flex: 1; min-width: 0; }
+.px-crumbs button { background: none; border: none; font: inherit; color: var(--accent); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.px-crumbs button:hover { background: var(--bg-alt); }
+.px-crumbs .sep { color: var(--ink-soft); font-weight: 400; padding: 0 2px; }
+.px-crumbs .cur { padding: 4px 6px; }
+.px-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.px-section-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-soft); margin: 18px 0 8px; font-weight: 600; }
+.px-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.px-card { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; box-shadow: var(--shadow); text-align: left; font: inherit; color: var(--ink); width: 100%; min-width: 0; }
+.px-card:hover { border-color: var(--accent); background: #f9fbfe; }
+.px-ico { font-size: 22px; flex-shrink: 0; }
+.px-txt { min-width: 0; flex: 1; }
+.px-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.px-sub { font-size: 11.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.px-file { cursor: default; }
+.px-fbtns { display: flex; gap: 4px; flex-shrink: 0; }
+.px-fbtns button { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; cursor: pointer; font-size: 13px; }
+.px-fbtns button:hover { border-color: var(--accent); }
+.px-empty { padding: 26px; text-align: center; color: var(--ink-soft); background: var(--card); border: 1px dashed var(--line); border-radius: 12px; }
+.px-imp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.px-imp-table th, .px-imp-table td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: middle; }
+.px-imp-table select { width: 100%; padding: 6px; border: 1px solid var(--line); border-radius: 6px; font-family: 'Poppins'; font-size: 12.5px; }
+.px-imp-path { font-size: 11px; color: var(--ink-soft); word-break: break-all; }
+@media (max-width: 600px) {
+  .px-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .px-card { padding: 10px; gap: 8px; }
+  .px-ico { font-size: 19px; }
+  .px-name { font-size: 13px; }
+  .px-crumbs { font-size: 15px; }
+  .px-file { grid-column: 1 / -1; }
+  .px-actions .btn { flex: 1 1 auto; }
+}
 </style>
 </head>
 <body>
@@ -653,6 +688,7 @@ footer strong { color: var(--ink); }
     <div class="area-nav-inner">
       <button class="area-tab active" data-area="funcionarios">👥 Funcionários</button>
       <button class="area-tab" data-area="empresa">🏢 Empresa</button>
+      <button class="area-tab" data-area="pastas">📁 Pastas</button>
     </div>
   </nav>
 
@@ -704,6 +740,10 @@ footer strong { color: var(--ink); }
     </div>
     <div id="empContent"></div>
   </div>
+
+  <!-- ÁREA: PASTAS (explorador tipo Drive: País › Empresa › Funcionário) -->
+  <div class="container area-view" id="areaPastas" style="display:none;"></div>
+  <input type="file" id="pxZipInput" accept=".zip,application/zip" style="display:none;">
 
   <footer>
     <div><strong>LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
@@ -1076,6 +1116,21 @@ footer strong { color: var(--ink); }
 </div>
 
 <div id="toastWrap"></div>
+<!-- Modal: importar pasta (ZIP do Google Drive) para as pastas dos funcionários -->
+<div class="modal-backdrop" id="pxImportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📥 Importar pasta (ZIP)</h2>
+      <button class="modal-close" id="pxImportClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" id="pxImportBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="pxImportCancel">Cancelar</button>
+      <button class="btn btn-primary" id="pxImportApply">✅ Importar documentos</button>
+    </div>
+  </div>
+</div>
+
 <div id="overlay"><div class="spinner"></div><div id="overlayMsg" style="font-family:'Montserrat';font-weight:600;"></div></div>
 
 <script>
@@ -1287,6 +1342,7 @@ async function doReset() {
 
 function doLogout() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  pxStopDocs();
   auth.signOut();
 }
 
@@ -1347,6 +1403,7 @@ function subscribeFuncionarios() {
   unsubscribe = db.collection('funcionarios').onSnapshot(snap => {
     employees = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
     render();
+    pxOnEmployeesChanged();
   }, err => {
     toast('Erro de sincronização: ' + friendlyError(err), true);
   });
@@ -3380,6 +3437,424 @@ function subscribeConfig() {
 }
 
 /* ============================================================
+   📁 PASTAS — explorador tipo Drive
+   Ativos: País › Empresa › Funcionário › (Ficha PDF + documentos)
+   Ex-colaboradores (inativos): mesma estrutura dentro de uma pasta própria.
+   As pastas derivam de cli_pais (país de destacamento) e cliente (empresa).
+   ============================================================ */
+const PX_SEM_PAIS = '(Sem país)';
+const PX_SEM_EMP = '(Sem empresa)';
+const PX_EX = 'Ex-colaboradores';
+const PX_FORMATOS = ['pdf', 'jpg', 'jpeg', 'png'];
+const PX_MAX_BYTES = 10485760; // 10 MB, igual ao upload manual
+let pxPath = { scope: 'ativos', pais: null, empresa: null, funcId: null };
+let pxItems = [];   // itens clicáveis da vista atual (cartões)
+let pxCrumbs = [];  // caminhos do breadcrumb
+let pxDocs = [];    // documentos do funcionário aberto
+let pxDocsUnsub = null;
+let pxDocsFor = null;
+let pxBound = false;
+let pxImportPlan = null;
+
+function pxPais(e) { return String(e.cli_pais || '').trim() || PX_SEM_PAIS; }
+function pxEmpresa(e) { return String(e.cliente || '').trim() || PX_SEM_EMP; }
+function pxIsEx(e) { return (e.estado || 'ativo') !== 'ativo'; }
+function pxList(scope) { return employees.filter(e => (scope === 'ex' ? pxIsEx(e) : !pxIsEx(e))); }
+function pxSortPt(a, b) { return String(a).localeCompare(String(b), 'pt', { sensitivity: 'base' }); }
+function pxSafe(s) { return String(s || 'sem_nome').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80) || 'sem_nome'; }
+function pxGroup(list, keyFn) {
+  const m = new Map();
+  list.forEach(e => { const k = keyFn(e); if (!m.has(k)) m.set(k, []); m.get(k).push(e); });
+  return Array.from(m.entries()).sort((a, b) => {
+    // pastas "(Sem …)" vão para o fim
+    const sa = a[0].startsWith('('), sb = b[0].startsWith('(');
+    return sa === sb ? pxSortPt(a[0], b[0]) : (sa ? 1 : -1);
+  });
+}
+function pxNomeOrd(a, b) { return pxSortPt(a.nome || '', b.nome || ''); }
+function pxDocCountTxt(e) { const n = Number(e.doc_count) || 0; return `${n + 1} ficheiro${n ? 's' : ''} (ficha + ${n} doc.)`; }
+
+function pxStopDocs() {
+  if (pxDocsUnsub) { pxDocsUnsub(); pxDocsUnsub = null; }
+  pxDocsFor = null; pxDocs = [];
+}
+function pxGo(p) {
+  pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, funcId: null }, p);
+  renderPastas();
+}
+function pxOnEmployeesChanged() {
+  const area = document.getElementById('areaPastas');
+  if (!area || area.style.display === 'none') return;
+  // a vista do funcionário atualiza-se pela subscrição dos documentos
+  if (!pxPath.funcId) renderPastas();
+}
+
+function pxCard(i, ico, nome, sub) {
+  return `<button type="button" class="px-card" data-px-i="${i}"><span class="px-ico">${ico}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(sub)}</div></span></button>`;
+}
+function pxBtn(action, label, cls) { return `<button type="button" class="btn ${cls || 'btn-ghost'}" data-px-act="${action}">${label}</button>`; }
+
+function renderPastas() {
+  const root = document.getElementById('areaPastas');
+  if (!root) return;
+  if (!pxBound) { root.addEventListener('click', pxOnClick); pxBound = true; }
+  const { scope, pais, empresa, funcId } = pxPath;
+
+  // Breadcrumb
+  pxCrumbs = [{ scope: 'ativos' }];
+  const labels = ['📁 Pastas'];
+  if (scope === 'ex') { pxCrumbs.push({ scope: 'ex' }); labels.push('🗂️ ' + PX_EX); }
+  if (pais) { pxCrumbs.push({ scope, pais }); labels.push(pais); }
+  if (empresa) { pxCrumbs.push({ scope, pais, empresa }); labels.push(empresa); }
+  let emp = null;
+  if (funcId) {
+    emp = employees.find(x => x.id === funcId);
+    if (!emp) { pxGo({ scope, pais, empresa }); return; }
+    pxCrumbs.push({ scope, pais, empresa, funcId }); labels.push(emp.nome || '(sem nome)');
+  }
+  const crumbsHtml = labels.map((l, i) => i === labels.length - 1
+    ? `<span class="cur">${escapeHtml(l)}</span>`
+    : `<button type="button" data-px-crumb="${i}">${escapeHtml(l)}</button><span class="sep">›</span>`).join('');
+
+  let actions = '', body = '';
+  pxItems = [];
+
+  if (funcId) {
+    // ----- Pasta do funcionário -----
+    if (pxDocsFor !== funcId) {
+      pxStopDocs();
+      pxDocsFor = funcId;
+      pxDocs = null; // a carregar
+      pxDocsUnsub = db.collection('funcionarios').doc(funcId).collection('documentos').onSnapshot(snap => {
+        pxDocs = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
+          .sort((a, b) => pxSortPt(docFullName(a), docFullName(b)));
+        if (pxPath.funcId === funcId) renderPastas();
+      }, err => toast('Erro ao carregar documentos: ' + friendlyError(err), true));
+    }
+    if (isEditor()) actions += pxBtn('upload', '📎 Anexar ficheiros', 'btn-primary');
+    actions += pxBtn('zip-func', '⬇️ Download pasta');
+    const ficha = `<div class="px-card px-file"><span class="px-ico">📋</span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">⬇️</button></span></div>`;
+    let docsHtml;
+    if (pxDocs === null) docsHtml = '<div class="px-empty">A carregar documentos…</div>';
+    else if (!pxDocs.length) docsHtml = `<div class="px-empty">Ainda não há documentos nesta pasta.${isEditor() ? ' Usa <strong>📎 Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
+    else docsHtml = '<div class="px-grid">' + pxDocs.map((d, i) => {
+      const nome = docFullName(d);
+      return `<div class="px-card px-file"><span class="px-ico">${isImageFormat(d.format) ? '🖼️' : '📄'}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns"><button type="button" data-px-doc="view" data-px-d="${i}" title="Ver">👁</button><button type="button" data-px-doc="down" data-px-d="${i}" title="Descarregar">⬇️</button>${isAdmin() ? `<button type="button" data-px-doc="del" data-px-d="${i}" title="Eliminar">🗑</button>` : ''}</span></div>`;
+    }).join('') + '</div>';
+    body = `<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title">Documentos</div>${docsHtml}`;
+  } else {
+    pxStopDocs();
+    const list = pxList(scope);
+    if (empresa) {
+      // ----- Funcionários da empresa -----
+      const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
+      actions += pxBtn('zip-empresa', '⬇️ Download empresa', 'btn-primary');
+      pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
+      body = emps.length
+        ? '<div class="px-grid">' + emps.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
+        : '<div class="px-empty">Sem funcionários nesta empresa.</div>';
+    } else if (pais) {
+      // ----- Empresas do país -----
+      const grupos = pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa);
+      actions += pxBtn('zip-pais', '⬇️ Download país', 'btn-primary');
+      pxItems = grupos.map(([emp]) => ({ scope, pais, empresa: emp }));
+      body = grupos.length
+        ? '<div class="px-grid">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, `${arr.length} funcionário${arr.length === 1 ? '' : 's'}`)).join('') + '</div>'
+        : '<div class="px-empty">Sem empresas neste país.</div>';
+    } else {
+      // ----- Raiz (Ativos) ou raiz dos Ex-colaboradores: países -----
+      const grupos = pxGroup(list, pxPais);
+      pxItems = grupos.map(([p]) => ({ scope, pais: p }));
+      let cards = grupos.map(([p, arr], i) => {
+        const nEmp = new Set(arr.map(pxEmpresa)).size;
+        return pxCard(i, scope === 'ex' ? '🗂️' : '🌍', p, `${nEmp} empresa${nEmp === 1 ? '' : 's'} · ${arr.length} funcionário${arr.length === 1 ? '' : 's'}`);
+      }).join('');
+      if (scope === 'ativos') {
+        const nEx = pxList('ex').length;
+        pxItems.push({ scope: 'ex' });
+        cards += pxCard(pxItems.length - 1, '🗂️', PX_EX, `${nEx} funcionário${nEx === 1 ? '' : 's'} inativo${nEx === 1 ? '' : 's'}`);
+        actions += pxBtn('zip-geral', '⬇️ Download geral', 'btn-primary');
+        if (isEditor()) actions += pxBtn('import', '📥 Importar pasta (ZIP)');
+      } else {
+        actions += pxBtn('zip-ex', '⬇️ Download ex-colaboradores', 'btn-primary');
+      }
+      body = cards ? `<div class="px-grid">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
+      if (scope === 'ativos') body += `<div class="px-sub" style="margin-top:12px;white-space:normal;">As pastas organizam-se pelo <strong>País de destacamento</strong> e pela <strong>Empresa cliente</strong> de cada funcionário. Quem não tiver estes campos preenchidos aparece em “${PX_SEM_PAIS}” / “${PX_SEM_EMP}”.</div>`;
+    }
+  }
+
+  root.innerHTML = `<div class="px-head"><div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${body}`;
+}
+
+function pxOnClick(ev) {
+  const t = ev.target.closest('[data-px-crumb],[data-px-i],[data-px-act],[data-px-doc]');
+  if (!t) return;
+  if (t.dataset.pxCrumb !== undefined) { pxGo(pxCrumbs[+t.dataset.pxCrumb]); return; }
+  if (t.dataset.pxI !== undefined) { const p = pxItems[+t.dataset.pxI]; if (p) pxGo(p); return; }
+  if (t.dataset.pxDoc) {
+    const d = (pxDocs || [])[+t.dataset.pxD]; if (!d) return;
+    const emp = employees.find(x => x.id === pxPath.funcId);
+    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d));
+    else if (t.dataset.pxDoc === 'down') downloadDocument(d.url);
+    else if (t.dataset.pxDoc === 'del' && emp) deleteDocument(emp.id, emp.nome, d.id, docFullName(d), d.bytes);
+    return;
+  }
+  const { scope, pais, empresa, funcId } = pxPath;
+  const emp = funcId ? employees.find(x => x.id === funcId) : null;
+  const hoje = dateStamp();
+  switch (t.dataset.pxAct) {
+    case 'upload': if (emp) openUploadWidget(emp.id, emp.nome); break;
+    case 'ficha': if (emp) generateSinglePdf(emp.id); break;
+    case 'zip-func':
+      if (emp) pxDownloadZip([{ e: emp, prefix: '' }], `Legado_${slug(emp.nome)}_${hoje}.zip`);
+      break;
+    case 'zip-empresa': {
+      const emps = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa);
+      pxDownloadZip(emps.map(e => ({ e, prefix: pxSafe(empresa) + '/' })), `Legado_${slug(pais)}_${slug(empresa)}_${hoje}.zip`);
+      break;
+    }
+    case 'zip-pais': {
+      const emps = pxList(scope).filter(e => pxPais(e) === pais);
+      pxDownloadZip(emps.map(e => ({ e, prefix: `${pxSafe(pais)}/${pxSafe(pxEmpresa(e))}/` })), `Legado_${slug(pais)}_${hoje}.zip`);
+      break;
+    }
+    case 'zip-ex':
+      pxDownloadZip(pxList('ex').map(e => ({ e, prefix: `${PX_EX}/${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/` })), `Legado_Ex-colaboradores_${hoje}.zip`);
+      break;
+    case 'zip-geral': {
+      const entries = employees.map(e => ({
+        e, prefix: (pxIsEx(e) ? PX_EX + '/' : '') + `${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/`
+      }));
+      pxDownloadZip(entries, `Legado_Pastas_Geral_${hoje}.zip`);
+      break;
+    }
+    case 'import': document.getElementById('pxZipInput').click(); break;
+  }
+}
+
+// Executa tarefas assíncronas com concorrência limitada.
+async function pxRunLimited(items, limit, worker) {
+  let idx = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (idx < items.length) { const i = idx++; await worker(items[i], i); }
+  });
+  await Promise.all(runners);
+}
+
+// entries: [{ e: funcionário, prefix: 'Pasta/Sub/' }] → ZIP com <prefix><Nome>/(ficha + documentos)
+async function pxDownloadZip(entries, zipName) {
+  if (!entries.length) { toast('Não há funcionários nesta pasta.', true); return; }
+  if (typeof JSZip === 'undefined') { toast('Biblioteca ZIP indisponível. Verifique a ligação.', true); return; }
+  const setMsg = m => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = m; };
+  showOverlay('A preparar o ZIP…');
+  try {
+    const zip = new JSZip();
+    const usedFolders = new Set();
+    const jobs = [];
+    // 1) Fichas (geradas localmente) e lista de documentos de cada funcionário
+    let lidos = 0;
+    await pxRunLimited(entries, 5, async ({ e, prefix }) => {
+      let pasta = prefix + pxSafe(e.nome);
+      if (usedFolders.has(pasta)) pasta += ` (${pxSafe(e.nif || e.id)})`;
+      usedFolders.add(pasta);
+      const folder = zip.folder(pasta);
+      folder.file(`Ficha_${slug(e.nome)}.pdf`, pxFichaBlob(e));
+      const snap = await db.collection('funcionarios').doc(e.id).collection('documentos').get();
+      const usados = {};
+      snap.docs.forEach(d => {
+        const meta = d.data();
+        let nome = pxSafe(docFullName(meta));
+        if (usados[nome]) { const n = ++usados[nome]; nome = nome.replace(/(\.[^.]+)?$/, `_${n}$1`); } else usados[nome] = 1;
+        if (meta.url) jobs.push({ folder, nome, url: meta.url });
+      });
+      setMsg(`A ler pastas… ${++lidos}/${entries.length}`);
+    });
+    // 2) Descarregar os documentos
+    let feitos = 0, falhas = 0;
+    await pxRunLimited(jobs, 4, async job => {
+      try {
+        const resp = await fetch(job.url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        job.folder.file(job.nome, await resp.blob());
+      } catch (err) { falhas++; }
+      setMsg(`A descarregar ficheiros… ${++feitos}/${jobs.length}`);
+    });
+    // 3) Comprimir e guardar
+    const blob = await zip.generateAsync({ type: 'blob' }, meta => setMsg(`A comprimir… ${Math.round(meta.percent)}%`));
+    saveAs(blob, zipName);
+    toast(`ZIP pronto: ${entries.length} funcionário(s), ${jobs.length - falhas} documento(s) + fichas.` + (falhas ? ` ${falhas} ficheiro(s) não foram obtidos.` : ''), falhas > 0);
+  } catch (err) {
+    toast('Erro ao gerar ZIP: ' + friendlyError(err), true);
+  } finally {
+    hideOverlay();
+  }
+}
+
+function pxFichaBlob(e) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  drawEmployeePdf(doc, e);
+  pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+  return doc.output('blob');
+}
+
+/* ---------- Importar pasta (ZIP do Google Drive) ---------- */
+const PX_STOP = ['DE', 'DA', 'DO', 'DOS', 'DAS', 'E'];
+function pxTokens(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ').split(' ').filter(t => t.length > 1 && !PX_STOP.includes(t));
+}
+// Liga o nome de uma pasta a um funcionário: todas as palavras da pasta têm de existir no nome.
+function pxMatchEmployee(folderName) {
+  const ft = pxTokens(folderName);
+  if (!ft.length) return { status: 'none' };
+  const cands = employees.filter(e => { const et = pxTokens(e.nome); return ft.every(t => et.includes(t)); });
+  if (cands.length === 1) return { status: 'ok', emp: cands[0] };
+  if (cands.length > 1) {
+    const exact = cands.filter(e => pxTokens(e.nome).join(' ') === ft.join(' '));
+    if (exact.length === 1) return { status: 'ok', emp: exact[0] };
+    const ativos = cands.filter(e => !pxIsEx(e));
+    if (ativos.length === 1) return { status: 'ok', emp: ativos[0] };
+    return { status: 'ambiguous', cands };
+  }
+  return { status: 'none' };
+}
+
+async function pxImportZip(file) {
+  if (!isEditor()) { toast('Sem permissões para importar documentos.', true); return; }
+  if (typeof JSZip === 'undefined') { toast('Biblioteca ZIP indisponível. Verifique a ligação.', true); return; }
+  showOverlay('A ler o ZIP…');
+  let zip;
+  try { zip = await JSZip.loadAsync(file); }
+  catch (e) { hideOverlay(); toast('Não foi possível ler o ficheiro ZIP.', true); return; }
+  hideOverlay();
+
+  const grupos = new Map();
+  const soltos = [];
+  zip.forEach((relPath, entry) => {
+    if (entry.dir || relPath.includes('__MACOSX/')) return;
+    const parts = relPath.split('/').filter(Boolean);
+    const nome = parts[parts.length - 1];
+    if (!nome || nome.startsWith('.') || nome.toLowerCase() === 'desktop.ini') return;
+    if (parts.length < 2) { soltos.push(nome); return; }
+    const segs = parts.slice(0, -1);
+    const key = segs.join('/');
+    if (!grupos.has(key)) grupos.set(key, { key, segs, files: [], ignorados: [] });
+    const ext = (nome.split('.').pop() || '').toLowerCase();
+    if (nome.includes('.') && PX_FORMATOS.includes(ext)) grupos.get(key).files.push({ entry, nome, ext });
+    else grupos.get(key).ignorados.push(nome);
+  });
+
+  // Procura o funcionário a partir da pasta mais funda para cima
+  const linhas = [];
+  let ignoradosSoltos = 0;
+  grupos.forEach(g => {
+    if (!g.files.length) { ignoradosSoltos += g.ignorados.length; return; }
+    let match = { status: 'none' };
+    for (let i = g.segs.length - 1; i >= 0; i--) {
+      const r = pxMatchEmployee(g.segs[i]);
+      if (r.status !== 'none') { match = r; break; }
+    }
+    linhas.push(Object.assign(g, { match }));
+  });
+  linhas.sort((a, b) => pxSortPt(a.key, b.key));
+  if (!linhas.length) { toast('O ZIP não tem pastas com documentos.', true); return; }
+
+  pxImportPlan = { linhas, soltos };
+  const opts = employees.slice().sort(pxNomeOrd)
+    .map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.nome || '(sem nome)')}${pxIsEx(e) ? ' (inativo)' : ''}</option>`).join('');
+  const ok = linhas.filter(l => l.match.status === 'ok').length;
+  const rows = linhas.map((l, i) => {
+    const pasta = l.segs[l.segs.length - 1];
+    const aviso = l.match.status === 'ambiguous' ? '<div class="px-imp-path">⚠️ vários funcionários possíveis — escolhe</div>'
+      : l.match.status === 'none' ? '<div class="px-imp-path">❌ não encontrado — escolhe ou ignora</div>' : '';
+    const ign = l.ignorados.length ? `<div class="px-imp-path">${l.ignorados.length} ignorado(s) (formato não suportado)</div>` : '';
+    return `<tr><td><strong>${escapeHtml(pasta)}</strong><div class="px-imp-path">${escapeHtml(l.key)}</div></td>`
+      + `<td style="white-space:nowrap;">${l.files.length} ficheiro(s)${ign}</td>`
+      + `<td><select data-px-imp="${i}"><option value="">— Ignorar —</option>${opts}</select>${aviso}</td></tr>`;
+  }).join('');
+  document.getElementById('pxImportBody').innerHTML = `
+    <p style="font-size:13px;margin-bottom:10px;">Encontrei <strong>${linhas.length}</strong> pasta(s) com ficheiros; <strong>${ok}</strong> ligada(s) automaticamente a um funcionário. Confirma ou corrige cada linha. Só são importados <strong>PDF, JPG e PNG</strong> até 10 MB; ficheiros com o mesmo nome que já existam na pasta do funcionário são saltados.</p>
+    ${soltos.length ? `<p class="px-imp-path" style="margin-bottom:10px;">${soltos.length} ficheiro(s) soltos na raiz do ZIP não são importados.</p>` : ''}
+    ${ignoradosSoltos ? `<p class="px-imp-path" style="margin-bottom:10px;">${ignoradosSoltos} ficheiro(s) em formato não suportado (ex.: Word/Excel) foram ignorados.</p>` : ''}
+    <div style="overflow-x:auto;"><table class="px-imp-table"><thead><tr><th>Pasta no ZIP</th><th>Ficheiros</th><th>Funcionário na app</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  linhas.forEach((l, i) => {
+    const sel = document.querySelector(`[data-px-imp="${i}"]`);
+    if (sel && l.match.status === 'ok') sel.value = l.match.emp.id;
+  });
+  openModal('pxImportModal');
+}
+
+async function pxUploadCloudinary(blob, filename, funcId) {
+  const fd = new FormData();
+  fd.append('file', blob, filename);
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  fd.append('folder', `${CLOUDINARY_FOLDER}/${funcId}`);
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: fd });
+  if (!resp.ok) throw new Error('Upload falhou (' + resp.status + ')');
+  return resp.json();
+}
+
+async function pxApplyImport() {
+  if (!isEditor() || !pxImportPlan) return;
+  const tarefas = [];
+  pxImportPlan.linhas.forEach((l, i) => {
+    const sel = document.querySelector(`[data-px-imp="${i}"]`);
+    const funcId = sel ? sel.value : '';
+    if (funcId) l.files.forEach(f => tarefas.push({ funcId, f }));
+  });
+  if (!tarefas.length) { toast('Nenhuma pasta foi ligada a um funcionário.', true); return; }
+  const nFunc = new Set(tarefas.map(t => t.funcId)).size;
+  if (!confirm(`Importar ${tarefas.length} ficheiro(s) para ${nFunc} funcionário(s)?`)) return;
+  closeModal('pxImportModal');
+  const setMsg = m => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = m; };
+  showOverlay('A preparar a importação…');
+  let ok = 0, dup = 0, grandes = 0, falhas = 0, feitos = 0;
+  try {
+    // Nomes já existentes por funcionário, para não duplicar
+    const existentes = {};
+    for (const funcId of new Set(tarefas.map(t => t.funcId))) {
+      const snap = await db.collection('funcionarios').doc(funcId).collection('documentos').get();
+      existentes[funcId] = new Set(snap.docs.map(d => docFullName(d.data()).toLowerCase()));
+    }
+    await pxRunLimited(tarefas, 3, async ({ funcId, f }) => {
+      try {
+        if (existentes[funcId].has(f.nome.toLowerCase())) { dup++; return; }
+        existentes[funcId].add(f.nome.toLowerCase());
+        const blob = await f.entry.async('blob');
+        if (blob.size > PX_MAX_BYTES) { grandes++; return; }
+        const info = await pxUploadCloudinary(blob, f.nome, funcId);
+        await db.collection('funcionarios').doc(funcId).collection('documentos').add({
+          url: info.secure_url,
+          public_id: info.public_id,
+          original_filename: info.original_filename || f.nome.replace(/\.[^.]+$/, ''),
+          format: info.format || f.ext,
+          bytes: info.bytes || blob.size,
+          resource_type: info.resource_type || 'image',
+          uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
+          uploaded_by_uid: currentUser.uid,
+          uploaded_by_email: currentUser.email,
+          origem: 'importacao_zip'
+        });
+        await db.collection('funcionarios').doc(funcId).update({ doc_count: firebase.firestore.FieldValue.increment(1) });
+        ok++;
+      } catch (err) {
+        falhas++;
+      } finally {
+        setMsg(`A importar… ${++feitos}/${tarefas.length}`);
+      }
+    });
+    await logAudit('import_docs_zip', '', `${ok} ficheiro(s) importados para ${nFunc} funcionário(s)`);
+    const extra = [dup ? `${dup} já existiam` : '', grandes ? `${grandes} acima de 10 MB` : '', falhas ? `${falhas} com erro` : ''].filter(Boolean).join(', ');
+    toast(`Importação concluída: ${ok} ficheiro(s) importados.` + (extra ? ` (${extra})` : ''), falhas > 0);
+  } catch (err) {
+    toast('Erro na importação: ' + friendlyError(err), true);
+  } finally {
+    pxImportPlan = null;
+    hideOverlay();
+  }
+}
+
+/* ============================================================
    NAVEGAÇÃO ENTRE ÁREAS
    ============================================================ */
 function switchArea(area) {
@@ -3387,8 +3862,11 @@ function switchArea(area) {
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
   document.getElementById('areaEmpresa').style.display = area === 'empresa' ? '' : 'none';
+  document.getElementById('areaPastas').style.display = area === 'pastas' ? '' : 'none';
   if (area === 'empresa') renderEmpContent();
   else unsubscribeDespesasFn();
+  if (area === 'pastas') renderPastas();
+  else pxStopDocs();
 }
 function contabConfirmLeave() {
   // Aviso ao sair do separador Contabilidade com alterações não guardadas
@@ -6051,6 +6529,11 @@ async function relContabConsolidadoPdf() {
 
 function bindFiscal() {
   document.querySelectorAll('.area-tab').forEach(t => t.addEventListener('click', () => switchArea(t.dataset.area)));
+  // Pastas: importação de ZIP
+  document.getElementById('pxZipInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) pxImportZip(f); });
+  document.getElementById('pxImportClose').addEventListener('click', () => closeModal('pxImportModal'));
+  document.getElementById('pxImportCancel').addEventListener('click', () => closeModal('pxImportModal'));
+  document.getElementById('pxImportApply').addEventListener('click', pxApplyImport);
   document.querySelectorAll('[data-emp-tab]').forEach(b => b.addEventListener('click', () => switchEmpTab(b.dataset.empTab)));
   document.getElementById('btnExportAll').addEventListener('click', exportarTudo);
 
