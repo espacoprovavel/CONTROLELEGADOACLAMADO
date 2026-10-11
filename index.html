@@ -951,7 +951,7 @@ footer strong { color: var(--ink); }
         <tbody id="usersBody"></tbody>
       </table>
       <div class="form-section-title" style="margin-top:24px;">Criar novo utilizador</div>
-      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">Cria aqui a conta de acesso (email + palavra-passe) e o perfil. A palavra-passe tem de ter pelo menos <strong>6 caracteres</strong>. Continuas com a tua sessão iniciada.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">Cria aqui a conta de acesso (email + palavra-passe) e o perfil. A palavra-passe tem de ter pelo menos <strong>6 caracteres</strong>. Continuas com a tua sessão iniciada.<br><strong>Todos os utilizadores criados aqui têm acesso total</strong> (criar, alterar, organizar e eliminar). Só o <strong>master</strong> gere utilizadores, logs e salários.</p>
       <div class="add-user-row">
         <input type="email" id="newUserEmail" placeholder="Email">
         <input type="text" id="newUserNome" placeholder="Nome">
@@ -1217,6 +1217,7 @@ let employees = [];
 let currentUser = null;
 let currentRole = 'viewer';
 let currentIsMaster = false;
+let currentHasProfile = false; // tem perfil criado pelo master em users/{uid} → acesso total
 let unsubscribe = null;
 let unsubscribeDocs = null;
 let currentDetailEmp = null;
@@ -1318,8 +1319,11 @@ const GROUPS = [
 ];
 
 /* ---------- Permissions ---------- */
-function isAdmin() { return currentRole === 'admin'; }
-function isEditor() { return currentRole === 'admin' || currentRole === 'editor'; }
+// Quem tem acesso à app (perfil criado pelo master) pode criar, alterar, organizar
+// e eliminar tudo. Só utilizadores, logs e salários continuam reservados ao master.
+function temAcesso() { return currentHasProfile === true; }
+function isAdmin() { return temAcesso(); }
+function isEditor() { return temAcesso(); }
 function isMaster() { return currentIsMaster === true; }
 
 function applyRolePermissions() {
@@ -1406,15 +1410,17 @@ async function loadRole(user) {
   try {
     const doc = await db.collection('users').doc(user.uid).get();
     currentIsMaster = !!(doc.exists && doc.data().master === true);
-    if (doc.exists && doc.data().role) {
-      currentRole = doc.data().role;
+    currentHasProfile = doc.exists;
+    if (doc.exists) {
+      currentRole = 'admin'; // acesso total para todos os utilizadores com perfil
     } else {
       currentRole = 'viewer';
-      toast('Conta sem perfil definido. Acesso só de leitura — contacte o administrador.', true);
+      toast('Esta conta ainda não tem acesso. Peça ao utilizador master para a criar em 👥 Utilizadores.', true);
     }
   } catch (err) {
     currentRole = 'viewer';
     currentIsMaster = false;
+    currentHasProfile = false;
     toast('Não foi possível carregar as permissões: ' + friendlyError(err), true);
   }
 }
@@ -1444,6 +1450,7 @@ auth.onAuthStateChanged(async user => {
     currentUser = null;
     currentRole = 'viewer';
     currentIsMaster = false;
+    currentHasProfile = false;
     applyMasterVisibility();
     employees = [];
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
