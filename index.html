@@ -390,17 +390,19 @@ footer strong { color: var(--ink); }
 .legal-banner strong { color: var(--accent); }
 
 /* ---------- Navegação por áreas ---------- */
+/* Barra de separadores: bem visível e sempre fixa no topo */
 .area-nav {
-  background: var(--accent-deep); border-bottom: 2px solid var(--gold);
+  background: var(--accent-deep); border-bottom: 3px solid var(--gold);
+  position: sticky; top: 0; z-index: 60; box-shadow: 0 3px 12px rgba(0,0,0,0.28);
 }
-.area-nav-inner { max-width: 1280px; margin: 0 auto; display: flex; gap: 4px; padding: 0 24px; flex-wrap: wrap; }
+.area-nav-inner { max-width: 1280px; margin: 0 auto; display: flex; gap: 8px; padding: 10px 24px; flex-wrap: wrap; }
 .area-tab {
-  font-family: 'Montserrat'; font-weight: 700; font-size: 14px; color: rgba(255,255,255,0.7);
-  background: none; border: none; cursor: pointer; padding: 14px 20px;
-  border-bottom: 3px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  font-family: 'Montserrat'; font-weight: 800; font-size: 16px; color: #fff; letter-spacing: 0.3px;
+  background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.18); border-radius: 12px;
+  cursor: pointer; padding: 12px 24px; transition: all 0.15s; display: flex; align-items: center; gap: 10px;
 }
-.area-tab:hover { color: #fff; }
-.area-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.area-tab:hover { background: rgba(255,255,255,0.16); border-color: var(--gold); }
+.area-tab.active { color: var(--accent-deep); background: var(--gold); border-color: var(--gold); box-shadow: 0 2px 10px rgba(212,175,55,0.45); }
 
 /* ---------- Dashboard ---------- */
 .dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
@@ -644,8 +646,8 @@ footer strong { color: var(--ink); }
 #appScreen > footer { margin-top: auto; }
 
 @media (max-width: 600px) {
-  .area-nav-inner { flex-wrap: nowrap; overflow-x: auto; padding: 0 8px; gap: 0; }
-  .area-tab { padding: 12px 12px; font-size: 13px; white-space: nowrap; flex: 1 0 auto; justify-content: center; }
+  .area-nav-inner { flex-wrap: nowrap; overflow-x: auto; padding: 8px; gap: 6px; }
+  .area-tab { padding: 11px 10px; font-size: 14px; white-space: nowrap; flex: 1 0 auto; justify-content: center; gap: 6px; border-radius: 10px; }
   .px-hero { padding-top: 4px; }
   .px-subtitle { display: none; }
   .px-search { margin-top: 10px; }
@@ -1732,6 +1734,7 @@ async function saveForm() {
     return;
   }
   const existingId = document.getElementById('f_id').value;
+  if (!confirm(existingId ? `Tem a certeza que quer guardar as alterações de "${nome}"?` : `Tem a certeza que quer criar o funcionário "${nome}"?`)) return;
   const id = existingId || uid();
   const data = {};
   FIELDS.forEach(f => {
@@ -2097,7 +2100,37 @@ async function downloadAllDocsZip(funcId, funcNome) {
 /* ============================================================
    PDF (jsPDF)
    ============================================================ */
-const { jsPDF } = window.jspdf;
+/* Confirmação antes de QUALQUER download da app: todos os ficheiros passam por
+   saveAs (ZIP, CSV, JSON, documentos…) ou por doc.save do jsPDF (PDF). Quando a
+   ação já perguntou antes de começar (ex.: ZIP das Pastas), põe-se
+   dlJaConfirmado = true para não perguntar duas vezes. */
+let dlJaConfirmado = false;
+function confirmarDownload(nome) {
+  if (dlJaConfirmado) { dlJaConfirmado = false; return true; }
+  return confirm(`Tem a certeza que quer descarregar "${nome || 'ficheiro'}"?`);
+}
+if (typeof window.saveAs === 'function') {
+  const origSaveAs = window.saveAs;
+  window.saveAs = function (blob, nome) {
+    if (!confirmarDownload(nome)) return;
+    return origSaveAs.apply(this, arguments);
+  };
+}
+// jsPDF define save() em cada documento: cada PDF criado passa a pedir confirmação ao guardar.
+const jsPDF = (function (Orig) {
+  function JsPDFComConfirmacao() {
+    const doc = new Orig(...arguments);
+    const origSave = doc.save;
+    doc.save = function (nome) {
+      if (!confirmarDownload(nome)) return doc;
+      return origSave.apply(doc, arguments);
+    };
+    return doc;
+  }
+  Object.assign(JsPDFComConfirmacao, Orig);
+  JsPDFComConfirmacao.API = Orig.API;
+  return JsPDFComConfirmacao;
+})(window.jspdf.jsPDF);
 const C = { navy:[0,51,102], gold:[212,175,55], text:[0,34,68], gray:[120,120,120], bgalt:[232,237,243] };
 
 function nowStamp() {
@@ -3688,6 +3721,7 @@ async function pxEliminarPasta(pais, empresa) {
 async function pxGuardarOffline(emps, label) {
   if (!emps.length) { toast('Não há funcionários nesta pasta.', true); return; }
   if (navigator.onLine === false) { toast('Precisas de Internet para preparar o uso offline.', true); return; }
+  if (!confirm(`Tem a certeza que quer guardar "${label}" neste aparelho para usar sem Internet?\n\n${emps.length} ficha(s) e os respetivos documentos vão ser descarregados (pode gastar dados móveis).`)) return;
   const setMsg = m => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = m; };
   showOverlay('A preparar uso offline…');
   try {
@@ -3991,6 +4025,7 @@ async function pxRunLimited(items, limit, worker) {
 async function pxDownloadZip(entries, zipName) {
   if (!entries.length) { toast('Não há funcionários nesta pasta.', true); return; }
   if (typeof JSZip === 'undefined') { toast('Biblioteca ZIP indisponível. Verifique a ligação.', true); return; }
+  if (!confirm(`Tem a certeza que quer descarregar esta pasta em ZIP?\n\n${zipName}\n${entries.length} funcionário(s), com ficha e documentos.`)) return;
   const setMsg = m => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = m; };
   showOverlay('A preparar o ZIP…');
   try {
@@ -4027,6 +4062,7 @@ async function pxDownloadZip(entries, zipName) {
     });
     // 3) Comprimir e guardar
     const blob = await zip.generateAsync({ type: 'blob' }, meta => setMsg(`A comprimir… ${Math.round(meta.percent)}%`));
+    dlJaConfirmado = true; // já perguntou antes de começar
     saveAs(blob, zipName);
     toast(`ZIP pronto: ${entries.length} funcionário(s), ${jobs.length - falhas} documento(s) + fichas.` + (falhas ? ` ${falhas} ficheiro(s) não foram obtidos.` : ''), falhas > 0);
   } catch (err) {
