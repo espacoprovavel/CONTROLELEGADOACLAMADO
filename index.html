@@ -632,6 +632,8 @@ footer strong { color: var(--ink); }
 .px-tile .px-name { font-size: 15px; font-weight: 700; white-space: normal; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 100%; }
 .px-tile .px-sub { white-space: normal; font-size: 12px; }
 #pxContent .px-head { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.px-back { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--accent); color: var(--gold); font-size: 22px; font-weight: 700; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: transform .15s ease, background .15s ease; }
+.px-back:hover, .px-back:focus-visible { background: var(--accent-hover); transform: translateX(-2px); outline: none; }
 #pxContent .px-empty { margin-top: 18px; }
 
 /* Rodapé sempre no fundo da página */
@@ -3577,7 +3579,7 @@ function renderPastas() {
     const res = pxSearchMatches(termo);
     pxCrumbs = [];
     pxItems = res.map(e => Object.assign(pxPathOf(e), { limparPesquisa: true }));
-    root.innerHTML = `<div class="px-head"><div class="px-crumbs"><span class="cur">🔎 ${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
+    root.innerHTML = `<div class="px-head"><button type="button" class="px-back" data-px-act="limpar-pesquisa" title="Voltar" aria-label="Limpar pesquisa e voltar">←</button><div class="px-crumbs"><span class="cur">🔎 ${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
       + (res.length
         ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e))).join('') + '</div>'
         : '<div class="px-empty">Nenhum funcionário encontrado.</div>');
@@ -3675,7 +3677,10 @@ function renderPastas() {
     }
   }
 
-  root.innerHTML = `<div class="px-head"><div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${body}`;
+  const voltar = pxCrumbs.length > 1
+    ? `<button type="button" class="px-back" data-px-crumb="${pxCrumbs.length - 2}" title="Voltar" aria-label="Voltar à pasta anterior">←</button>`
+    : '';
+  root.innerHTML = `<div class="px-head">${voltar}<div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${body}`;
 }
 
 function pxOnClick(ev) {
@@ -3702,6 +3707,7 @@ function pxOnClick(ev) {
   switch (t.dataset.pxAct) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
+    case 'limpar-pesquisa': { const s = document.getElementById('pxSearch'); if (s) s.value = ''; renderPastas(); break; }
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
     case 'novo-aqui':
