@@ -2,20 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
     function isAuth() {
       return request.auth != null;
     }
 
+    // Tem acesso à app = tem perfil em users/{uid} (criado pelo master).
+    // Todos os utilizadores com perfil podem criar, alterar e eliminar dados.
+    function temPerfil() {
+      return isAuth() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function isAdmin() {
-      return isAuth() && getRole() == 'admin';
+      return temPerfil();
     }
 
     function isEditor() {
-      return isAuth() && (getRole() == 'admin' || getRole() == 'editor');
+      return temPerfil();
     }
 
     // Administrador master: único com acesso às funcionalidades de salários/cálculos (recibos)
@@ -24,13 +26,13 @@ service cloud.firestore {
     }
 
     match /funcionarios/{docId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
 
     match /funcionarios/{funcionarioId}/documentos/{docId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create: if isEditor();
       allow delete: if isAdmin();
       allow update: if false;
@@ -44,42 +46,42 @@ service cloud.firestore {
 
     // Faltas e baixas médicas por trabalhador
     match /funcionarios/{funcionarioId}/faltas/{faltaId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
 
     // Parâmetros fiscais/salariais (documento único editável)
     match /config/{docId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if false;
     }
 
     // Histórico de alterações à configuração (imutável)
     match /config_history/{logId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create: if isEditor();
       allow update, delete: if false;
     }
 
     // Apuramento de IVA por trimestre
     match /iva/{trimestreId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
 
     // Faturas de despesas da empresa (por mês)
     match /despesas/{docId} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
 
     // Folha mensal para a contabilidade (editável manualmente)
     match /contabilidade/{mes} {
-      allow read: if isAuth();
+      allow read: if temPerfil();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
@@ -93,7 +95,7 @@ service cloud.firestore {
 
     match /audit_logs/{logId} {
       allow read: if isMaster();
-      allow create: if isAuth();
+      allow create: if temPerfil();
       allow update, delete: if false;
     }
   }
