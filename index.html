@@ -614,7 +614,44 @@ footer strong { color: var(--ink); }
 .px-imp-table th, .px-imp-table td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: middle; }
 .px-imp-table select { width: 100%; padding: 6px; border: 1px solid var(--line); border-radius: 6px; font-family: 'Poppins'; font-size: 12.5px; }
 .px-imp-path { font-size: 11px; color: var(--ink-soft); word-break: break-all; }
+/* Página Pastas: cabeçalho, pesquisa e cartões grandes ao centro */
+.px-hero { text-align: center; padding: 14px 0 6px; }
+.px-title { font-size: 28px; color: var(--accent); letter-spacing: 0.3px; }
+.px-subtitle { color: var(--ink-soft); font-size: 13.5px; margin-top: 4px; }
+.px-search { max-width: 560px; margin: 18px auto 6px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 2px 18px; box-shadow: var(--shadow); }
+.px-search:focus-within { border-color: var(--accent); }
+.px-search input { border: none; outline: none; flex: 1; font-family: 'Poppins'; font-size: 14.5px; padding: 11px 0; background: transparent; min-width: 0; }
+#pxContent { max-width: 1100px; width: 100%; margin: 14px auto 0; }
+.px-grid-big { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 230px)); justify-content: center; gap: 22px; margin-top: 18px; }
+.px-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; min-height: 178px; padding: 22px 14px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); cursor: pointer; font: inherit; color: var(--ink); width: 100%; min-width: 0; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.px-tile:hover, .px-tile:focus-visible { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,34,68,0.14); border-color: var(--gold); outline: none; }
+.px-folder-wrap { position: relative; display: inline-block; }
+.px-folder-ico { width: 78px; height: 63px; display: block; }
+.px-badge { position: absolute; right: -6px; bottom: -4px; font-size: 20px; background: #fff; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+.px-avatar { width: 66px; height: 66px; border-radius: 50%; background: var(--accent); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px; }
+.px-tile .px-name { font-size: 15px; font-weight: 700; white-space: normal; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 100%; }
+.px-tile .px-sub { white-space: normal; font-size: 12px; }
+#pxContent .px-head { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+#pxContent .px-empty { margin-top: 18px; }
+
+/* Rodapé sempre no fundo da página */
+#appScreen { flex-direction: column; min-height: 100vh; }
+#appScreen > header, #appScreen > nav, #appScreen > .legal-banner, #appScreen > .area-view, #appScreen > footer { width: 100%; }
+#appScreen > footer { margin-top: auto; }
+
 @media (max-width: 600px) {
+  .area-nav-inner { flex-wrap: nowrap; overflow-x: auto; padding: 0 8px; gap: 0; }
+  .area-tab { padding: 12px 12px; font-size: 13px; white-space: nowrap; flex: 1 0 auto; justify-content: center; }
+  .px-hero { padding-top: 4px; }
+  .px-subtitle { display: none; }
+  .px-search { margin-top: 10px; }
+  .px-title { font-size: 22px; }
+  .px-grid-big { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .px-tile { min-height: 142px; padding: 16px 8px; border-radius: 14px; }
+  .px-folder-ico { width: 58px; height: 47px; }
+  .px-avatar { width: 52px; height: 52px; font-size: 18px; }
+  .px-badge { width: 24px; height: 24px; font-size: 15px; }
+  .px-tile .px-name { font-size: 13.5px; }
   .px-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .px-card { padding: 10px; gap: 8px; }
   .px-ico { font-size: 19px; }
@@ -686,9 +723,9 @@ footer strong { color: var(--ink); }
   <!-- Navegação por áreas -->
   <nav class="area-nav">
     <div class="area-nav-inner">
-      <button class="area-tab active" data-area="funcionarios">👥 Funcionários</button>
+      <button class="area-tab active" data-area="pastas">📁 Pastas</button>
+      <button class="area-tab" data-area="funcionarios">👥 Funcionários</button>
       <button class="area-tab" data-area="empresa">🏢 Empresa</button>
-      <button class="area-tab" data-area="pastas">📁 Pastas</button>
     </div>
   </nav>
 
@@ -697,8 +734,21 @@ footer strong { color: var(--ink); }
     <strong>Estimativas de apoio à gestão.</strong> Não substituem contabilidade certificada nem software de faturação certificado pela AT.
   </div>
 
-  <!-- ÁREA: FUNCIONÁRIOS -->
-  <div class="container area-view" id="areaFuncionarios">
+  <!-- ÁREA: PASTAS (página inicial) — País › Empresa › Funcionário -->
+  <div class="container area-view px-area" id="areaPastas">
+    <div class="px-hero">
+      <h1 class="px-title">Pastas</h1>
+      <p class="px-subtitle">Documentos organizados por país, empresa e funcionário</p>
+      <div class="px-search">
+        <span aria-hidden="true">🔎</span>
+        <input type="search" id="pxSearch" placeholder="Procurar funcionário por nome, NIF ou empresa…" aria-label="Procurar funcionário">
+      </div>
+    </div>
+    <div id="pxContent"></div>
+  </div>
+
+  <!-- ÁREA: FUNCIONÁRIOS (lista) -->
+  <div class="container area-view" id="areaFuncionarios" style="display:none;">
     <div class="toolbar">
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Pesquisar por nome, NIF, NISS, função, cliente ou CC…" aria-label="Pesquisar funcionários">
@@ -741,8 +791,6 @@ footer strong { color: var(--ink); }
     <div id="empContent"></div>
   </div>
 
-  <!-- ÁREA: PASTAS (explorador tipo Drive: País › Empresa › Funcionário) -->
-  <div class="container area-view" id="areaPastas" style="display:none;"></div>
   <input type="file" id="pxZipInput" accept=".zip,application/zip" style="display:none;">
 
   <footer>
@@ -1294,7 +1342,7 @@ function showLogin() {
 }
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('bootLoading').style.display = 'none';
 }
 
@@ -2748,6 +2796,7 @@ function bind() {
   document.getElementById('btnDedup').addEventListener('click', openDedup);
   document.getElementById('btnNormEmp').addEventListener('click', openNormEmp);
   document.getElementById('searchInput').addEventListener('input', render);
+  document.getElementById('pxSearch').addEventListener('input', renderPastas);
 
   // Form modal
   document.getElementById('formClose').addEventListener('click', () => closeModal('formModal'));
@@ -3472,7 +3521,7 @@ function pxGroup(list, keyFn) {
   });
 }
 function pxNomeOrd(a, b) { return pxSortPt(a.nome || '', b.nome || ''); }
-function pxDocCountTxt(e) { const n = Number(e.doc_count) || 0; return `${n + 1} ficheiro${n ? 's' : ''} (ficha + ${n} doc.)`; }
+function pxDocCountTxt(e) { const n = Number(e.doc_count) || 0; return n ? `Ficha + ${n} documento${n === 1 ? '' : 's'}` : 'Ficha · sem documentos'; }
 
 function pxStopDocs() {
   if (pxDocsUnsub) { pxDocsUnsub(); pxDocsUnsub = null; }
@@ -3485,24 +3534,63 @@ function pxGo(p) {
 function pxOnEmployeesChanged() {
   const area = document.getElementById('areaPastas');
   if (!area || area.style.display === 'none') return;
-  // a vista do funcionário atualiza-se pela subscrição dos documentos
-  if (!pxPath.funcId) renderPastas();
+  renderPastas();
 }
+function pxSearchTerm() {
+  const el = document.getElementById('pxSearch');
+  return el ? el.value.trim() : '';
+}
+function pxNorm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function pxSearchMatches(term) {
+  const q = pxNorm(term);
+  return employees.filter(e => ['nome', 'nif', 'niss', 'funcao', 'cliente', 'cc', 'passaporte', 'cli_pais']
+    .some(f => pxNorm(e[f]).includes(q))).sort(pxNomeOrd);
+}
+function pxPathOf(e) { return { scope: pxIsEx(e) ? 'ex' : 'ativos', pais: pxPais(e), empresa: pxEmpresa(e), funcId: e.id }; }
 
+function pxInitials(nome) {
+  const p = String(nome || '').trim().split(/\s+/).filter(Boolean);
+  return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+}
+function pxFolderSvg(ex) {
+  const corpo = ex ? '#8a94a3' : '#003366', aba = ex ? '#c3cad4' : '#D4AF37';
+  return `<svg class="px-folder-ico" viewBox="0 0 64 52" aria-hidden="true"><path d="M4 9a5 5 0 0 1 5-5h15l6 6h25a5 5 0 0 1 5 5v3H4z" fill="${aba}"/><rect x="2" y="14" width="60" height="36" rx="6" fill="${corpo}"/></svg>`;
+}
+// Cartão grande: pasta (país/empresa/ex-colaboradores) ou funcionário (iniciais)
 function pxCard(i, ico, nome, sub) {
-  return `<button type="button" class="px-card" data-px-i="${i}"><span class="px-ico">${ico}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(sub)}</div></span></button>`;
+  const visual = ico === '👤'
+    ? `<span class="px-avatar">${escapeHtml(pxInitials(nome))}</span>`
+    : `<span class="px-folder-wrap">${pxFolderSvg(ico === '🗂️')}${ico === '🌍' || ico === '🏢' ? `<span class="px-badge">${ico}</span>` : ''}</span>`;
+  return `<button type="button" class="px-tile" data-px-i="${i}" title="${escapeHtml(nome)}">${visual}<span class="px-name">${escapeHtml(nome)}</span><span class="px-sub">${escapeHtml(sub)}</span></button>`;
 }
 function pxBtn(action, label, cls) { return `<button type="button" class="btn ${cls || 'btn-ghost'}" data-px-act="${action}">${label}</button>`; }
 
 function renderPastas() {
-  const root = document.getElementById('areaPastas');
+  const root = document.getElementById('pxContent');
   if (!root) return;
   if (!pxBound) { root.addEventListener('click', pxOnClick); pxBound = true; }
+
+  // Pesquisa: mostra os funcionários encontrados (de todas as pastas)
+  const termo = pxSearchTerm();
+  if (termo) {
+    pxStopDocs();
+    const res = pxSearchMatches(termo);
+    pxCrumbs = [];
+    pxItems = res.map(e => Object.assign(pxPathOf(e), { limparPesquisa: true }));
+    root.innerHTML = `<div class="px-head"><div class="px-crumbs"><span class="cur">🔎 ${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
+      + (res.length
+        ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e))).join('') + '</div>'
+        : '<div class="px-empty">Nenhum funcionário encontrado.</div>');
+    return;
+  }
+
+  // Dentro da pasta de um funcionário, o caminho segue os dados atuais dele
+  if (pxPath.funcId) { const e0 = employees.find(x => x.id === pxPath.funcId); if (e0) pxPath = pxPathOf(e0); }
   const { scope, pais, empresa, funcId } = pxPath;
 
   // Breadcrumb
   pxCrumbs = [{ scope: 'ativos' }];
-  const labels = ['📁 Pastas'];
+  const labels = ['🏠 Início'];
   if (scope === 'ex') { pxCrumbs.push({ scope: 'ex' }); labels.push('🗂️ ' + PX_EX); }
   if (pais) { pxCrumbs.push({ scope, pais }); labels.push(pais); }
   if (empresa) { pxCrumbs.push({ scope, pais, empresa }); labels.push(empresa); }
@@ -3531,7 +3619,10 @@ function renderPastas() {
         if (pxPath.funcId === funcId) renderPastas();
       }, err => toast('Erro ao carregar documentos: ' + friendlyError(err), true));
     }
-    if (isEditor()) actions += pxBtn('upload', '📎 Anexar ficheiros', 'btn-primary');
+    if (isEditor()) actions += pxBtn('editar', '✏️ Editar dados', 'btn-primary');
+    actions += pxBtn('ficha', '📄 Gerar PDF');
+    actions += pxBtn('detalhe', '📋 Ficha completa');
+    if (isEditor()) actions += pxBtn('upload', '📎 Anexar ficheiros');
     actions += pxBtn('zip-func', '⬇️ Download pasta');
     const ficha = `<div class="px-card px-file"><span class="px-ico">📋</span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">⬇️</button></span></div>`;
     let docsHtml;
@@ -3548,10 +3639,11 @@ function renderPastas() {
     if (empresa) {
       // ----- Funcionários da empresa -----
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
-      actions += pxBtn('zip-empresa', '⬇️ Download empresa', 'btn-primary');
+      if (isEditor() && scope === 'ativos') actions += pxBtn('novo-aqui', '＋ Novo funcionário aqui', 'btn-primary');
+      actions += pxBtn('zip-empresa', '⬇️ Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
       pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
       body = emps.length
-        ? '<div class="px-grid">' + emps.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
+        ? '<div class="px-grid-big">' + emps.map((e, i) => pxCard(i, '👤', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
         : '<div class="px-empty">Sem funcionários nesta empresa.</div>';
     } else if (pais) {
       // ----- Empresas do país -----
@@ -3559,7 +3651,7 @@ function renderPastas() {
       actions += pxBtn('zip-pais', '⬇️ Download país', 'btn-primary');
       pxItems = grupos.map(([emp]) => ({ scope, pais, empresa: emp }));
       body = grupos.length
-        ? '<div class="px-grid">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, `${arr.length} funcionário${arr.length === 1 ? '' : 's'}`)).join('') + '</div>'
+        ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, '🏢', emp, `${arr.length} funcionário${arr.length === 1 ? '' : 's'}`)).join('') + '</div>'
         : '<div class="px-empty">Sem empresas neste país.</div>';
     } else {
       // ----- Raiz (Ativos) ou raiz dos Ex-colaboradores: países -----
@@ -3578,7 +3670,7 @@ function renderPastas() {
       } else {
         actions += pxBtn('zip-ex', '⬇️ Download ex-colaboradores', 'btn-primary');
       }
-      body = cards ? `<div class="px-grid">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
+      body = cards ? `<div class="px-grid-big">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
       if (scope === 'ativos') body += `<div class="px-sub" style="margin-top:12px;white-space:normal;">As pastas organizam-se pelo <strong>País de destacamento</strong> e pela <strong>Empresa cliente</strong> de cada funcionário. Quem não tiver estes campos preenchidos aparece em “${PX_SEM_PAIS}” / “${PX_SEM_EMP}”.</div>`;
     }
   }
@@ -3590,7 +3682,12 @@ function pxOnClick(ev) {
   const t = ev.target.closest('[data-px-crumb],[data-px-i],[data-px-act],[data-px-doc]');
   if (!t) return;
   if (t.dataset.pxCrumb !== undefined) { pxGo(pxCrumbs[+t.dataset.pxCrumb]); return; }
-  if (t.dataset.pxI !== undefined) { const p = pxItems[+t.dataset.pxI]; if (p) pxGo(p); return; }
+  if (t.dataset.pxI !== undefined) {
+    const p = pxItems[+t.dataset.pxI]; if (!p) return;
+    if (p.limparPesquisa) { const s = document.getElementById('pxSearch'); if (s) s.value = ''; }
+    pxGo({ scope: p.scope, pais: p.pais, empresa: p.empresa, funcId: p.funcId });
+    return;
+  }
   if (t.dataset.pxDoc) {
     const d = (pxDocs || [])[+t.dataset.pxD]; if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
@@ -3605,6 +3702,14 @@ function pxOnClick(ev) {
   switch (t.dataset.pxAct) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
+    case 'editar': if (emp) openForm(emp); break;
+    case 'detalhe': if (emp) viewDetail(emp.id); break;
+    case 'novo-aqui':
+      openForm();
+      setSelectValue('f_estado', 'ativo');
+      if (pais && pais !== PX_SEM_PAIS) setSelectValue('f_cli_pais', pais);
+      if (empresa && empresa !== PX_SEM_EMP) setSelectValue('f_cliente', empresa);
+      break;
     case 'zip-func':
       if (emp) pxDownloadZip([{ e: emp, prefix: '' }], `Legado_${slug(emp.nome)}_${hoje}.zip`);
       break;
@@ -3860,9 +3965,9 @@ async function pxApplyImport() {
 function switchArea(area) {
   if (area !== 'empresa' && !contabConfirmLeave()) return;
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
+  document.getElementById('areaPastas').style.display = area === 'pastas' ? '' : 'none';
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
   document.getElementById('areaEmpresa').style.display = area === 'empresa' ? '' : 'none';
-  document.getElementById('areaPastas').style.display = area === 'pastas' ? '' : 'none';
   if (area === 'empresa') renderEmpContent();
   else unsubscribeDespesasFn();
   if (area === 'pastas') renderPastas();
