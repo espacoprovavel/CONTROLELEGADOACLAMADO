@@ -80,6 +80,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Documentos da empresa (separador Empresa): pastas, fichas e ficheiros
+    match /empresa_itens/{itemId} {
+      allow read: if temPerfil();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
     // Folha mensal para a contabilidade (editável manualmente)
     match /contabilidade/{mes} {
       allow read: if temPerfil();
