@@ -34,8 +34,9 @@ service cloud.firestore {
     match /funcionarios/{funcionarioId}/documentos/{docId} {
       allow read: if temPerfil();
       allow create: if isEditor();
+      // renomear ficheiros e mover entre subpastas (nome e pasta)
+      allow update: if isEditor();
       allow delete: if isAdmin();
-      allow update: if false;
     }
 
     // Recibos de vencimento (histórico mensal por trabalhador)
