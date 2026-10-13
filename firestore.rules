@@ -27,11 +27,30 @@ service cloud.firestore {
       return isMaster();
     }
 
-    // Marca da versão das regras: a app lê regras/v3 para confirmar que estas
+    // Contabilidade e salários: só masters com acesso (acesso_contab/{uid}).
+    function temContab() {
+      return isMaster() && exists(/databases/$(database)/documents/acesso_contab/$(request.auth.uid));
+    }
+
+    // Marca da versão das regras: a app lê regras/v4 para confirmar que estas
     // regras estão publicadas (se a leitura for recusada, avisa o master).
     match /regras/{versao} {
-      allow read: if temPerfil() && versao == 'v3';
+      allow read: if temPerfil() && versao == 'v4';
       allow write: if false;
+    }
+
+    // Quem pode entrar na Contabilidade. A 1.ª pessoa a ativar a proteção fica
+    // como dona (cria o seu acesso e o marcador _inicial na mesma operação);
+    // depois, só quem já tem acesso pode dar ou retirar acesso a outros masters.
+    match /acesso_contab/{id} {
+      allow read: if temPerfil();
+      allow create, delete: if temContab() && id != '_inicial';
+      allow create: if isMaster()
+        && (id == request.auth.uid || id == '_inicial')
+        && !exists(/databases/$(database)/documents/acesso_contab/_inicial)
+        && existsAfter(/databases/$(database)/documents/acesso_contab/_inicial)
+        && existsAfter(/databases/$(database)/documents/acesso_contab/$(request.auth.uid));
+      allow update: if false;
     }
 
     match /funcionarios/{docId} {
@@ -49,9 +68,9 @@ service cloud.firestore {
     }
 
     // Recibos de vencimento (histórico mensal por trabalhador)
-    // Dados salariais — acesso exclusivo do administrador master.
+    // Dados salariais — só quem tem acesso à Contabilidade.
     match /funcionarios/{funcionarioId}/recibos/{reciboId} {
-      allow read, create, update, delete: if isMaster();
+      allow read, create, update, delete: if temContab();
     }
 
     // Faltas e baixas médicas por trabalhador
@@ -77,16 +96,12 @@ service cloud.firestore {
 
     // Apuramento de IVA por trimestre
     match /iva/{trimestreId} {
-      allow read: if temPerfil();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read, create, update, delete: if temContab();
     }
 
     // Faturas de despesas da empresa (por mês)
     match /despesas/{docId} {
-      allow read: if temPerfil();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read, create, update, delete: if temContab();
     }
 
     // Documentos da empresa (separador Empresa): pastas, fichas e ficheiros
@@ -98,9 +113,7 @@ service cloud.firestore {
 
     // Folha mensal para a contabilidade (editável manualmente)
     match /contabilidade/{mes} {
-      allow read: if temPerfil();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read, create, update, delete: if temContab();
     }
 
     match /users/{userId} {
