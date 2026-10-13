@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Legado RH">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -26,20 +26,20 @@
 <style>
 :root {
   color-scheme: light;
-  --bg: #f5f7fa;
-  --bg-alt: #e8edf3;
-  --ink: #002244;
-  --ink-soft: #4B4B4B;
-  --line: #c8d3e0;
-  --accent: #003366;
-  --accent-hover: #002244;
-  --accent-deep: #132347;
+  --bg: #f7f8fa;
+  --bg-alt: #f2f4f7;
+  --ink: #111827;
+  --ink-soft: #6b7280;
+  --line: #e5e7eb;
+  --accent: #0f2f57;
+  --accent-hover: #0a2342;
+  --accent-deep: #0b1f3a;
   --gold: #D4AF37;
   --gold-soft: #b89530;
   --green: #2e7d32;
-  --red: #AC3838;
+  --red: #b42318;
   --card: #ffffff;
-  --shadow: 0 1px 3px rgba(0,34,68,0.08), 0 4px 12px rgba(0,34,68,0.06);
+  --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -868,6 +868,179 @@ body.px-dragging .px-dropbar { display: flex; }
   .px-actions .btn { flex: 1 1 auto; }
 }
 
+/* =====================================================================
+   DESIGN 2030 — superfícies claras, tipografia Inter, hierarquia calma.
+   (O bloco do telemóvel, mais abaixo, afina isto para ecrãs pequenos.)
+   ===================================================================== */
+body, body * { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important; }
+body kbd, body code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace !important; }
+body { background: var(--bg); background-image: none; color: var(--ink); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-feature-settings: 'cv11', 'ss01'; }
+h1, h2, h3, h4 { letter-spacing: -0.02em; }
+
+/* Topo */
+header { background: #fff; color: var(--ink); border-bottom: 1px solid #eceef1; padding: 0; }
+.header-inner { padding: 12px 28px; }
+.brand { gap: 12px; }
+.brand-logo { width: 38px; height: 38px; border-radius: 11px; font-size: 14px; font-weight: 700; box-shadow: none; }
+.brand h1 { font-size: 17px; font-weight: 700; color: var(--ink); }
+.brand .sub { color: var(--ink-soft); opacity: 1; font-size: 11.5px; letter-spacing: 0.02em; font-weight: 500; }
+.brand-edit { background: #f3f4f6; } .brand-edit:hover { background: #e5e7eb; }
+.brand-edit svg { color: var(--ink-soft); }
+.stats { display: none; }
+.user-box { gap: 10px; }
+.user-box .uemail { color: var(--ink-soft); opacity: 1; font-size: 13px; }
+.role-badge { font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10.5px; }
+.role-badge.role-master { background: #fff6dc; color: #7a5b00; border: 1px solid #f3e1a5; }
+.role-badge.role-viewer, .role-badge.role-admin, .role-badge.role-editor { background: #eef4ff; color: #1d3f75; border: 1px solid #dbe6fb; }
+.btn-logout, .btn-logout:hover { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 7px 16px; font-weight: 500; font-size: 13px; }
+.btn-logout:hover { background: #f9fafb; }
+
+/* Separadores */
+.area-nav { background: rgba(255,255,255,0.92); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid #eceef1; box-shadow: none; }
+.area-nav-inner { padding: 0 20px; gap: 2px; }
+.area-tab, .area-tab:hover { background: none; border: none; border-radius: 0; box-shadow: none; color: var(--ink-soft); font-weight: 500; font-size: 14.5px; letter-spacing: 0; padding: 14px 14px 13px; position: relative; }
+.area-tab:hover { color: var(--ink); }
+.area-tab.active { background: none; box-shadow: none; color: var(--ink); font-weight: 600; }
+.area-tab.active::after { content: ''; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+
+/* Botões */
+.btn { font-weight: 500; font-size: 13.5px; border-radius: 10px; padding: 9px 14px; letter-spacing: -0.005em; box-shadow: none; transition: background .15s, border-color .15s, color .15s, box-shadow .15s; }
+.btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost, .btn-gold { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover, .btn-gold:hover { background: #f9fafb; border-color: #d1d5db; }
+.btn-danger { background: #fff; color: var(--red); border: 1px solid #f4c7c3; }
+.btn-danger:hover { background: #fef3f2; }
+.btn-sm { padding: 6px 11px; font-size: 12.5px; border-radius: 8px; }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(15,47,87,0.12); }
+
+/* Barras de ferramentas e pesquisa */
+.toolbar { background: transparent; border: none; box-shadow: none; padding: 0; margin-bottom: 20px; }
+.search-box input, .px-search { background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+.search-box input:focus { border-color: #c7cdd6; box-shadow: 0 0 0 4px rgba(15,47,87,0.07); }
+.px-search:focus-within { border-color: #c7cdd6; box-shadow: 0 0 0 4px rgba(15,47,87,0.07); }
+.estado-toggle { border: none; border-radius: 11px; background: #f2f4f7; padding: 3px; gap: 2px; }
+.estado-toggle button { background: transparent; border-radius: 8px; font-weight: 500; color: var(--ink-soft); padding: 6px 14px; }
+.estado-toggle button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(16,24,40,0.08); }
+.estado-toggle button:not(.active):hover { background: transparent; color: var(--ink); }
+
+/* Tabelas */
+.table-wrap { border: 1px solid #eceef1; border-radius: 14px; box-shadow: none; }
+thead th, .mini-table th, .contab-table th { background: #fafbfc; color: var(--ink-soft); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; border-bottom: 1px solid #eceef1; }
+tbody td { border-bottom: 1px solid #f2f3f5; color: var(--ink); }
+tbody tr:hover { background: #fafbfc; }
+.emp-name { font-weight: 600; }
+.cell-mono { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.badge-on { background: #ecfdf3; color: #067647; }
+.badge-off { background: #fef3f2; color: var(--red); }
+.badge { font-weight: 500; }
+
+/* Lista de funcionários por país / empresa */
+.country-group { border: none; background: transparent; box-shadow: none; border-radius: 0; margin-bottom: 30px; overflow: visible; }
+.country-head, .country-head:hover { background: none; color: var(--ink); border-bottom: none; padding: 4px 2px 12px; }
+.country-head h2 { color: var(--ink); font-size: 19px; font-weight: 700; }
+.country-head .country-count { background: #f2f4f7; color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.country-head .country-caret { color: #9ca3af; }
+.country-body { padding: 0; }
+.empresa-group { border: 1px solid #eceef1; border-radius: 14px; overflow: hidden; margin: 0 0 12px; background: #fff; }
+.empresa-head, .empresa-head:hover { background: #fff; border-bottom: 1px solid #f2f3f5; border-radius: 0; padding: 12px 16px; }
+.empresa-head:hover { background: #fafbfc; }
+.empresa-head h3 { color: var(--ink); font-size: 14.5px; font-weight: 600; }
+.empresa-head .empresa-count, .empresa-head .empresa-caret { color: #9ca3af; }
+.empresa-body .table-wrap { border: none; border-radius: 0; }
+.group-pill { background: #f2f4f7; color: var(--ink-soft); font-weight: 500; }
+.subgroup-head .subcount { color: var(--ink-soft); }
+
+/* Contabilidade: separadores em texto e cartões calmos */
+#areaEmpresa > .toolbar { border-bottom: 1px solid #eceef1; border-radius: 0; gap: 2px; padding: 0; margin-bottom: 22px; }
+#areaEmpresa > .toolbar .btn[data-emp-tab] { background: none; border: none; border-radius: 0; color: var(--ink-soft); padding: 11px 12px; position: relative; }
+#areaEmpresa > .toolbar .btn[data-emp-tab]:hover { color: var(--ink); }
+#areaEmpresa > .toolbar .btn[data-emp-tab].btn-primary, #areaEmpresa > .toolbar .btn[data-emp-tab].btn-gold { color: var(--ink); font-weight: 600; }
+#areaEmpresa > .toolbar .btn[data-emp-tab].btn-primary::after, #areaEmpresa > .toolbar .btn[data-emp-tab].btn-gold::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+#areaEmpresa > .toolbar #btnExportAll { margin-bottom: 6px; }
+.dash-card, .dash-card.warn, .dash-card.alert { border: 1px solid #eceef1; border-radius: 16px; box-shadow: none; padding: 18px 20px; }
+.dash-card .dc-lbl { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+.dash-card .dc-val { font-weight: 700; font-size: 28px; color: var(--ink); letter-spacing: -0.03em; }
+.dash-card.alert .dc-val { color: var(--red); }
+.dash-list li { border-bottom-style: solid; border-bottom-color: #f2f3f5; }
+.dash-list .pill-days { background: #fff6dc; color: #7a5b00; }
+.dash-list .pill-days.urgent { background: #fef3f2; color: var(--red); }
+.legal-banner { background: transparent; border-bottom: none; color: #9ca3af; font-size: 12px; }
+.legal-banner strong { color: var(--ink-soft); }
+
+/* Janelas */
+.modal-backdrop { background: rgba(17,24,39,0.36); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.modal { border-radius: 20px; box-shadow: 0 24px 64px -12px rgba(16,24,40,0.28); border: 1px solid rgba(17,24,39,0.06); }
+.modal-head { background: #fff; color: var(--ink); border-bottom: 1px solid #f2f3f5; padding: 18px 24px; }
+.modal-head h2 { font-size: 17px; font-weight: 600; }
+.modal-close, .vw-btn { background: #f3f4f6; color: #374151; border-radius: 10px; }
+.modal-close:hover, .vw-btn:hover { background: #e5e7eb; }
+.modal-foot { background: #fff; border-top: 1px solid #f2f3f5; }
+.detail-head .dname { font-weight: 700; font-size: 24px; color: var(--ink); }
+.detail-item .dl { text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--ink-soft); }
+.detail-item .dv { color: var(--ink); font-size: 14.5px; }
+.form-section-title { text-transform: none; letter-spacing: -0.01em; font-size: 14.5px; font-weight: 600; color: var(--ink); border-bottom: 1px solid #f2f3f5; }
+.ficha-tab { font-weight: 500; font-size: 14px; }
+.ficha-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+.field input, .field select, .field textarea, .cfg-field input, .login-field input { border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.field input:focus, .field select:focus, .field textarea:focus, .cfg-field input:focus, .login-field input:focus { border-color: #c7cdd6; box-shadow: 0 0 0 4px rgba(15,47,87,0.07); }
+.toast { background: #111827; color: #fff; border-left: none; border-radius: 12px; font-size: 13.5px; box-shadow: 0 12px 32px -8px rgba(16,24,40,0.35); }
+.toast.err { background: var(--red); }
+.ctx-menu { border-radius: 12px; border-color: #eceef1; box-shadow: 0 16px 40px -12px rgba(16,24,40,0.25); }
+
+/* Entrada */
+#loginScreen { background: #f7f8fa; background-image: radial-gradient(900px 500px at 50% -10%, rgba(15,47,87,0.08), transparent 70%); }
+.login-card { border-top: none; border-radius: 22px; border: 1px solid #eceef1; box-shadow: 0 24px 64px -20px rgba(16,24,40,0.22); }
+.login-logo { color: var(--ink); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; }
+.login-logo .deep { color: var(--ink-soft); font-weight: 500; letter-spacing: 0.18em; font-size: 11px; margin-top: 4px; }
+.pass-toggle { color: var(--ink-soft); }
+
+/* Rodapé */
+footer { border-top: 1px solid #eceef1; color: #9ca3af; font-size: 12px; }
+footer strong { color: var(--ink-soft); font-weight: 600; }
+footer .ver { color: #9ca3af; }
+
+/* Pastas e Empresa (estilo Drive) */
+.px-hero .px-title, .px-hero .px-subtitle { display: none; }
+.px-hero { padding-top: 22px; }
+.px-search { margin-top: 0; }
+#pxContent .px-head, #edContent .px-head { border-bottom: none; padding-bottom: 2px; }
+.px-back, .px-back:hover { background: #f3f4f6; color: var(--ink); box-shadow: none; width: 38px; height: 38px; font-size: 19px; transform: none; }
+.px-back:hover { background: #e5e7eb; }
+.px-crumbs { font-size: 13.5px; font-weight: 500; color: var(--ink-soft); }
+.px-crumbs button { color: var(--ink-soft); padding: 2px 5px; }
+.px-crumbs button:hover { color: var(--ink); background: #f3f4f6; }
+.px-crumbs .sep { color: #c4c9d1; }
+.px-crumbs .cur { display: block; width: 100%; font-size: 26px; font-weight: 700; color: var(--ink); letter-spacing: -0.03em; padding: 2px 5px 0; line-height: 1.2; }
+.px-actions .btn { border-radius: 999px; padding: 8px 15px; font-size: 13px; }
+.px-section-title { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin: 22px 0 10px; }
+.px-hint { display: none; }
+.px-tile { border: 1px solid #eceef1; box-shadow: none; border-radius: 18px; min-height: 150px; gap: 6px; }
+.px-tile:hover, .px-tile:focus-visible { border-color: #d6dae0; box-shadow: 0 10px 28px -14px rgba(16,24,40,0.22); transform: translateY(-2px); }
+.px-tile .px-name { color: var(--ink); font-weight: 600; font-size: 14.5px; }
+.px-tile .px-sub { color: var(--ink-soft); }
+.px-grid-big { gap: 16px; }
+.px-avatar { background: #eef4ff; color: #1d3f75; font-weight: 700; }
+.px-grid { gap: 0; background: #fff; border: 1px solid #eceef1; border-radius: 16px; overflow: hidden; }
+.px-card, .px-card:hover { border: none; border-radius: 0; box-shadow: none; border-bottom: 1px solid #f2f3f5; padding: 12px 16px; background: #fff; }
+.px-grid > .px-card:last-child { border-bottom: none; }
+.px-card:hover { background: #fafbfc; }
+.px-selected, .px-selected:hover { background: #eef4ff; box-shadow: none; }
+.px-card .px-name { color: var(--ink); font-weight: 500; font-size: 14px; }
+.px-card .px-sub { color: var(--ink-soft); }
+.ftype { border-radius: 9px; font-weight: 700; letter-spacing: 0.04em; }
+/* as ações de cada ficheiro aparecem ao passar o rato (como no Drive) */
+.px-fbtns { opacity: 0; transition: opacity .12s ease; }
+.px-card:hover .px-fbtns, .px-card:focus-within .px-fbtns, .px-selected .px-fbtns { opacity: 1; }
+@media (hover: none) { .px-fbtns { opacity: 1; } }
+.px-fbtns button { border: 1px solid var(--line); border-radius: 8px; color: #374151; font-weight: 500; background: #fff; }
+.px-fbtns button:hover { border-color: #c7cdd6; background: #f9fafb; }
+.px-fbtns button[data-px-doc="del"] { color: var(--red); }
+.px-bulk { border: none; background: #eef4ff; border-radius: 12px; color: #1d3f75; }
+.px-empty { background: transparent; border: 1px dashed #e5e7eb; color: var(--ink-soft); border-radius: 16px; font-size: 14px; }
+.px-dropbar { border-color: #c7cdd6; border-radius: 14px; }
+
+.toolbar .tb-extra { display: none !important; }
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -909,7 +1082,7 @@ body.px-dragging .px-dropbar { display: flex; }
   .px-grid-sub .px-folder-ico, .px-folder-ico { width: 46px; height: 37px; }
 
   /* Ficheiros: lista simples, nome em preto, ⋮ para as opções */
-  .px-grid { gap: 0; }
+  .px-grid { gap: 0; border: none; border-radius: 0; background: none; overflow: visible; }
   .px-card, .px-card:hover, .px-selected { background: none; border: none; border-bottom: 1px solid #eef0f3; border-radius: 0; box-shadow: none; padding: 10px 0 10px 2px; }
   .px-selected { background: #e8f0fe; border-radius: 12px; }
   .px-card .px-name { color: #111; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 14.5px; }
@@ -1055,20 +1228,22 @@ body.px-dragging .px-dropbar { display: flex; }
         <button type="button" class="active" data-estado="ativo">Ativos</button>
         <button type="button" data-estado="inativo">Inativos</button>
       </div>
-      <button class="btn btn-primary" id="btnNew">+ Novo Funcionário</button>
-      <button class="btn btn-ghost" id="btnPdfAll">PDF Todos</button>
-      <button class="btn btn-ghost" id="btnZipAll">ZIP Completo</button>
-      <button class="btn btn-ghost" id="btnBackup">Backup JSON</button>
-      <button class="btn btn-ghost" id="btnImport">Importar</button>
-      <button class="btn btn-gold" id="btnUsers">Utilizadores</button>
-      <button class="btn btn-gold" id="btnLogs">Logs</button>
-      <button class="btn btn-gold" id="btnDedup">Corrigir duplicados</button>
-      <button class="btn btn-gold" id="btnNormEmp">Normalizar empresas</button>
+      <button class="btn btn-primary" id="btnNew">+ Novo funcionário</button>
+      <button class="btn btn-ghost" id="btnMais" aria-haspopup="menu">Mais <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <!-- Ações menos usadas: ficam no menu "Mais" -->
+      <button class="btn btn-ghost tb-extra" id="btnPdfAll">PDF de todos</button>
+      <button class="btn btn-ghost tb-extra" id="btnZipAll">ZIP completo</button>
+      <button class="btn btn-ghost tb-extra" id="btnBackup">Backup (JSON)</button>
+      <button class="btn btn-ghost tb-extra" id="btnImport">Importar</button>
+      <button class="btn btn-gold tb-extra" id="btnUsers">Utilizadores e acessos</button>
+      <button class="btn btn-gold tb-extra" id="btnLogs">Registo de atividade (logs)</button>
+      <button class="btn btn-gold tb-extra" id="btnDedup">Corrigir duplicados</button>
+      <button class="btn btn-gold tb-extra" id="btnNormEmp">Normalizar empresas</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none;">
     </div>
 
-    <div class="toolbar master-only" style="margin-top:-12px;">
-      <button class="btn btn-ghost" id="btnRelContab">Relatório p/ Contabilista</button>
+    <div class="toolbar master-only" style="display:none;">
+      <button class="btn btn-ghost tb-extra" id="btnRelContab">Relatório para o contabilista</button>
     </div>
 
     <div id="groupsWrap"></div>
@@ -1096,7 +1271,7 @@ body.px-dragging .px-dropbar { display: flex; }
       <button class="btn btn-ghost" id="btnEmpContab" data-emp-tab="contab">Contabilidade</button>
       <button class="btn btn-ghost" id="btnEmpIrc" data-emp-tab="irc">IRC</button>
       <button class="btn btn-ghost" id="btnEmpProforma" data-emp-tab="proforma">Pró-formas</button>
-      <button class="btn btn-gold" id="btnEmpConfig" data-emp-tab="config">Configurações</button>
+      <button class="btn btn-ghost" id="btnEmpConfig" data-emp-tab="config">Configurações</button>
       <button class="btn btn-ghost" id="btnExportAll" style="margin-left:auto;">Exportar todos os dados</button>
     </div>
     <div id="empContent"></div>
@@ -1107,7 +1282,7 @@ body.px-dragging .px-dropbar { display: flex; }
   <footer>
     <div><strong data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
-      <span class="ver">v3.3</span> · Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+      <span class="ver">v3.4</span> · Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
   </footer>
 </div>
@@ -1233,13 +1408,13 @@ body.px-dragging .px-dropbar { display: flex; }
     </div>
     <div class="modal-body" id="detailBody"></div>
     <div class="modal-foot">
+      <button class="btn btn-danger" id="detailDelete" style="margin-right:auto;">Eliminar</button>
       <button class="btn btn-ghost" id="detailPdf">PDF</button>
-      <button class="btn btn-primary master-only" id="detailSalary">Processar Salário</button>
-      <button class="btn btn-primary master-only" id="detailContab">Cálculo Contabilista</button>
-      <button class="btn btn-primary" id="detailFaltas">Faltas / Baixas</button>
-      <button class="btn btn-primary" id="detailA1">A1 / Contrato</button>
-      <button class="btn btn-gold" id="detailEdit">Editar</button>
-      <button class="btn btn-danger" id="detailDelete">Eliminar</button>
+      <button class="btn btn-ghost master-only" id="detailSalary">Processar Salário</button>
+      <button class="btn btn-ghost master-only" id="detailContab">Cálculo Contabilista</button>
+      <button class="btn btn-ghost" id="detailFaltas">Faltas / Baixas</button>
+      <button class="btn btn-ghost" id="detailA1">A1 / Contrato</button>
+      <button class="btn btn-primary" id="detailEdit">Editar</button>
     </div>
   </div>
 </div>
@@ -5068,7 +5243,7 @@ function renderPastas() {
         actions += pxBtn('offline', 'Guardar offline');
       }
       body = cards ? `<div class="px-grid-big">${cards}</div>` : '<div class="px-empty">Ainda não há funcionários.</div>';
-      if (scope === 'ativos') body += `<div class="px-sub" style="margin-top:12px;white-space:normal;">As pastas organizam-se pelo <strong>País de destacamento</strong> e pela <strong>Empresa cliente</strong> de cada funcionário. Quem não tiver estes campos preenchidos aparece em “${PX_SEM_PAIS}” / “${PX_SEM_EMP}”.</div>`;
+      // (explicação sobre País/Empresa removida: a organização é evidente pelas pastas)
     }
   }
 
@@ -8241,6 +8416,28 @@ function abrirMenuContexto(x, y, itens) {
   m.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
   const primeiro = m.querySelector('button'); if (primeiro) primeiro.focus({ preventScroll: true });
 }
+// Menu "Mais" da lista de Funcionários (ações menos usadas)
+function abrirMenuMais(btn) {
+  const r = btn.getBoundingClientRect();
+  const item = (id, label, ok) => {
+    const b = document.getElementById(id);
+    if (!b || ok === false || b.style.display === 'none') return null;
+    return { label, fn: () => b.click() };
+  };
+  abrirMenuContexto(r.left, r.bottom + 6, [
+    item('btnPdfAll', 'PDF de todos'),
+    item('btnZipAll', 'ZIP completo'),
+    item('btnBackup', 'Backup (JSON)'),
+    item('btnImport', 'Importar'),
+    item('btnRelContab', 'Relatório para o contabilista', isMaster()),
+    isMaster() ? '-' : null,
+    item('btnUsers', 'Utilizadores e acessos'),
+    item('btnLogs', 'Registo de atividade (logs)'),
+    item('btnDedup', 'Corrigir duplicados'),
+    item('btnNormEmp', 'Normalizar empresas')
+  ].filter(Boolean).filter((x, i, a) => x !== '-' || (i > 0 && i < a.length - 1 && a[i + 1] !== '-')));
+}
+document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('#btnMais'); if (b) { ev.stopPropagation(); abrirMenuMais(b); } });
 function ehTelemovel() { return !!(window.matchMedia && matchMedia('(max-width: 600px)').matches); }
 // Botão ⋮ das linhas: abre o mesmo menu do botão direito, junto ao botão
 document.addEventListener('click', ev => {
