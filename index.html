@@ -667,6 +667,43 @@ body.px-dragging .px-dropbar { display: flex; }
 .px-grid-sub { justify-content: start; margin-top: 4px; grid-template-columns: repeat(auto-fill, minmax(170px, 200px)); gap: 14px; }
 .px-grid-sub .px-tile { min-height: 132px; padding: 16px 10px 14px; }
 .px-grid-sub .px-folder-ico { width: 58px; height: 47px; }
+.ftype-xls { background: #e0f2f1; color: #00695c; }
+.px-ico .px-folder-ico { width: 46px; height: 37px; }
+
+/* ---------- Área Empresa (documentos da empresa) ---------- */
+#edContent { max-width: 1100px; width: 100%; margin: 14px auto 0; min-height: 260px; }
+#edContent .px-head { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+#edContent .px-empty { margin-top: 18px; }
+#edContent .px-tile[draggable="true"] { cursor: pointer; }
+#edContent .px-tile .px-name { -webkit-line-clamp: 3; }
+/* a barra de seleção ocupa sempre o mesmo espaço: a lista não salta ao selecionar */
+#edBulkWrap { min-height: 50px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+#edBulkWrap .px-bulk { margin-bottom: 0; min-height: 50px; box-sizing: border-box; }
+#edBulkWrap .px-hint { margin: 0; }
+.ed-onde { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 12px; }
+.ed-campos-tit { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.ed-campos-tit span { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+.ed-campos { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.ed-campo { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 34px; gap: 8px; align-items: start; }
+.ed-campo input, .ed-campo textarea { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 14px; color: var(--ink); background: #fff; }
+.ed-campo input { font-weight: 600; color: var(--accent); }
+.ed-campo textarea { resize: vertical; min-height: 40px; line-height: 1.4; }
+.ed-campo input:focus, .ed-campo textarea:focus { outline: none; border-color: var(--accent); }
+.ed-campo-del { width: 34px; height: 40px; border: 1px solid var(--line); background: #fff; color: var(--red); border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+.ed-campo-del:hover { border-color: var(--red); }
+.ed-sug-wrap { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); }
+.ed-sug { display: flex; flex-wrap: wrap; gap: 6px; }
+.ed-sug button { background: #eef3fa; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-family: 'Poppins'; font-size: 12px; color: var(--accent); cursor: pointer; }
+.ed-sug button:hover { border-color: var(--accent); }
+
+/* ---------- Menu do botão direito ---------- */
+.ctx-menu { position: fixed; z-index: 3000; min-width: 220px; max-width: 290px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,34,68,0.22); padding: 6px; display: none; }
+.ctx-menu.open { display: block; }
+.ctx-menu button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 9px 12px; border-radius: 7px; font-family: 'Poppins'; font-size: 13.5px; color: var(--ink); cursor: pointer; }
+.ctx-menu button:hover, .ctx-menu button:focus-visible { background: #eef3fa; color: var(--accent); outline: none; }
+.ctx-menu button.perigo { color: var(--red); }
+.ctx-menu hr { border: none; border-top: 1px solid var(--line); margin: 5px 4px; }
+.ctx-menu .ctx-tit { font-size: 11px; font-weight: 600; color: var(--ink-soft); padding: 6px 12px 4px; text-transform: uppercase; letter-spacing: .5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Rodapé sempre no fundo da página */
 #appScreen { flex-direction: column; min-height: 100vh; }
@@ -677,7 +714,10 @@ body.px-dragging .px-dropbar { display: flex; }
 
 @media (max-width: 600px) {
   .area-nav-inner { flex-wrap: nowrap; overflow-x: auto; padding: 8px; gap: 6px; }
-  .area-tab { padding: 11px 10px; font-size: 14px; white-space: nowrap; flex: 1 0 auto; justify-content: center; gap: 6px; border-radius: 10px; }
+  .area-tab { padding: 11px 7px; font-size: 13px; letter-spacing: 0; white-space: nowrap; flex: 1 0 auto; justify-content: center; gap: 6px; border-radius: 10px; }
+  .ed-campo { grid-template-columns: 1fr 34px; }
+  .ed-campo textarea { grid-column: 1 / 2; }
+  .ed-campo .ed-campo-del { grid-row: 1; grid-column: 2; }
   .px-hero { padding-top: 4px; }
   .px-subtitle { display: none; }
   .px-search { margin-top: 10px; }
@@ -763,11 +803,12 @@ body.px-dragging .px-dropbar { display: flex; }
       <button class="area-tab active" data-area="pastas">Pastas</button>
       <button class="area-tab" data-area="funcionarios">Funcionários</button>
       <button class="area-tab" data-area="empresa">Empresa</button>
+      <button class="area-tab" data-area="contabilidade">Contabilidade</button>
     </div>
   </nav>
 
-  <!-- Aviso legal (transversal) -->
-  <div class="legal-banner">
+  <!-- Aviso legal (só na Contabilidade) -->
+  <div class="legal-banner" id="legalBanner" style="display:none;">
     <strong>Estimativas de apoio à gestão.</strong> Não substituem contabilidade certificada nem software de faturação certificado pela AT.
   </div>
   <div class="offline-banner" id="offlineBanner" hidden>Sem Internet — estás a ver os dados guardados neste aparelho. As alterações são enviadas quando a ligação voltar.</div>
@@ -814,7 +855,20 @@ body.px-dragging .px-dropbar { display: flex; }
     <div id="groupsWrap"></div>
   </div>
 
-  <!-- ÁREA: EMPRESA -->
+  <!-- ÁREA: EMPRESA — documentos da empresa (pastas, fichas e ficheiros, estilo Drive) -->
+  <div class="container area-view px-area" id="areaEmpresaDocs" style="display:none;">
+    <div class="px-hero">
+      <h1 class="px-title">Empresa</h1>
+      <p class="px-subtitle">Contratos, alojamentos, seguros e outros documentos da empresa</p>
+      <div class="px-search">
+        <span class="px-search-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+        <input type="search" id="edSearch" placeholder="Procurar pastas, fichas e ficheiros…" aria-label="Procurar nos documentos da empresa">
+      </div>
+    </div>
+    <div id="edContent"></div>
+  </div>
+
+  <!-- ÁREA: CONTABILIDADE -->
   <div class="container area-view" id="areaEmpresa" style="display:none;">
     <div class="toolbar">
       <button class="btn btn-primary active" id="btnEmpDash" data-emp-tab="dashboard">Dashboard</button>
@@ -834,7 +888,7 @@ body.px-dragging .px-dropbar { display: flex; }
   <footer>
     <div><strong data-marca="empresa">LEGADO ACLAMADO — UNIPESSOAL LDA</strong> · Sistema interno de gestão de funcionários</div>
     <div style="margin-top:6px;">
-      <span class="ver">v3.2</span> · Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
+      <span class="ver">v3.3</span> · Dados sincronizados em tempo real (Firebase) · Sessão de <span id="footerUser">—</span>
     </div>
   </footer>
 </div>
@@ -1241,6 +1295,52 @@ body.px-dragging .px-dropbar { display: flex; }
     </div>
   </div>
 </div>
+
+<!-- Modal: ficha livre da área Empresa (campos escolhidos pelo utilizador) -->
+<div class="modal-backdrop" id="edFichaModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="edFichaTitulo">Ficha</h2>
+      <button class="modal-close" id="edFichaClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="ed-onde" id="edFichaOnde"></p>
+      <div class="cfg-field" style="margin-bottom:16px;"><label for="edFichaNome">Nome da ficha</label><input type="text" id="edFichaNome" maxlength="120" placeholder="Ex.: Casa Rua das Flores 12 · Carrinha AA-00-BB · Fábrica X"></div>
+      <div class="ed-campos-tit">Dados da ficha <span>escreve o nome de cada campo e o valor; podes acrescentar ou tirar campos</span></div>
+      <div class="ed-campos" id="edFichaCampos"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="edFichaAdd">+ Adicionar campo</button>
+      <div class="ed-sug-wrap"><span>Campos rápidos:</span><div class="ed-sug" id="edFichaSug"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="edFichaDel" style="margin-right:auto;">Eliminar ficha</button>
+      <button class="btn btn-ghost" id="edFichaPdf">Gerar PDF</button>
+      <button class="btn btn-ghost" id="edFichaCancel">Cancelar</button>
+      <button class="btn btn-primary" id="edFichaSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: mover pastas, fichas ou ficheiros da área Empresa -->
+<div class="modal-backdrop" id="edMoverModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>Mover para outra pasta</h2>
+      <button class="modal-close" id="edMoverClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:12px;">A mover: <strong id="edMoverInfo"></strong></p>
+      <div class="cfg-field" style="margin-bottom:12px;"><label for="edMoverSel">Mover para</label><select id="edMoverSel" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:'Poppins';font-size:14px;"></select></div>
+      <div class="cfg-field"><label for="edMoverNova">ou para uma pasta nova (criada dentro da escolhida)</label><input type="text" id="edMoverNova" maxlength="80" placeholder="Nome da nova pasta (opcional)"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="edMoverCancel">Cancelar</button>
+      <button class="btn btn-primary" id="edMoverOk">Mover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu do botão direito (pastas e ficheiros) -->
+<div class="ctx-menu" id="ctxMenu" role="menu"></div>
 
 <!-- Modal: importar pasta (ZIP do Google Drive) para as pastas dos funcionários -->
 <div class="modal-backdrop" id="pxImportModal">
@@ -2021,7 +2121,7 @@ function formatBytes(n) {
 }
 function docIcon(format) {
   const f = (format || '').toLowerCase();
-  const cls = f === 'pdf' ? 'ftype-pdf' : (['jpg','jpeg','png','gif','webp','bmp'].includes(f) ? 'ftype-img' : '');
+  const cls = f === 'pdf' ? 'ftype-pdf' : (['jpg','jpeg','png','gif','webp','bmp'].includes(f) ? 'ftype-img' : (['xls','xlsx','csv'].includes(f) ? 'ftype-xls' : ''));
   return `<span class="ftype ${cls}">${escapeHtml((f || 'doc').toUpperCase().slice(0, 4))}</span>`;
 }
 function isImageFormat(format) {
@@ -3895,7 +3995,7 @@ async function pxRenomearSubpasta(emp, sub) {
     b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.map(x => x === sub ? novo : x) }, { merge: true });
     await b.commit();
     logAudit('pastas', emp.id, `${emp.nome}: pasta "${sub}" → "${novo}"`);
-    pxPath = Object.assign({}, pxPath, { sub: novo });
+    if (pxPath.sub === sub) pxPath = Object.assign({}, pxPath, { sub: novo });
     toast('Pasta renomeada.');
     renderPastas();
   } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); } finally { hideOverlay(); }
@@ -4411,6 +4511,43 @@ function pxLigarEventos(root) {
       renderPastas();
     }
   });
+  // Botão direito: ficheiros e subpastas dentro da pasta do funcionário
+  root.addEventListener('contextmenu', ev => {
+    const row = ev.target.closest('[data-px-row]');
+    const tile = !row && pxPath.funcId && !pxPath.sub ? ev.target.closest('.px-tile[data-px-i]') : null;
+    if (!row && !tile) return; // resto da página: menu normal do navegador
+    ev.preventDefault();
+    const emp = employees.find(x => x.id === pxPath.funcId);
+    if (row) {
+      const id = row.dataset.pxRow;
+      if (pxSelecionados.size > 1 && pxSelecionados.has(id)) {
+        const docs = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
+        abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: `${docs.length} selecionados` },
+          isEditor() ? { label: 'Mover para…', fn: () => pxAbrirMover(emp, docs) } : null,
+          { label: 'Descarregar (ZIP)', fn: () => pxDescarregarVarios(emp, docs) },
+          isAdmin() ? '-' : null,
+          isAdmin() ? { label: 'Eliminar', fn: () => pxEliminarVarios(emp, docs), perigo: true } : null]);
+        return;
+      }
+      const d = pxDocPorId(id);
+      const carregar = op => () => { const b = root.querySelector(`[data-px-doc="${op}"][data-px-did="${CSS.escape(id)}"]`); if (b) b.click(); };
+      abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: d ? docFullName(d) : 'Ficheiro' },
+        { label: 'Ver', fn: carregar('view') }, { label: 'Descarregar', fn: carregar('down') },
+        isEditor() ? '-' : null,
+        isEditor() ? { label: 'Mudar o nome', fn: carregar('ren') } : null,
+        isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
+        isAdmin() ? '-' : null,
+        isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
+      return;
+    }
+    const alvo = pxItems[Number(tile.dataset.pxI)];
+    if (!emp || !alvo || !alvo.sub) return;
+    abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: alvo.sub },
+      { label: 'Abrir', fn: () => pxGo(alvo) },
+      isEditor() ? { label: 'Mudar o nome', fn: () => pxRenomearSubpasta(emp, alvo.sub) } : null,
+      isAdmin() ? '-' : null,
+      isAdmin() ? { label: 'Eliminar pasta', fn: () => pxEliminarSubpasta(emp, alvo.sub), perigo: true } : null]);
+  });
   // Arrastar ficheiros para uma pasta (vários, se estiverem selecionados)
   const limparAlvos = () => root.querySelectorAll('.px-drop-hover').forEach(x => x.classList.remove('px-drop-hover'));
   root.addEventListener('dragstart', ev => {
@@ -4790,12 +4927,16 @@ async function pxApplyImport() {
    NAVEGAÇÃO ENTRE ÁREAS
    ============================================================ */
 function switchArea(area) {
-  if (area !== 'empresa' && !contabConfirmLeave()) return;
+  if (area !== 'contabilidade' && !contabConfirmLeave()) return;
+  fecharMenuContexto();
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
   document.getElementById('areaPastas').style.display = area === 'pastas' ? '' : 'none';
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
-  document.getElementById('areaEmpresa').style.display = area === 'empresa' ? '' : 'none';
-  if (area === 'empresa') renderEmpContent();
+  document.getElementById('areaEmpresaDocs').style.display = area === 'empresa' ? '' : 'none';
+  document.getElementById('areaEmpresa').style.display = area === 'contabilidade' ? '' : 'none';
+  document.getElementById('legalBanner').style.display = area === 'contabilidade' ? '' : 'none';
+  if (area === 'empresa') renderEmpresaDocs();
+  if (area === 'contabilidade') renderEmpContent();
   else unsubscribeDespesasFn();
   if (area === 'pastas') renderPastas();
   else pxStopDocs();
@@ -7459,8 +7600,789 @@ async function relContabConsolidadoPdf() {
   toast('PDF consolidado gerado.');
 }
 
+/* ============================================================
+   MENU DO BOTÃO DIREITO (usado na Empresa e nas Pastas)
+   itens: [{ label, fn, perigo }] · '-' = separador · { titulo } = cabeçalho
+   ============================================================ */
+function abrirMenuContexto(x, y, itens) {
+  const m = document.getElementById('ctxMenu');
+  if (!m) return;
+  m.innerHTML = '';
+  itens.filter(Boolean).forEach(it => {
+    if (it === '-') { m.appendChild(document.createElement('hr')); return; }
+    if (it.titulo) { const t = document.createElement('div'); t.className = 'ctx-tit'; t.textContent = it.titulo; m.appendChild(t); return; }
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = it.label; b.setAttribute('role', 'menuitem');
+    if (it.perigo) b.className = 'perigo';
+    b.addEventListener('click', () => { fecharMenuContexto(); setTimeout(it.fn, 0); });
+    m.appendChild(b);
+  });
+  m.classList.add('open');
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
+  const primeiro = m.querySelector('button'); if (primeiro) primeiro.focus({ preventScroll: true });
+}
+function fecharMenuContexto() { const m = document.getElementById('ctxMenu'); if (m) m.classList.remove('open'); }
+document.addEventListener('mousedown', ev => { if (!ev.target.closest || !ev.target.closest('#ctxMenu')) fecharMenuContexto(); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') fecharMenuContexto(); });
+window.addEventListener('resize', fecharMenuContexto);
+window.addEventListener('scroll', fecharMenuContexto, true);
+
+/* ============================================================
+   EMPRESA — documentos da empresa, estilo Drive
+   Coleção empresa_itens: { tipo: 'pasta' | 'ficha' | 'ficheiro', nome, parent ('' = início), … }
+   - pasta: nome
+   - ficha: nome + campos [{ rotulo, valor }] escolhidos pelo utilizador
+   - ficheiro: url, public_id, original_filename, format, bytes (Cloudinary)
+   ============================================================ */
+const ED_COL = 'empresa_itens';
+const ED_CLOUD_FOLDER = 'legado-aclamado/empresa';
+const ED_FORMATOS = ['pdf', 'jpg', 'jpeg', 'png', 'xls', 'xlsx', 'csv'];
+const ED_RAIZ = 'Empresa';
+const ED_SUGESTOES = ['Nome', 'Responsável', 'Moradores', 'Morada', 'Telefone', 'Email', 'NIF', 'Senhorio', 'Renda (€)', 'Matrícula', 'Seguradora', 'N.º apólice', 'Data de início', 'Data de fim', 'Valor (€)', 'Observações'];
+const ED_PASTAS_INICIAIS = [['ed_fabricas', 'Contratos com Fábricas'], ['ed_alojamentos', 'Contratos de Arrendamento — Alojamentos'], ['ed_seguros', 'Seguros — Carrinhas']];
+let edItens = null;        // null = a carregar
+let edUnsub = null;
+let edPasta = '';          // pasta aberta ('' = início)
+let edBound = false;
+let edSeedFeito = false;
+const edSel = new Set();   // itens selecionados (fichas e ficheiros da vista)
+let edIdsVista = [];
+let edArrastar = null;     // ids a ser arrastados
+let edFicha = null;        // { id, parent, inicial } da ficha aberta
+let edMoverIds = null;
+
+function edSubscribe() {
+  if (edUnsub) return;
+  edUnsub = db.collection(ED_COL).onSnapshot(snap => {
+    edItens = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    if (!(snap.metadata && snap.metadata.fromCache)) edCriarPastasIniciais();
+    edRenderSeVisivel();
+  }, err => {
+    if (edItens === null) edItens = [];
+    toast('Erro ao carregar os documentos da empresa: ' + friendlyError(err), true);
+    edRenderSeVisivel();
+  });
+}
+function edUnsubscribe() {
+  if (edUnsub) { edUnsub(); edUnsub = null; }
+  edItens = null; edPasta = ''; edSel.clear(); edSeedFeito = false;
+}
+function edRenderSeVisivel() {
+  const a = document.getElementById('areaEmpresaDocs');
+  if (a && a.style.display !== 'none') renderEmpresaDocs();
+}
+// Na primeira utilização cria as pastas pedidas (podem ser renomeadas ou eliminadas; não voltam a aparecer)
+async function edCriarPastasIniciais() {
+  if (edSeedFeito || !isEditor() || !edItens || edItens.length) return;
+  edSeedFeito = true;
+  try {
+    const m = await db.collection('config').doc('migracoes').get();
+    if (m.exists && (m.data() || {}).empresa_pastas_v1) return;
+    const b = db.batch();
+    ED_PASTAS_INICIAIS.forEach(([id, nome]) => b.set(db.collection(ED_COL).doc(id), edNovoBase('pasta', nome, '')));
+    b.set(db.collection('config').doc('migracoes'), { empresa_pastas_v1: { feito_em: firebase.firestore.FieldValue.serverTimestamp(), por: currentUser ? currentUser.email : '' } }, { merge: true });
+    await b.commit();
+  } catch (err) {
+    edSeedFeito = false;
+    console.warn('Pastas iniciais da Empresa:', err);
+  }
+}
+function edNovoBase(tipo, nome, parent) {
+  return { tipo, nome, parent: parent || '', created_at: firebase.firestore.FieldValue.serverTimestamp(), created_by_email: currentUser ? currentUser.email : '' };
+}
+
+// ---------- Árvore ----------
+function edItem(id) { return id ? (edItens || []).find(x => x.id === id) : null; }
+function edPaiDe(x) { return x && x.parent && edItem(x.parent) ? x.parent : ''; } // pai apagado → início
+function edFilhos(pai) { return (edItens || []).filter(x => edPaiDe(x) === (pai || '')); }
+function edNome(x) { return !x ? ED_RAIZ : (x.tipo === 'ficheiro' ? docFullName(x) : (x.nome || '(sem nome)')); }
+function edCaminho(id) {
+  const out = []; const vistos = new Set();
+  let cur = edItem(id);
+  while (cur && !vistos.has(cur.id)) { vistos.add(cur.id); out.unshift(cur); cur = edItem(edPaiDe(cur)); }
+  return out;
+}
+function edCaminhoTxt(id) { return [ED_RAIZ].concat(edCaminho(id).map(edNome)).join(' › '); }
+function edDescendentes(id) {
+  const out = []; const fila = [id]; const vistos = new Set([id]);
+  while (fila.length) {
+    const p = fila.shift();
+    edFilhos(p).forEach(x => { if (vistos.has(x.id)) return; vistos.add(x.id); out.push(x); if (x.tipo === 'pasta') fila.push(x.id); });
+  }
+  return out;
+}
+function edOrdenar(a, b) {
+  const ordem = { pasta: 0, ficha: 1, ficheiro: 2 };
+  return (ordem[a.tipo] - ordem[b.tipo]) || pxSortPt(edNome(a), edNome(b));
+}
+function edContagem(id) {
+  const filhos = edFilhos(id);
+  const n = t => filhos.filter(x => x.tipo === t).length;
+  const partes = [[n('pasta'), 'pasta', 'pastas'], [n('ficha'), 'ficha', 'fichas'], [n('ficheiro'), 'ficheiro', 'ficheiros']]
+    .filter(([q]) => q).map(([q, s, p]) => `${q} ${q === 1 ? s : p}`);
+  return partes.length ? partes.join(' · ') : 'Pasta vazia';
+}
+function edResumoFicha(x) {
+  const c = (Array.isArray(x.campos) ? x.campos : []).filter(f => f && String(f.valor || '').trim());
+  return c.length ? c.slice(0, 3).map(f => `${f.rotulo ? f.rotulo + ': ' : ''}${String(f.valor).split('\n')[0]}`).join(' · ') : 'Ficha sem dados';
+}
+function edNomeDuplicado(pai, nome, tipo, excetoId) {
+  return edFilhos(pai).some(x => x.tipo === tipo && x.id !== excetoId && pxNorm(edNome(x)) === pxNorm(nome));
+}
+
+// ---------- Desenho ----------
+function edGo(id) { edSel.clear(); edPasta = id || ''; renderEmpresaDocs(); window.scrollTo({ top: 0 }); }
+
+function renderEmpresaDocs() {
+  const root = document.getElementById('edContent');
+  if (!root) return;
+  if (!edBound) { edLigarEventos(root); edBound = true; }
+  edSubscribe();
+  if (edItens === null) { root.innerHTML = '<div class="px-empty">A carregar documentos da empresa…</div>'; return; }
+  if (edPasta && (!edItem(edPasta) || edItem(edPasta).tipo !== 'pasta')) edPasta = '';
+  const ed = isEditor(), adm = isAdmin();
+  const termo = pxNorm((document.getElementById('edSearch') || {}).value || '').trim();
+
+  const pastaTile = x => `<div class="px-tile" role="button" tabindex="0" data-ed-open="${escapeHtml(x.id)}" title="${escapeHtml(edNome(x))}"`
+    + (ed ? ` draggable="true" data-ed-drag="${escapeHtml(x.id)}" data-ed-drop="${escapeHtml(x.id)}"` : '') + `>`
+    + `<span class="px-folder-wrap">${pxFolderSvg(false)}</span><span class="px-name">${escapeHtml(edNome(x))}</span><span class="px-sub">${escapeHtml(edContagem(x.id))}</span></div>`;
+
+  const linha = (x, comCaminho) => {
+    const id = escapeHtml(x.id);
+    const marcado = edSel.has(x.id);
+    const ico = x.tipo === 'pasta' ? pxFolderSvg(false) : (x.tipo === 'ficha' ? '<span class="ftype ftype-ficha">FICHA</span>' : docIcon(x.format));
+    const sub = comCaminho ? edCaminhoTxt(edPaiDe(x))
+      : (x.tipo === 'ficha' ? edResumoFicha(x) : `${formatBytes(x.bytes)} · ${docDateStr(x.uploaded_at)}`);
+    const b = (op, label) => `<button type="button" data-ed-op="${op}" data-ed-id="${id}">${label}</button>`;
+    let botoes = '';
+    if (x.tipo === 'pasta') botoes += b('abrir', 'Abrir');
+    else if (x.tipo === 'ficha') botoes += b('abrir', 'Abrir') + b('pdf', 'PDF');
+    else botoes += b('ver', 'Ver') + b('down', 'Descarregar');
+    if (ed) botoes += b('ren', 'Renomear') + b('mov', 'Mover');
+    if (adm) botoes += `<button type="button" data-ed-op="del" data-ed-id="${id}" data-px-doc="del">Eliminar</button>`;
+    const selecionavel = x.tipo !== 'pasta';
+    return `<div class="px-card px-file px-selrow${marcado ? ' px-selected' : ''}" data-ed-row="${id}"`
+      + (ed ? ` draggable="true" data-ed-drag="${id}"` : '')
+      + (x.tipo === 'pasta' && ed ? ` data-ed-drop="${id}"` : '')
+      + ` title="${selecionavel ? 'Clica para selecionar · duplo clique para abrir' : 'Clica para abrir'}${ed ? ' · arrasta para uma pasta para mover' : ''} · botão direito para mais opções">`
+      + (selecionavel ? `<input type="checkbox" class="px-sel" data-ed-sel="${id}"${marcado ? ' checked' : ''} aria-label="Selecionar ${escapeHtml(edNome(x))}">` : '')
+      + `<span class="px-ico">${ico}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(edNome(x))}">${escapeHtml(edNome(x))}</div><div class="px-sub">${escapeHtml(sub)}</div></span>`
+      + `<span class="px-fbtns">${botoes}</span></div>`;
+  };
+
+  // ----- Pesquisa -----
+  if (termo) {
+    const res = (edItens || []).filter(x => pxNorm(edNome(x)).includes(termo)
+      || (x.tipo === 'ficha' && (x.campos || []).some(f => pxNorm(f.valor).includes(termo) || pxNorm(f.rotulo).includes(termo))))
+      .sort(edOrdenar);
+    edIdsVista = res.filter(x => x.tipo !== 'pasta').map(x => x.id);
+    [...edSel].forEach(id => { if (!edIdsVista.includes(id)) edSel.delete(id); });
+    root.innerHTML = `<div class="px-head"><button type="button" class="px-back" data-ed-act="limpar-pesquisa" title="Voltar" aria-label="Limpar pesquisa">←</button><div class="px-crumbs"><span class="cur">${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(document.getElementById('edSearch').value.trim())}”</span></div></div>`
+      + `<div id="edBulkWrap">${edBarraSelecao()}</div>`
+      + (res.length ? `<div class="px-grid" style="margin-top:14px;">${res.map(x => linha(x, true)).join('')}</div>` : '<div class="px-empty">Nada encontrado.</div>');
+    return;
+  }
+
+  // ----- Pasta aberta (ou início) -----
+  const caminho = edCaminho(edPasta);
+  const crumbs = [{ id: '', nome: ED_RAIZ }].concat(caminho.map(x => ({ id: x.id, nome: edNome(x) })));
+  const crumbsHtml = crumbs.map((c, i) => i === crumbs.length - 1
+    ? `<span class="cur">${escapeHtml(c.nome)}</span>`
+    : `<button type="button" data-ed-go="${escapeHtml(c.id)}"${ed ? ` data-ed-drop="${escapeHtml(c.id)}"` : ''}>${escapeHtml(c.nome)}</button><span class="sep">›</span>`).join('');
+  const voltar = edPasta ? `<button type="button" class="px-back" data-ed-go="${escapeHtml(edPaiDe(edItem(edPasta)))}" title="Voltar" aria-label="Voltar à pasta anterior">←</button>` : '';
+
+  let actions = '';
+  if (ed) actions += pxBtn('ed-nova-pasta', '+ Nova pasta', 'btn-primary') + pxBtn('ed-nova-ficha', '+ Nova ficha') + pxBtn('ed-upload', 'Anexar ficheiros');
+  actions += pxBtn('ed-zip', edPasta ? 'Download pasta' : 'Download tudo');
+  actions += pxBtn('ed-offline', 'Guardar offline');
+  if (edPasta && ed) actions += pxBtn('ed-ren-pasta', 'Renomear pasta') + pxBtn('ed-mov-pasta', 'Mover pasta');
+  if (edPasta && adm) actions += pxBtn('ed-del-pasta', 'Eliminar pasta', 'btn-danger');
+  actions = actions.replace(/data-px-act="ed-/g, 'data-ed-act="');
+
+  const filhos = edFilhos(edPasta).sort(edOrdenar);
+  const pastas = filhos.filter(x => x.tipo === 'pasta');
+  const outros = filhos.filter(x => x.tipo !== 'pasta');
+  edIdsVista = outros.map(x => x.id);
+  [...edSel].forEach(id => { if (!edIdsVista.includes(id)) edSel.delete(id); });
+  const nSel = edSel.size;
+  const selTodos = outros.length ? `<label class="px-selall"><input type="checkbox" data-ed-selall${nSel && nSel === outros.length ? ' checked' : ''}> Selecionar todos</label>` : '';
+
+  // Faixa para largar (aparece só enquanto se arrasta): pasta de cima + pastas desta vista
+  const destinos = [];
+  if (edPasta) destinos.push({ id: edPaiDe(edItem(edPasta)), nome: '↑ ' + edNome(edItem(edPaiDe(edItem(edPasta)))) });
+  pastas.forEach(p => destinos.push({ id: p.id, nome: edNome(p) }));
+  const faixa = ed && destinos.length
+    ? `<div class="px-dropbar"><span>Largar aqui para mover:</span>${destinos.map(d => `<span class="px-drop-chip" data-ed-drop="${escapeHtml(d.id)}">${escapeHtml(d.nome)}</span>`).join('')}</div>`
+    : '';
+
+  const pastasHtml = pastas.length
+    ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">${pastas.map(pastaTile).join('')}</div>`
+    : '';
+  const vazio = !filhos.length
+    ? `<div class="px-empty">${edPasta ? 'Esta pasta está vazia.' : 'Ainda não há pastas.'}${ed ? ' Usa <strong>+ Nova pasta</strong>, <strong>+ Nova ficha</strong> ou <strong>Anexar ficheiros</strong> (PDF, JPG, PNG ou Excel).' : ''}</div>`
+    : '';
+  const outrosHtml = outros.length
+    ? `<div class="px-section-title px-section-row"><span>Fichas e ficheiros</span>${selTodos}</div><div id="edBulkWrap">${edBarraSelecao()}</div><div class="px-grid">${outros.map(x => linha(x, false)).join('')}</div>`
+    : '';
+  root.innerHTML = `<div class="px-head">${voltar}<div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${faixa}${pastasHtml}${outrosHtml}${vazio}`;
+}
+// Atualiza a seleção sem redesenhar a lista (assim o duplo clique continua a funcionar)
+function edAtualizarSelecao() {
+  const root = document.getElementById('edContent');
+  root.querySelectorAll('[data-ed-row]').forEach(r => {
+    const on = edSel.has(r.dataset.edRow);
+    r.classList.toggle('px-selected', on);
+    const cb = r.querySelector('[data-ed-sel]'); if (cb) cb.checked = on;
+  });
+  const todos = root.querySelector('[data-ed-selall]');
+  if (todos) todos.checked = edSel.size > 0 && edSel.size === edIdsVista.length;
+  const w = document.getElementById('edBulkWrap'); if (w) w.innerHTML = edBarraSelecao();
+}
+function edBarraSelecao() {
+  const n = edSel.size;
+  if (!n) return isEditor() && edIdsVista.length ? '<div class="px-hint">Clica para selecionar · arrasta com o rato para uma pasta · botão direito para mais opções.</div>' : '';
+  return `<div class="px-bulk"><strong>${n} selecionado${n === 1 ? '' : 's'}</strong>`
+    + (isEditor() ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="mover">Mover para…</button>' : '')
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ed-bulk="zip">Descarregar</button>'
+    + (isAdmin() ? '<button type="button" class="btn btn-danger btn-sm" data-ed-bulk="del">Eliminar</button>' : '')
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ed-bulk="limpar">Limpar seleção</button></div>';
+}
+
+// ---------- Eventos ----------
+function edLigarEventos(root) {
+  root.addEventListener('click', ev => {
+    if (ev.target.closest('input, label.px-selall')) return; // caixas: evento "change"
+    const t = ev.target.closest('[data-ed-act],[data-ed-go],[data-ed-open],[data-ed-op],[data-ed-bulk],[data-ed-row]');
+    if (!t) return;
+    if (t.dataset.edAct) return edAcao(t.dataset.edAct);
+    if (t.dataset.edGo !== undefined) return edGo(t.dataset.edGo);
+    if (t.dataset.edOpen) return edGo(t.dataset.edOpen);
+    if (t.dataset.edBulk) {
+      const ids = [...edSel];
+      if (t.dataset.edBulk === 'limpar') { edSel.clear(); renderEmpresaDocs(); }
+      else if (t.dataset.edBulk === 'mover') edAbrirMover(ids);
+      else if (t.dataset.edBulk === 'zip') edDescarregar(ids);
+      else if (t.dataset.edBulk === 'del') edEliminar(ids);
+      return;
+    }
+    if (t.dataset.edOp) return edOperacao(t.dataset.edOp, edItem(t.dataset.edId));
+    // clique na linha: pasta abre; ficha/ficheiro seleciona
+    const x = edItem(t.dataset.edRow);
+    if (!x) return;
+    if (x.tipo === 'pasta') return edGo(x.id);
+    if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id);
+    edAtualizarSelecao();
+  });
+  root.addEventListener('dblclick', ev => {
+    const t = ev.target.closest('[data-ed-row]');
+    if (!t || ev.target.closest('button, input')) return;
+    const x = edItem(t.dataset.edRow);
+    if (x && x.tipo !== 'pasta') { edSel.delete(x.id); edOperacao(x.tipo === 'ficha' ? 'abrir' : 'ver', x); }
+  });
+  root.addEventListener('keydown', ev => {
+    const t = ev.target.closest && ev.target.closest('[data-ed-open]');
+    if (t && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); edGo(t.dataset.edOpen); }
+  });
+  root.addEventListener('change', ev => {
+    const cb = ev.target;
+    if (!cb || !cb.dataset) return;
+    if (cb.dataset.edSel !== undefined) {
+      if (cb.checked) edSel.add(cb.dataset.edSel); else edSel.delete(cb.dataset.edSel);
+      edAtualizarSelecao();
+    } else if (cb.dataset.edSelall !== undefined) {
+      if (cb.checked) edIdsVista.forEach(id => edSel.add(id)); else edSel.clear();
+      edAtualizarSelecao();
+    }
+  });
+  // Botão direito
+  root.addEventListener('contextmenu', ev => {
+    const alvo = ev.target.closest('[data-ed-row],[data-ed-open]');
+    ev.preventDefault();
+    if (!alvo) { abrirMenuContexto(ev.clientX, ev.clientY, edMenuFundo()); return; }
+    const x = edItem(alvo.dataset.edRow || alvo.dataset.edOpen);
+    if (!x) return;
+    if (x.tipo !== 'pasta' && edSel.size > 1 && edSel.has(x.id)) { abrirMenuContexto(ev.clientX, ev.clientY, edMenuVarios([...edSel])); return; }
+    abrirMenuContexto(ev.clientX, ev.clientY, edMenuItem(x));
+  });
+  // Arrastar para uma pasta (vários, se estiverem selecionados)
+  const limparAlvos = () => root.querySelectorAll('.px-drop-hover').forEach(x => x.classList.remove('px-drop-hover'));
+  root.addEventListener('dragstart', ev => {
+    const el = ev.target.closest && ev.target.closest('[data-ed-drag]');
+    if (!el) return;
+    const id = el.dataset.edDrag;
+    edArrastar = edSel.has(id) ? [...edSel] : [id];
+    try { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', edArrastar.join(',')); } catch (e) { /* navegador sem suporte */ }
+    // alterar a página dentro do dragstart cancela o arrastar no Chrome: mostra a faixa logo a seguir
+    setTimeout(() => { if (edArrastar) document.body.classList.add('px-dragging'); }, 0);
+  });
+  root.addEventListener('dragend', () => { edArrastar = null; document.body.classList.remove('px-dragging'); limparAlvos(); });
+  root.addEventListener('dragover', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-ed-drop]');
+    if (!alvo || !edArrastar || edArrastar.includes(alvo.dataset.edDrop)) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) { /* navegador sem suporte */ }
+    alvo.classList.add('px-drop-hover');
+  });
+  root.addEventListener('dragleave', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-ed-drop]');
+    if (alvo && !alvo.contains(ev.relatedTarget)) alvo.classList.remove('px-drop-hover');
+  });
+  root.addEventListener('drop', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-ed-drop]');
+    if (!alvo || !edArrastar) return;
+    ev.preventDefault();
+    const ids = edArrastar, destino = alvo.dataset.edDrop || '';
+    edArrastar = null;
+    document.body.classList.remove('px-dragging');
+    limparAlvos();
+    setTimeout(() => edMover(ids, destino), 0); // pergunta depois de o arrastar terminar
+  });
+}
+
+function edAcao(a) {
+  const pasta = edItem(edPasta);
+  if (a === 'limpar-pesquisa') { document.getElementById('edSearch').value = ''; renderEmpresaDocs(); }
+  else if (a === 'nova-pasta') edNovaPasta(edPasta);
+  else if (a === 'nova-ficha') edAbrirFicha(null, edPasta);
+  else if (a === 'upload') edUpload(edPasta);
+  else if (a === 'zip') edDescarregar(edPasta ? [edPasta] : edFilhos('').map(x => x.id), edPasta ? null : ED_RAIZ);
+  else if (a === 'offline') edGuardarOffline(edPasta);
+  else if (a === 'ren-pasta' && pasta) edRenomear(pasta);
+  else if (a === 'mov-pasta' && pasta) edAbrirMover([pasta.id]);
+  else if (a === 'del-pasta' && pasta) edEliminar([pasta.id]);
+}
+function edOperacao(op, x) {
+  if (!x) return;
+  if (op === 'abrir') { if (x.tipo === 'pasta') edGo(x.id); else if (x.tipo === 'ficha') edAbrirFicha(x); else edOperacao('ver', x); }
+  else if (op === 'pdf') edFichaPdfDescarregar(x);
+  else if (op === 'ver') {
+    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x));
+    else downloadDocument(x.url, docFullName(x)); // Excel/CSV: não há pré-visualização → descarrega
+  }
+  else if (op === 'down') { if (x.tipo === 'ficheiro') downloadDocument(x.url, docFullName(x)); else edDescarregar([x.id]); }
+  else if (op === 'ren') edRenomear(x);
+  else if (op === 'mov') edAbrirMover([x.id]);
+  else if (op === 'del') edEliminar([x.id]);
+}
+function edMenuItem(x) {
+  const ed = isEditor(), adm = isAdmin();
+  const op = o => () => edOperacao(o, x);
+  const itens = [{ titulo: edNome(x) }];
+  if (x.tipo === 'pasta') itens.push({ label: 'Abrir', fn: op('abrir') }, { label: 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
+  else if (x.tipo === 'ficha') itens.push({ label: 'Abrir / editar ficha', fn: op('abrir') }, { label: 'Gerar PDF', fn: op('pdf') });
+  else itens.push({ label: 'Ver', fn: op('ver') }, { label: 'Descarregar', fn: op('down') });
+  if (ed) itens.push('-', { label: 'Mudar o nome', fn: op('ren') }, { label: 'Mover para…', fn: op('mov') });
+  if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
+  return itens;
+}
+function edMenuVarios(ids) {
+  return [{ titulo: `${ids.length} selecionados` },
+    isEditor() ? { label: 'Mover para…', fn: () => edAbrirMover(ids) } : null,
+    { label: 'Descarregar (ZIP)', fn: () => edDescarregar(ids) },
+    isAdmin() ? '-' : null,
+    isAdmin() ? { label: 'Eliminar', fn: () => edEliminar(ids), perigo: true } : null];
+}
+function edMenuFundo() {
+  if (!isEditor()) return [{ titulo: edNome(edItem(edPasta)) }, { label: 'Descarregar (ZIP)', fn: () => edAcao('zip') }];
+  return [{ titulo: edNome(edItem(edPasta)) },
+    { label: '+ Nova pasta', fn: () => edNovaPasta(edPasta) },
+    { label: '+ Nova ficha', fn: () => edAbrirFicha(null, edPasta) },
+    { label: 'Anexar ficheiros', fn: () => edUpload(edPasta) }];
+}
+
+// ---------- Criar, renomear, mover, eliminar ----------
+async function edNovaPasta(pai) {
+  if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  const nome = pxNomeValido(prompt(`Nome da nova pasta dentro de "${edNome(edItem(pai))}":`));
+  if (!nome) return;
+  if (edNomeDuplicado(pai, nome, 'pasta')) { toast('Já existe uma pasta com esse nome aqui.', true); return; }
+  try {
+    const ref = await db.collection(ED_COL).add(edNovoBase('pasta', nome, pai));
+    logAudit('empresa_docs', ref.id, `pasta criada: ${edCaminhoTxt(pai)} › ${nome}`);
+    toast(`Pasta "${nome}" criada.`);
+  } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
+}
+
+async function edRenomear(x) {
+  if (!isEditor()) { toast('Sem permissões para mudar nomes.', true); return; }
+  if (x.tipo === 'ficheiro') {
+    const atual = x.original_filename || 'documento';
+    const ext = x.format ? '.' + String(x.format).toLowerCase() : '';
+    let novo = prompt(`Novo nome para "${docFullName(x)}"${ext ? ` (a extensão ${ext} mantém-se)` : ''}:`, atual);
+    if (novo == null) return;
+    novo = String(novo).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ');
+    if (ext && novo.toLowerCase().endsWith(ext)) novo = novo.slice(0, -ext.length).trim();
+    if (!novo || novo === atual) return;
+    try {
+      await db.collection(ED_COL).doc(x.id).update({ original_filename: novo.slice(0, 120), updated_at: firebase.firestore.FieldValue.serverTimestamp() });
+      logAudit('empresa_docs', x.id, `ficheiro renomeado: "${docFullName(x)}" → "${novo}${ext}"`);
+      toast('Nome alterado.');
+    } catch (err) { toast('Erro ao mudar o nome: ' + friendlyError(err), true); }
+    return;
+  }
+  const rotulo = x.tipo === 'pasta' ? 'pasta' : 'ficha';
+  const novo = pxNomeValido(prompt(`Novo nome para a ${rotulo} "${edNome(x)}":`, edNome(x)));
+  if (!novo || novo === edNome(x)) return;
+  if (edNomeDuplicado(edPaiDe(x), novo, x.tipo, x.id)) { toast(`Já existe uma ${rotulo} com esse nome aqui.`, true); return; }
+  try {
+    await db.collection(ED_COL).doc(x.id).update({ nome: novo, updated_at: firebase.firestore.FieldValue.serverTimestamp() });
+    logAudit('empresa_docs', x.id, `${rotulo} renomeada: "${edNome(x)}" → "${novo}"`);
+    toast('Nome alterado.');
+  } catch (err) { toast('Erro ao mudar o nome: ' + friendlyError(err), true); }
+}
+
+// Pastas para onde se pode mover (nunca para dentro de si mesma)
+function edDestinosValidos(ids) {
+  const proibidos = new Set();
+  ids.forEach(id => { const x = edItem(id); if (x && x.tipo === 'pasta') { proibidos.add(id); edDescendentes(id).forEach(d => proibidos.add(d.id)); } });
+  return (edItens || []).filter(x => x.tipo === 'pasta' && !proibidos.has(x.id))
+    .map(x => ({ id: x.id, txt: edCaminhoTxt(x.id) }))
+    .sort((a, b) => pxSortPt(a.txt, b.txt));
+}
+function edAbrirMover(ids) {
+  if (!isEditor()) { toast('Sem permissões para mover.', true); return; }
+  ids = ids.filter(id => edItem(id));
+  if (!ids.length) return;
+  edMoverIds = ids;
+  const sel = document.getElementById('edMoverSel');
+  sel.innerHTML = `<option value="">${escapeHtml(ED_RAIZ)} (início)</option>` + edDestinosValidos(ids).map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.txt)}</option>`).join('');
+  const atual = edPaiDe(edItem(ids[0]));
+  sel.value = [...sel.options].some(o => o.value === atual) ? atual : '';
+  document.getElementById('edMoverInfo').textContent = ids.length === 1 ? edNome(edItem(ids[0])) : `${ids.length} itens selecionados`;
+  document.getElementById('edMoverNova').value = '';
+  openModal('edMoverModal');
+}
+async function edConfirmarMover() {
+  if (!edMoverIds) return;
+  let destino = document.getElementById('edMoverSel').value;
+  const nova = pxNomeValido(document.getElementById('edMoverNova').value);
+  if (nova) {
+    const existente = edFilhos(destino).find(x => x.tipo === 'pasta' && pxNorm(edNome(x)) === pxNorm(nova));
+    if (existente) destino = existente.id;
+    else {
+      if (!confirm(`Criar a pasta "${nova}" dentro de "${edNome(edItem(destino))}" e mover para lá?`)) return;
+      try {
+        const ref = await db.collection(ED_COL).add(edNovoBase('pasta', nova, destino));
+        logAudit('empresa_docs', ref.id, `pasta criada: ${edCaminhoTxt(destino)} › ${nova}`);
+        destino = ref.id;
+      } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); return; }
+      closeModal('edMoverModal');
+      await edMover(edMoverIds, destino, true);
+      return;
+    }
+  }
+  const feito = await edMover(edMoverIds, destino);
+  if (feito !== false) closeModal('edMoverModal');
+}
+async function edMover(ids, destino, semPerguntar) {
+  if (!isEditor()) { toast('Sem permissões para mover.', true); return false; }
+  destino = destino || '';
+  const validos = new Set([''].concat(edDestinosValidos(ids).map(d => d.id)));
+  // (uma pasta acabada de criar ainda pode não estar na lista: não tem nada dentro, é sempre válida)
+  if (!validos.has(destino) && edItem(destino)) { toast('Não é possível mover uma pasta para dentro de si mesma.', true); return false; }
+  const mover = ids.map(edItem).filter(x => x && edPaiDe(x) !== destino);
+  if (!mover.length) { toast('Já está nessa pasta.'); return false; }
+  const alvo = `"${edNome(edItem(destino))}"`;
+  if (!semPerguntar && !confirm(mover.length === 1 ? `Mover "${edNome(mover[0])}" para a pasta ${alvo}?` : `Mover ${mover.length} itens para a pasta ${alvo}?`)) return false;
+  showOverlay('A mover…');
+  try {
+    for (let i = 0; i < mover.length; i += 400) {
+      const b = db.batch();
+      mover.slice(i, i + 400).forEach(x => b.update(db.collection(ED_COL).doc(x.id), { parent: destino, updated_at: firebase.firestore.FieldValue.serverTimestamp() }));
+      await b.commit();
+    }
+    logAudit('empresa_docs', '', `${mover.length} item(ns) movido(s) para ${edCaminhoTxt(destino)}`);
+    edSel.clear();
+    toast(mover.length === 1 ? 'Movido.' : `${mover.length} itens movidos.`);
+    return true;
+  } catch (err) { toast('Erro ao mover: ' + friendlyError(err), true); return false; }
+  finally { hideOverlay(); }
+}
+
+async function edEliminar(ids) {
+  if (!isAdmin()) { toast('Sem permissões para eliminar.', true); return; }
+  const itens = ids.map(edItem).filter(Boolean);
+  if (!itens.length) return;
+  const todos = new Map();
+  itens.forEach(x => { todos.set(x.id, x); if (x.tipo === 'pasta') edDescendentes(x.id).forEach(d => todos.set(d.id, d)); });
+  const dentro = [...todos.values()].filter(x => !ids.includes(x.id));
+  const conta = t => dentro.filter(x => x.tipo === t).length;
+  const lista = itens.slice(0, 6).map(x => '• ' + edNome(x)).join('\n') + (itens.length > 6 ? `\n• … e mais ${itens.length - 6}` : '');
+  const extra = dentro.length ? `\n\nAtenção: lá dentro há ${[[conta('pasta'), 'pasta(s)'], [conta('ficha'), 'ficha(s)'], [conta('ficheiro'), 'ficheiro(s)']].filter(([q]) => q).map(([q, t]) => `${q} ${t}`).join(', ')} que também serão eliminados.` : '';
+  if (!confirm(`${itens.length === 1 ? 'Eliminar?' : `Eliminar ${itens.length} itens?`}\n\n${lista}${extra}`)) return;
+  if (dentro.length && !confirm('Tem a certeza? Esta ação não pode ser anulada.')) return;
+  // se a pasta aberta vai ser eliminada, volta para a pasta acima dela
+  const topo = todos.has(edPasta) ? edCaminho(edPasta).find(p => ids.includes(p.id)) : null;
+  const voltarPara = topo ? edPaiDe(topo) : edPasta;
+  showOverlay('A eliminar…');
+  try {
+    const lst = [...todos.values()];
+    for (let i = 0; i < lst.length; i += 400) {
+      const b = db.batch();
+      lst.slice(i, i + 400).forEach(x => b.delete(db.collection(ED_COL).doc(x.id)));
+      await b.commit();
+    }
+    logAudit('empresa_docs', '', `eliminado(s): ${itens.map(edNome).join(', ')}${dentro.length ? ` (+${dentro.length} lá dentro)` : ''}`);
+    edSel.clear();
+    edPasta = voltarPara;
+    toast(lst.length === 1 ? 'Eliminado.' : `${lst.length} itens eliminados.`);
+    renderEmpresaDocs();
+  } catch (err) { toast('Erro ao eliminar: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+
+// ---------- Anexar ficheiros (PDF, JPG, PNG, Excel) ----------
+function edExtensao(info) {
+  if (info.format) return String(info.format).toLowerCase();
+  const m = /\.([a-z0-9]{2,5})$/i.exec(info.public_id || '') || /\.([a-z0-9]{2,5})$/i.exec(info.secure_url || '');
+  return m ? m[1].toLowerCase() : '';
+}
+function edUpload(pai) {
+  if (!isEditor()) { toast('Sem permissões para anexar ficheiros.', true); return; }
+  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
+  const widget = cloudinary.createUploadWidget({
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    folder: ED_CLOUD_FOLDER,
+    resourceType: 'auto',
+    clientAllowedFormats: ED_FORMATOS,
+    maxFileSize: 10485760,
+    multiple: true,
+    sources: ['local', 'camera'],
+    language: 'pt',
+    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
+  }, (error, result) => {
+    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
+    if (result && result.event === 'success') edGuardarFicheiro(pai, result.info);
+  });
+  widget.open();
+}
+async function edGuardarFicheiro(pai, info) {
+  const format = edExtensao(info);
+  let base = info.original_filename || 'documento';
+  if (format && base.toLowerCase().endsWith('.' + format)) base = base.slice(0, -(format.length + 1));
+  try {
+    const ref = await db.collection(ED_COL).add(Object.assign(edNovoBase('ficheiro', base, pai), {
+      url: info.secure_url, public_id: info.public_id, original_filename: base, format, bytes: info.bytes,
+      resource_type: info.resource_type || '', uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
+      uploaded_by_email: currentUser ? currentUser.email : ''
+    }));
+    logAudit('empresa_docs', ref.id, `ficheiro anexado: ${edCaminhoTxt(pai)} › ${base}${format ? '.' + format : ''}`);
+    toast('Ficheiro anexado.');
+  } catch (err) { toast('Erro ao guardar ficheiro: ' + friendlyError(err), true); }
+}
+
+// ---------- Fichas (campos escolhidos pelo utilizador) ----------
+function edCampoHtml(rotulo, valor) {
+  return `<div class="ed-campo"><input type="text" class="ed-campo-rot" maxlength="60" placeholder="Campo (ex.: Responsável)" value="${escapeHtml(rotulo || '')}">`
+    + `<textarea class="ed-campo-val" rows="1" maxlength="2000" placeholder="Escreve aqui">${escapeHtml(valor || '')}</textarea>`
+    + `<button type="button" class="ed-campo-del" title="Tirar este campo" aria-label="Tirar este campo">×</button></div>`;
+}
+function edFichaLer() {
+  const nome = document.getElementById('edFichaNome').value.trim().replace(/\s+/g, ' ');
+  const campos = [...document.querySelectorAll('#edFichaCampos .ed-campo')].map(r => ({
+    rotulo: r.querySelector('.ed-campo-rot').value.trim(),
+    valor: r.querySelector('.ed-campo-val').value.trim()
+  })).filter(c => c.rotulo || c.valor);
+  return { nome, campos };
+}
+function edAbrirFicha(x, pai) {
+  if (!x && !isEditor()) { toast('Sem permissões para criar fichas.', true); return; }
+  const campos = x ? (x.campos || []) : [{ rotulo: 'Nome', valor: '' }, { rotulo: 'Responsável', valor: '' }];
+  edFicha = { id: x ? x.id : null, parent: x ? edPaiDe(x) : (pai || '') };
+  document.getElementById('edFichaTitulo').textContent = x ? 'Ficha' : 'Nova ficha';
+  document.getElementById('edFichaOnde').textContent = 'Pasta: ' + edCaminhoTxt(edFicha.parent);
+  document.getElementById('edFichaNome').value = x ? (x.nome || '') : '';
+  document.getElementById('edFichaCampos').innerHTML = (campos.length ? campos : [{}]).map(c => edCampoHtml(c.rotulo, c.valor)).join('');
+  document.getElementById('edFichaSug').innerHTML = ED_SUGESTOES.map(s => `<button type="button" data-ed-sug="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('');
+  document.getElementById('edFichaDel').style.display = x && isAdmin() ? '' : 'none';
+  document.getElementById('edFichaSave').style.display = isEditor() ? '' : 'none';
+  edFicha.inicial = JSON.stringify(edFichaLer());
+  openModal('edFichaModal');
+  edAjustarTextos(); // só depois de visível (antes disso a altura do texto é 0)
+  if (!x) setTimeout(() => document.getElementById('edFichaNome').focus(), 50);
+}
+function edAjustarTextos() {
+  document.querySelectorAll('#edFichaCampos textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 220) + 'px'; });
+}
+function edFecharFicha() {
+  if (edFicha && isEditor() && JSON.stringify(edFichaLer()) !== edFicha.inicial && !confirm('Há alterações não guardadas nesta ficha. Sair sem guardar?')) return;
+  closeModal('edFichaModal');
+  edFicha = null;
+}
+async function edGuardarFicha() {
+  if (!edFicha || !isEditor()) return;
+  const dados = edFichaLer();
+  if (!dados.nome) {
+    const primeiro = dados.campos.find(c => c.valor);
+    if (!primeiro) { toast('Escreve o nome da ficha.', true); document.getElementById('edFichaNome').focus(); return; }
+    dados.nome = primeiro.valor.split('\n')[0].slice(0, 120);
+  }
+  if (edNomeDuplicado(edFicha.parent, dados.nome, 'ficha', edFicha.id) && !confirm(`Já existe uma ficha "${dados.nome}" nesta pasta. Guardar mesmo assim?`)) return;
+  showOverlay('A guardar ficha…');
+  try {
+    if (edFicha.id) {
+      await db.collection(ED_COL).doc(edFicha.id).update({ nome: dados.nome, campos: dados.campos, updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by_email: currentUser ? currentUser.email : '' });
+      logAudit('empresa_docs', edFicha.id, `ficha alterada: ${edCaminhoTxt(edFicha.parent)} › ${dados.nome}`);
+    } else {
+      const ref = await db.collection(ED_COL).add(Object.assign(edNovoBase('ficha', dados.nome, edFicha.parent), { campos: dados.campos }));
+      logAudit('empresa_docs', ref.id, `ficha criada: ${edCaminhoTxt(edFicha.parent)} › ${dados.nome}`);
+    }
+    closeModal('edFichaModal');
+    edFicha = null;
+    toast('Ficha guardada.');
+  } catch (err) { toast('Erro ao guardar ficha: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+function edDesenharFichaPdf(f, parent) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+  const margin = 15, larg = pageW - margin * 2;
+  doc.setFillColor(...C.navy); doc.rect(0, 0, pageW, 28, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(255, 255, 255);
+  doc.text('FICHA', margin, 13);
+  doc.setFontSize(9); doc.setTextColor(...C.gold);
+  doc.text(MARCA.empresa, margin, 19);
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal');
+  doc.text('Documento interno', margin, 24.5);
+  let y = 40;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...C.text);
+  const titulo = doc.splitTextToSize(f.nome || '—', larg);
+  doc.text(titulo, margin, y); y += titulo.length * 7;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C.gray);
+  doc.text(doc.splitTextToSize('Pasta: ' + edCaminhoTxt(parent), larg), margin, y); y += 9;
+  const campos = (f.campos || []).filter(c => c.rotulo || c.valor);
+  if (!campos.length) { doc.setTextColor(...C.gray); doc.text('Sem dados.', margin, y); }
+  campos.forEach(c => {
+    const linhas = doc.splitTextToSize(String(c.valor || '—'), larg - 4);
+    const alt = 5 + linhas.length * 5 + 4;
+    if (y + alt > pageH - 18) { doc.addPage(); y = 20; }
+    doc.setFillColor(...C.bgalt); doc.rect(margin, y - 4, larg, 6.5, 'F');
+    doc.setFont('courier', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...C.navy);
+    doc.text(String(c.rotulo || '').toUpperCase() || '—', margin + 2, y + 0.6); y += 7;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(...C.text);
+    doc.text(linhas, margin + 2, y); y += linhas.length * 5 + 5;
+  });
+  pdfFooter(doc, pageW, pageH);
+  return doc;
+}
+function edFichaPdfDescarregar(x) {
+  edDesenharFichaPdf(x, edPaiDe(x)).save(`Ficha_${slug(x.nome || 'ficha')}_${dateStamp()}.pdf`);
+}
+
+// ---------- Descarregar (ZIP com as pastas) e guardar offline ----------
+async function edDescarregar(ids, nomeZip) {
+  const itens = ids.map(edItem).filter(Boolean);
+  if (!itens.length) { toast('Não há nada para descarregar aqui.', true); return; }
+  if (itens.length === 1 && itens[0].tipo === 'ficheiro') { downloadDocument(itens[0].url, docFullName(itens[0])); return; }
+  if (itens.length === 1 && itens[0].tipo === 'ficha') { edFichaPdfDescarregar(itens[0]); return; }
+  const nome = nomeZip || (itens.length === 1 ? edNome(itens[0]) : `${ED_RAIZ}_selecao`);
+  if (!confirm(`Tem a certeza que quer descarregar "${nome}" (ZIP com as pastas, fichas em PDF e ficheiros)?`)) return;
+  showOverlay('A preparar o ZIP…');
+  try {
+    const zip = new JSZip();
+    const usados = {};
+    const unico = (dir, n) => {
+      const k = (dir + n).toLowerCase();
+      if (!usados[k]) { usados[k] = 1; return dir + n; }
+      const i = ++usados[k];
+      return dir + n.replace(/(\.[^.]+)?$/, `_${i}$1`);
+    };
+    const tarefas = [];
+    const juntar = (x, dir, vistos) => {
+      if (vistos.has(x.id)) return; vistos.add(x.id);
+      if (x.tipo === 'pasta') {
+        const d = unico(dir, pxSafe(edNome(x))) + '/';
+        zip.folder(d);
+        edFilhos(x.id).forEach(f => juntar(f, d, vistos));
+      } else if (x.tipo === 'ficha') {
+        zip.file(unico(dir, pxSafe(x.nome) + '.pdf'), edDesenharFichaPdf(x, edPaiDe(x)).output('blob'));
+      } else tarefas.push({ x, dir });
+    };
+    const vistos = new Set();
+    itens.forEach(x => juntar(x, '', vistos));
+    let falhas = 0;
+    await pxRunLimited(tarefas, 4, async ({ x, dir }) => {
+      try {
+        const r = await fetch(x.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+        zip.file(unico(dir, pxSafe(docFullName(x))), await r.blob());
+      } catch (e) { falhas++; }
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
+    dlJaConfirmado = true;
+    saveAs(blob, `${slug(nome)}_${dateStamp()}.zip`);
+    if (falhas) toast(`${falhas} ficheiro(s) não foram obtidos.`, true);
+  } catch (err) { toast('Erro ao gerar ZIP: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+async function edGuardarOffline(pastaId) {
+  const lista = (pastaId ? edDescendentes(pastaId) : (edItens || [])).filter(x => x.tipo === 'ficheiro' && x.url);
+  const nome = edNome(edItem(pastaId));
+  if (navigator.onLine === false) { toast('Precisas de Internet para preparar o uso offline.', true); return; }
+  if (!confirm(`Tem a certeza que quer guardar "${nome}" neste aparelho para usar sem Internet?\n\n${lista.length} ficheiro(s) vão ser descarregados (pode gastar dados móveis). As pastas e fichas já ficam guardadas automaticamente.`)) return;
+  showOverlay('A guardar ficheiros…');
+  try {
+    let ok = 0, falhas = 0;
+    await pxRunLimited(lista, 4, async x => {
+      try { const r = await fetch(x.url); if (!r.ok) throw new Error('HTTP ' + r.status); await r.blob(); ok++; }
+      catch (e) { falhas++; }
+      const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A guardar ficheiros… ${ok + falhas}/${lista.length}`;
+    });
+    toast(`${nome}: ${ok} ficheiro(s) disponíveis offline neste aparelho.` + (falhas ? ` ${falhas} não foram guardados.` : ''), falhas > 0);
+  } catch (err) { toast('Erro ao preparar uso offline: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+
+function edBind() {
+  document.getElementById('edSearch').addEventListener('input', () => { edSel.clear(); renderEmpresaDocs(); });
+  document.getElementById('edMoverClose').addEventListener('click', () => closeModal('edMoverModal'));
+  document.getElementById('edMoverCancel').addEventListener('click', () => closeModal('edMoverModal'));
+  document.getElementById('edMoverOk').addEventListener('click', () => edConfirmarMover());
+  document.getElementById('edFichaClose').addEventListener('click', edFecharFicha);
+  document.getElementById('edFichaCancel').addEventListener('click', edFecharFicha);
+  document.getElementById('edFichaSave').addEventListener('click', edGuardarFicha);
+  document.getElementById('edFichaPdf').addEventListener('click', () => {
+    if (!edFicha) return;
+    const dados = edFichaLer();
+    edDesenharFichaPdf(dados, edFicha.parent).save(`Ficha_${slug(dados.nome || 'ficha')}_${dateStamp()}.pdf`);
+  });
+  document.getElementById('edFichaDel').addEventListener('click', async () => {
+    if (!edFicha || !edFicha.id) return;
+    const id = edFicha.id;
+    if (!confirm(`Eliminar a ficha "${edNome(edItem(id))}"?`)) return;
+    try {
+      await db.collection(ED_COL).doc(id).delete();
+      logAudit('empresa_docs', id, `ficha eliminada: ${edCaminhoTxt(edFicha.parent)} › ${edNome(edItem(id))}`);
+      closeModal('edFichaModal'); edFicha = null;
+      toast('Ficha eliminada.');
+    } catch (err) { toast('Erro ao eliminar: ' + friendlyError(err), true); }
+  });
+  document.getElementById('edFichaAdd').addEventListener('click', () => {
+    document.getElementById('edFichaCampos').insertAdjacentHTML('beforeend', edCampoHtml('', ''));
+    const rots = document.querySelectorAll('#edFichaCampos .ed-campo-rot'); rots[rots.length - 1].focus();
+  });
+  document.getElementById('edFichaSug').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-ed-sug]'); if (!b) return;
+    const caixa = document.getElementById('edFichaCampos');
+    // usa uma linha vazia se houver, senão acrescenta
+    const vazia = [...caixa.querySelectorAll('.ed-campo')].find(r => !r.querySelector('.ed-campo-rot').value.trim() && !r.querySelector('.ed-campo-val').value.trim());
+    if (vazia) vazia.querySelector('.ed-campo-rot').value = b.dataset.edSug;
+    else caixa.insertAdjacentHTML('beforeend', edCampoHtml(b.dataset.edSug, ''));
+    const linha = vazia || caixa.lastElementChild;
+    linha.querySelector('.ed-campo-val').focus();
+  });
+  document.getElementById('edFichaCampos').addEventListener('click', ev => {
+    const b = ev.target.closest('.ed-campo-del'); if (!b) return;
+    b.closest('.ed-campo').remove();
+  });
+  document.getElementById('edFichaCampos').addEventListener('input', ev => { if (ev.target.matches('textarea')) edAjustarTextos(); });
+}
+
 function bindFiscal() {
   document.querySelectorAll('.area-tab').forEach(t => t.addEventListener('click', () => switchArea(t.dataset.area)));
+  edBind();
   // Pastas: importação de ZIP
   document.getElementById('pxZipInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) pxImportZip(f); });
   document.getElementById('pxImportClose').addEventListener('click', () => closeModal('pxImportModal'));
@@ -7533,6 +8455,7 @@ function bindFiscal() {
     if (user) { subscribeConfig(); subscribeListas(); pxSubscribeEstrutura(); subscribeMarca(); }
     else {
       pxUnsubscribeEstrutura();
+      edUnsubscribe();
       if (unsubscribeMarca) { unsubscribeMarca(); unsubscribeMarca = null; }
       if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; } appConfig = null;
       if (unsubscribeListas) { unsubscribeListas(); unsubscribeListas = null; } appListas = { paises: PAISES_DEFAULT.slice(), empresas: [] };
