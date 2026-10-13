@@ -650,6 +650,20 @@ footer strong { color: var(--ink); }
 .px-back { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--accent); color: var(--gold); font-size: 22px; font-weight: 700; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: transform .15s ease, background .15s ease; }
 .px-back:hover, .px-back:focus-visible { background: var(--accent-hover); transform: translateX(-2px); outline: none; }
 #pxContent .px-empty { margin-top: 18px; }
+/* Seleção e arrastar ficheiros */
+.px-selrow { cursor: pointer; user-select: none; }
+.px-selrow[draggable="true"] { cursor: grab; }
+.px-selrow:hover { border-color: var(--accent); }
+.px-selected { border-color: var(--accent); background: #eef3fa; box-shadow: 0 0 0 2px rgba(0,51,102,0.18); }
+.px-sel { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+.px-section-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.px-selall { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--accent); cursor: pointer; }
+.px-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #eef3fa; border: 1px solid var(--accent); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; font-size: 13px; color: var(--accent); }
+.px-hint { font-size: 12px; color: var(--ink-soft); margin: -2px 0 8px; }
+.px-dropbar { display: none; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(720px, calc(100vw - 32px)); box-sizing: border-box; z-index: 60; flex-wrap: wrap; align-items: center; gap: 8px; background: #fff; border: 2px dashed var(--accent); border-radius: 12px; padding: 10px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.18); font-size: 13px; font-weight: 600; color: var(--accent); }
+body.px-dragging .px-dropbar { display: flex; }
+.px-drop-chip { padding: 8px 14px; border-radius: 8px; background: #eef3fa; border: 1px solid var(--line); }
+.px-drop-hover { outline: 3px solid var(--gold); outline-offset: 2px; background: #fff8e1 !important; }
 .px-grid-sub { justify-content: start; margin-top: 4px; grid-template-columns: repeat(auto-fill, minmax(170px, 200px)); gap: 14px; }
 .px-grid-sub .px-tile { min-height: 132px; padding: 16px 10px 14px; }
 .px-grid-sub .px-folder-ico { width: 58px; height: 47px; }
@@ -3919,40 +3933,104 @@ async function pxRenomearFicheiro(emp, d) {
   } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); }
 }
 
-let pxMoverDoc = null;
-function pxAbrirMover(emp, d) {
+// Seleção de ficheiros (clique / caixa) e arrastar para outra pasta
+const pxSelecionados = new Set();
+let pxIdsVista = [];
+let pxArrastar = null;
+
+let pxMoverDoc = null; // { emp, docs }
+function pxAbrirMover(emp, docs) {
   if (!isEditor()) { toast('Sem permissões para mover ficheiros.', true); return; }
-  pxMoverDoc = { emp, d };
+  docs = (Array.isArray(docs) ? docs : [docs]).filter(Boolean);
+  if (!docs.length) return;
+  pxMoverDoc = { emp, docs };
   const subs = pxSubpastas(emp);
-  const atual = d.pasta && subs.includes(d.pasta) ? d.pasta : '';
+  const atual = docs.length === 1 && docs[0].pasta && subs.includes(docs[0].pasta) ? docs[0].pasta : (pxPath.sub || '');
   const sel = document.getElementById('pxMoverSel');
   sel.innerHTML = `<option value="">Pasta principal de ${escapeHtml(emp.nome)}</option>` + subs.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
   sel.value = atual;
-  document.getElementById('pxMoverInfo').textContent = docFullName(d);
+  document.getElementById('pxMoverInfo').textContent = docs.length === 1 ? docFullName(docs[0]) : `${docs.length} ficheiros selecionados`;
   document.getElementById('pxMoverNova').value = '';
   openModal('pxMoverModal');
 }
+// Move um ou vários ficheiros para a subpasta "destino" ('' = pasta principal)
+async function pxMoverVarios(emp, docs, destino) {
+  if (!isEditor()) { toast('Sem permissões para mover ficheiros.', true); return false; }
+  const subs = pxSubpastas(emp);
+  const pastaDe = d => (d.pasta && subs.includes(d.pasta) ? d.pasta : '');
+  const mover = docs.filter(d => pastaDe(d) !== destino);
+  if (!mover.length) { toast('Os ficheiros já estão nessa pasta.'); return false; }
+  const alvo = destino ? `a pasta "${destino}"` : 'a pasta principal';
+  if (!confirm(mover.length === 1 ? `Mover "${docFullName(mover[0])}" para ${alvo}?` : `Mover ${mover.length} ficheiros para ${alvo}?`)) return false;
+  showOverlay('A mover…');
+  try {
+    for (let i = 0; i < mover.length; i += 400) {
+      const b = db.batch();
+      mover.slice(i, i + 400).forEach(d => {
+        const ref = db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id);
+        b.update(ref, destino ? { pasta: destino } : { pasta: firebase.firestore.FieldValue.delete() });
+      });
+      if (i === 0 && destino && !subs.includes(destino)) b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.concat([destino]) }, { merge: true });
+      await b.commit();
+    }
+    logAudit('document_move', emp.id, `${emp.nome}: ${mover.length} ficheiro(s) → ${destino || 'pasta principal'}`);
+    pxSelecionados.clear();
+    toast(mover.length === 1 ? 'Ficheiro movido.' : `${mover.length} ficheiros movidos.`);
+    return true;
+  } catch (err) { toast('Erro ao mover: ' + friendlyError(err), true); return false; }
+  finally { hideOverlay(); }
+}
 async function pxConfirmarMover() {
   if (!pxMoverDoc) return;
-  const { emp, d } = pxMoverDoc;
+  const { emp, docs } = pxMoverDoc;
   let destino = document.getElementById('pxMoverSel').value;
   const nova = pxNomeValido(document.getElementById('pxMoverNova').value);
-  const subs = pxSubpastas(emp);
-  if (nova) { const existente = subs.find(x => pxNorm(x) === pxNorm(nova)); destino = existente || nova; }
-  const atual = d.pasta && subs.includes(d.pasta) ? d.pasta : '';
-  if (destino === atual) { closeModal('pxMoverModal'); return; }
-  if (!confirm(`Mover "${docFullName(d)}" para ${destino ? `a pasta "${destino}"` : 'a pasta principal'}?`)) return;
+  if (nova) { const existente = pxSubpastas(emp).find(x => pxNorm(x) === pxNorm(nova)); destino = existente || nova; }
+  const feito = await pxMoverVarios(emp, docs, destino);
+  if (feito !== false || !docs.some(d => (d.pasta || '') !== destino)) closeModal('pxMoverModal');
+}
+async function pxEliminarVarios(emp, docs) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar documentos.', true); return; }
+  if (!docs.length) return;
+  const lista = docs.slice(0, 6).map(d => '• ' + docFullName(d)).join('\n') + (docs.length > 6 ? `\n• … e mais ${docs.length - 6}` : '');
+  if (!confirm(`Eliminar ${docs.length} ficheiro(s)?\n\n${lista}\n\nEsta ação não pode ser anulada.`)) return;
+  showOverlay('A eliminar…');
   try {
-    const b = db.batch();
-    const ref = db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id);
-    if (destino) b.update(ref, { pasta: destino });
-    else b.update(ref, { pasta: firebase.firestore.FieldValue.delete() });
-    if (destino && !subs.includes(destino)) b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.concat([destino]) }, { merge: true });
-    await b.commit();
-    logAudit('document_move', emp.id, `${emp.nome}: "${docFullName(d)}" → ${destino || 'pasta principal'}`);
-    closeModal('pxMoverModal');
-    toast('Ficheiro movido.');
-  } catch (err) { toast('Erro ao mover: ' + friendlyError(err), true); }
+    for (let i = 0; i < docs.length; i += 400) {
+      const b = db.batch();
+      docs.slice(i, i + 400).forEach(d => b.delete(db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id)));
+      await b.commit();
+    }
+    await db.collection('funcionarios').doc(emp.id).update({ doc_count: firebase.firestore.FieldValue.increment(-docs.length) });
+    logAudit('document_delete', emp.id, `${emp.nome}: ${docs.length} ficheiro(s) eliminados`);
+    pxSelecionados.clear();
+    toast(`${docs.length} ficheiro(s) eliminado(s).`);
+  } catch (err) { toast('Erro ao eliminar: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+async function pxDescarregarVarios(emp, docs) {
+  if (!docs.length) return;
+  if (docs.length === 1) { downloadDocument(docs[0].url, docFullName(docs[0])); return; }
+  if (!confirm(`Tem a certeza que quer descarregar ${docs.length} ficheiros (num ZIP)?`)) return;
+  showOverlay('A preparar o ZIP…');
+  try {
+    const zip = new JSZip();
+    const usados = {};
+    let falhas = 0;
+    await pxRunLimited(docs, 4, async d => {
+      try {
+        const r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+        let nome = pxSafe(docFullName(d));
+        if (usados[nome]) { const n = ++usados[nome]; nome = nome.replace(/(\.[^.]+)?$/, `_${n}$1`); } else usados[nome] = 1;
+        zip.file(nome, await r.blob());
+      } catch (e) { falhas++; }
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
+    dlJaConfirmado = true;
+    saveAs(blob, `${slug(emp.nome)}_ficheiros_${dateStamp()}.zip`);
+    if (falhas) toast(`${falhas} ficheiro(s) não foram obtidos.`, true);
+  } catch (err) { toast('Erro ao gerar ZIP: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
 }
 
 // Nova pasta: sem país → novo país; com país → nova empresa dentro dele
@@ -4093,6 +4171,7 @@ function pxStopDocs() {
   pxDocsFor = null; pxDocs = [];
 }
 function pxGo(p) {
+  pxSelecionados.clear();
   pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, funcId: null, sub: null }, p);
   renderPastas();
 }
@@ -4123,18 +4202,18 @@ function pxFolderSvg(ex) {
   return `<svg class="px-folder-ico" viewBox="0 0 64 52" aria-hidden="true"><path d="M4 9a5 5 0 0 1 5-5h15l6 6h25a5 5 0 0 1 5 5v3H4z" fill="${aba}"/><rect x="2" y="14" width="60" height="36" rx="6" fill="${corpo}"/></svg>`;
 }
 // Cartão grande: pasta (pais/empresa/ex) ou funcionário (func, com iniciais)
-function pxCard(i, tipo, nome, sub) {
+function pxCard(i, tipo, nome, sub, extra) {
   const visual = tipo === 'func'
     ? `<span class="px-avatar">${escapeHtml(pxInitials(nome))}</span>`
     : `<span class="px-folder-wrap">${pxFolderSvg(tipo === 'ex')}</span>`;
-  return `<button type="button" class="px-tile" data-px-i="${i}" title="${escapeHtml(nome)}">${visual}<span class="px-name">${escapeHtml(nome)}</span><span class="px-sub">${escapeHtml(sub)}</span></button>`;
+  return `<button type="button" class="px-tile" data-px-i="${i}" title="${escapeHtml(nome)}"${extra ? ' ' + extra : ''}>${visual}<span class="px-name">${escapeHtml(nome)}</span><span class="px-sub">${escapeHtml(sub)}</span></button>`;
 }
 function pxBtn(action, label, cls) { return `<button type="button" class="btn ${cls || 'btn-ghost'}" data-px-act="${action}">${label}</button>`; }
 
 function renderPastas() {
   const root = document.getElementById('pxContent');
   if (!root) return;
-  if (!pxBound) { root.addEventListener('click', pxOnClick); pxBound = true; }
+  if (!pxBound) { pxLigarEventos(root); pxBound = true; }
 
   // Pesquisa: mostra os funcionários encontrados (de todas as pastas)
   const termo = pxSearchTerm();
@@ -4194,7 +4273,10 @@ function renderPastas() {
     const docRow = d => {
       const nome = docFullName(d);
       const id = escapeHtml(d.id);
-      return `<div class="px-card px-file"><span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
+      const marcado = pxSelecionados.has(d.id);
+      return `<div class="px-card px-file px-selrow${marcado ? ' px-selected' : ''}" data-px-row="${id}"${isEditor() ? ` draggable="true" data-px-drag="${id}"` : ''} title="Clica para selecionar${isEditor() ? ' · arrasta para uma pasta para mover' : ''}">`
+        + `<input type="checkbox" class="px-sel" data-px-sel="${id}"${marcado ? ' checked' : ''} aria-label="Selecionar ${escapeHtml(nome)}">`
+        + `<span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
         + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
         + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
@@ -4204,6 +4286,22 @@ function renderPastas() {
     };
     // Ficheiros desta vista: na subpasta aberta, ou na pasta principal (sem subpasta / subpasta inexistente)
     const daVista = (pxDocs || []).filter(d => sub ? d.pasta === sub : (!d.pasta || !subs.includes(d.pasta)));
+    pxIdsVista = daVista.map(d => d.id);
+    [...pxSelecionados].forEach(id => { if (!pxIdsVista.includes(id)) pxSelecionados.delete(id); });
+    const nSel = pxSelecionados.size;
+    const selTodos = daVista.length ? `<label class="px-selall"><input type="checkbox" data-px-selall${nSel && nSel === daVista.length ? ' checked' : ''}> Selecionar todos</label>` : '';
+    const barra = nSel
+      ? `<div class="px-bulk"><strong>${nSel} selecionado${nSel === 1 ? '' : 's'}</strong>`
+        + (isEditor() ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="mover">Mover para…</button>` : '')
+        + `<button type="button" class="btn btn-ghost btn-sm" data-px-bulk="zip">Descarregar</button>`
+        + (isAdmin() ? `<button type="button" class="btn btn-danger btn-sm" data-px-bulk="del">Eliminar</button>` : '')
+        + `<button type="button" class="btn btn-ghost btn-sm" data-px-bulk="limpar">Limpar seleção</button></div>`
+      : (isEditor() && daVista.length ? `<div class="px-hint">Clica nos ficheiros para os selecionar, ou arrasta-os com o rato para uma pasta.</div>` : '');
+    // Faixa para largar ficheiros arrastados (aparece só enquanto se arrasta)
+    const destinos = [''].concat(subs).filter(x => x !== (sub || ''));
+    const faixa = isEditor() && destinos.length
+      ? `<div class="px-dropbar"><span>Largar aqui para mover:</span>` + destinos.map(x => `<span class="px-drop-chip" data-px-drop="${escapeHtml(x)}">${x ? escapeHtml(x) : 'Pasta principal'}</span>`).join('') + `</div>`
+      : '';
     const vazio = sub
       ? `<div class="px-empty">Esta pasta está vazia.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> ou <strong>Mover</strong> um ficheiro para aqui.' : ''}</div>`
       : `<div class="px-empty">Ainda não há documentos soltos nesta pasta.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
@@ -4214,7 +4312,7 @@ function renderPastas() {
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros', 'btn-primary');
       if (isEditor()) actions += pxBtn('renomear-sub', 'Renomear pasta');
       if (isAdmin()) actions += pxBtn('eliminar-sub', 'Eliminar pasta', 'btn-danger');
-      body = `<div class="px-section-title">Ficheiros</div>${docsHtml}`;
+      body = `${faixa}<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}`;
     } else {
       if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
       actions += pxBtn('ficha', 'Gerar PDF');
@@ -4230,10 +4328,10 @@ function renderPastas() {
       const subsHtml = subs.length
         ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + subs.map((nomeSub, i) => {
             const n = contar(nomeSub);
-            return pxCard(i, 'pasta', nomeSub, pxDocs === null ? '…' : (n ? `${n} ficheiro${n === 1 ? '' : 's'}` : 'Pasta vazia'));
+            return pxCard(i, 'pasta', nomeSub, pxDocs === null ? '…' : (n ? `${n} ficheiro${n === 1 ? '' : 's'}` : 'Pasta vazia'), isEditor() ? `data-px-drop="${escapeHtml(nomeSub)}"` : '');
           }).join('') + '</div>'
         : '';
-      body = `${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title">Documentos</div>${docsHtml}`;
+      body = `${faixa}${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title px-section-row"><span>Documentos</span>${selTodos}</div>${barra}${docsHtml}`;
     }
   } else {
     pxStopDocs();
@@ -4299,9 +4397,79 @@ function renderPastas() {
   root.innerHTML = `<div class="px-head">${voltar}<div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${body}`;
 }
 
+function pxLigarEventos(root) {
+  root.addEventListener('click', pxOnClick);
+  // Caixas de seleção
+  root.addEventListener('change', ev => {
+    const cb = ev.target;
+    if (!cb || !cb.dataset) return;
+    if (cb.dataset.pxSel !== undefined) {
+      if (cb.checked) pxSelecionados.add(cb.dataset.pxSel); else pxSelecionados.delete(cb.dataset.pxSel);
+      renderPastas();
+    } else if (cb.dataset.pxSelall !== undefined) {
+      if (cb.checked) pxIdsVista.forEach(id => pxSelecionados.add(id)); else pxSelecionados.clear();
+      renderPastas();
+    }
+  });
+  // Arrastar ficheiros para uma pasta (vários, se estiverem selecionados)
+  const limparAlvos = () => root.querySelectorAll('.px-drop-hover').forEach(x => x.classList.remove('px-drop-hover'));
+  root.addEventListener('dragstart', ev => {
+    const row = ev.target.closest && ev.target.closest('[data-px-drag]');
+    if (!row) return;
+    const id = row.dataset.pxDrag;
+    pxArrastar = pxSelecionados.has(id) ? [...pxSelecionados] : [id];
+    try { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', pxArrastar.join(',')); } catch (e) { /* navegador sem suporte */ }
+    // mostrar a faixa logo a seguir: alterar a página dentro do dragstart cancela o arrastar no Chrome
+    setTimeout(() => { if (pxArrastar) document.body.classList.add('px-dragging'); }, 0);
+  });
+  root.addEventListener('dragend', () => { pxArrastar = null; document.body.classList.remove('px-dragging'); limparAlvos(); });
+  root.addEventListener('dragover', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-px-drop]');
+    if (!alvo || !pxArrastar) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) { /* navegador sem suporte */ }
+    alvo.classList.add('px-drop-hover');
+  });
+  root.addEventListener('dragleave', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-px-drop]');
+    if (alvo && !alvo.contains(ev.relatedTarget)) alvo.classList.remove('px-drop-hover');
+  });
+  root.addEventListener('drop', ev => {
+    const alvo = ev.target.closest && ev.target.closest('[data-px-drop]');
+    if (!alvo || !pxArrastar) return;
+    ev.preventDefault();
+    const ids = pxArrastar;
+    pxArrastar = null;
+    document.body.classList.remove('px-dragging');
+    limparAlvos();
+    const emp = employees.find(x => x.id === pxPath.funcId);
+    const docs = ids.map(pxDocPorId).filter(Boolean);
+    const destino = alvo.dataset.pxDrop || '';
+    // pergunta só depois de o navegador terminar o arrastar (evita ficar "preso")
+    if (emp && docs.length) setTimeout(() => pxMoverVarios(emp, docs, destino), 0);
+  });
+}
+
 function pxOnClick(ev) {
-  const t = ev.target.closest('[data-px-crumb],[data-px-i],[data-px-act],[data-px-doc]');
+  if (ev.target.closest('input, label.px-selall')) return; // caixas de seleção: tratadas no evento "change"
+  const t = ev.target.closest('[data-px-crumb],[data-px-i],[data-px-act],[data-px-doc],[data-px-bulk],[data-px-row]');
   if (!t) return;
+  if (t.dataset.pxBulk) {
+    const empB = employees.find(x => x.id === pxPath.funcId);
+    const docsSel = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
+    if (t.dataset.pxBulk === 'limpar') { pxSelecionados.clear(); renderPastas(); }
+    else if (!empB || !docsSel.length) return;
+    else if (t.dataset.pxBulk === 'mover') pxAbrirMover(empB, docsSel);
+    else if (t.dataset.pxBulk === 'zip') pxDescarregarVarios(empB, docsSel);
+    else if (t.dataset.pxBulk === 'del') pxEliminarVarios(empB, docsSel);
+    return;
+  }
+  if (t.dataset.pxRow && !t.dataset.pxDoc) { // clique na linha do ficheiro: seleciona / desseleciona
+    const id = t.dataset.pxRow;
+    if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id);
+    renderPastas();
+    return;
+  }
   if (t.dataset.pxCrumb !== undefined) { pxGo(pxCrumbs[+t.dataset.pxCrumb]); return; }
   if (t.dataset.pxI !== undefined) {
     const p = pxItems[+t.dataset.pxI]; if (!p) return;
@@ -4315,7 +4483,7 @@ function pxOnClick(ev) {
     if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d));
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
-    else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, d);
+    else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, [d]);
     else if (t.dataset.pxDoc === 'del' && emp) deleteDocument(emp.id, emp.nome, d.id, docFullName(d), d.bytes);
     return;
   }
