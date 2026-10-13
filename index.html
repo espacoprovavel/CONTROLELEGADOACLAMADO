@@ -867,6 +867,90 @@ body.px-dragging .px-dropbar { display: flex; }
   .px-file { grid-column: 1 / -1; }
   .px-actions .btn { flex: 1 1 auto; }
 }
+
+/* Botão ⋮ (só aparece no telemóvel) */
+.px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
+.px-kebab:active { background: #eef1f5; }
+.px-ver-m { display: none; flex-shrink: 0; border: 1px solid #dadce0; background: #fff; color: #1f1f1f; border-radius: 999px; padding: 6px 14px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; }
+.px-ver-m:active { background: #f1f3f4; }
+.px-ficha { cursor: pointer; }
+
+/* ================= TELEMÓVEL: visual limpo, estilo Drive ================= */
+@media (max-width: 600px) {
+  /* Separadores: só os nomes, letra escura, desliza com o dedo */
+  .area-nav { background: #fff; border-bottom: 1px solid #e8eaed; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+  .area-nav-inner { padding: 0 6px; gap: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+  .area-nav-inner::-webkit-scrollbar { display: none; }
+  .area-tab, .area-tab:hover { flex: 0 0 auto; background: none; border: none; border-radius: 0; box-shadow: none; color: #5f6368; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 15px; letter-spacing: 0; padding: 15px 14px 13px; position: relative; scroll-snap-align: center; }
+  .area-tab.active { background: none; box-shadow: none; color: #111; font-weight: 600; }
+  .area-tab.active::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: #111; }
+
+  /* Cabeçalho da pasta: caminho pequeno e cinzento, nome da pasta em destaque */
+  #pxContent .px-head, #edContent .px-head { border-bottom: none; padding-bottom: 4px; gap: 6px 10px; }
+  .px-back, .px-back:hover { width: 38px; height: 38px; background: none; color: #111; box-shadow: none; font-size: 22px; transform: none; }
+  .px-back:active { background: #eef1f5; }
+  .px-crumbs { font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500; color: #5f6368; flex: 1 1 0; }
+  .px-crumbs button { color: #5f6368; padding: 2px 3px; }
+  .px-crumbs .sep { color: #b0b5bc; }
+  .px-crumbs .cur { display: block; width: 100%; padding: 2px 3px 0; font-family: 'Montserrat', sans-serif; font-size: 21px; font-weight: 700; color: #111; line-height: 1.25; }
+
+  /* Ações: uma linha discreta que desliza */
+  .px-actions { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 8px; width: calc(100% + 32px); margin: 6px -16px 0; padding: 2px 16px 8px; scrollbar-width: none; }
+  .px-actions::-webkit-scrollbar { display: none; }
+  .px-actions .btn, .px-actions .btn:hover { flex: 0 0 auto; padding: 8px 14px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500; border-radius: 999px; background: #fff; color: #1f1f1f; border: 1px solid #dadce0; box-shadow: none; transform: none; }
+  .px-actions .btn-primary { background: #e8f0fe; color: #0b3a75; border-color: #e8f0fe; }
+  .px-actions .btn-danger { color: #c5221f; border-color: #f3d3d2; background: #fff; }
+
+  /* Títulos de secção e pastas */
+  .px-section-title { font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; color: #5f6368; margin: 16px 0 6px; }
+  .px-tile, .px-tile:hover { box-shadow: none; border: 1px solid #e8eaed; border-radius: 16px; transform: none; min-height: 120px; }
+  .px-tile .px-name { color: #111; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 14px; }
+  .px-tile .px-sub { color: #5f6368; }
+  .px-grid-sub .px-folder-ico, .px-folder-ico { width: 46px; height: 37px; }
+
+  /* Ficheiros: lista simples, nome em preto, ⋮ para as opções */
+  .px-grid { gap: 0; }
+  .px-card, .px-card:hover, .px-selected { background: none; border: none; border-bottom: 1px solid #eef0f3; border-radius: 0; box-shadow: none; padding: 10px 0 10px 2px; }
+  .px-selected { background: #e8f0fe; border-radius: 12px; }
+  .px-card .px-name { color: #111; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 14.5px; }
+  .px-card .px-sub { color: #5f6368; font-size: 12px; }
+  .px-fbtns { display: none; }
+  .px-kebab { display: inline-flex; margin-left: -4px; }
+  .px-ver-m { display: inline-block; }
+  .px-card { align-items: center; }
+  .px-card .px-txt { min-width: 0; flex: 1 1 auto; }
+  .px-card .px-name { white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; word-break: normal; line-height: 1.3; }
+  .px-ficha .px-kebab { display: none; }
+  .px-card .ftype { min-width: 40px; height: 40px; border-radius: 10px; font-size: 9.5px; }
+  .px-hint { display: none; }
+  .px-sel { display: none; }
+  .px-grid:has(.px-selected) .px-sel { display: block; }
+  .px-bulk { border-radius: 14px; border: none; background: #e8f0fe; }
+  .px-empty { background: none; border: none; color: #5f6368; padding: 30px 10px; }
+  #edBulkWrap { min-height: 0; margin-bottom: 0; }
+
+  /* Topo: claro e numa só linha (logótipo, nome, acesso e Sair) */
+  header { background: #fff; color: #111; border-bottom: none; box-shadow: none; padding: 0; }
+  .header-inner { flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+  .brand { gap: 10px; min-width: 0; }
+  .brand-logo { width: 36px; height: 36px; font-size: 14px; border-radius: 10px; flex-shrink: 0; }
+  .brand h1 { font-size: 18px; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .sub, .user-box .uemail, .stats { display: none; }
+  .brand-edit { background: #f1f3f4; }
+  .brand-edit svg { color: #5f6368; }
+  .header-right { gap: 8px; flex-wrap: nowrap; flex-shrink: 0; width: auto; justify-content: flex-end; }
+  .user-box { gap: 8px; }
+  .role-badge.role-master { background: #fff4d6; color: #7a5b00; border-color: #f0d58a; }
+  .role-badge.role-viewer { background: #e8f0fe; color: #0b3a75; border-color: #d2e3fc; }
+  .btn-logout, .btn-logout:hover { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; border-radius: 999px; padding: 6px 14px; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 13px; box-shadow: none; }
+  .px-hero .px-title, .px-hero .px-subtitle { display: none; }
+  .px-hero { padding-top: 10px; }
+  body, #appScreen { background: #fff; background-image: none; }
+  .px-search { background: #f1f3f4; border: none; box-shadow: none; margin-top: 4px; }
+  .px-search:focus-within { background: #fff; box-shadow: 0 1px 6px rgba(32,33,36,0.2); }
+  .ctx-menu { min-width: 230px; border-radius: 14px; }
+  .ctx-menu button { padding: 12px 14px; font-size: 15px; }
+}
 </style>
 </head>
 <body>
@@ -4879,7 +4963,7 @@ function renderPastas() {
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
         + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
         + (isAdmin() ? `<button type="button" data-px-doc="del" data-px-did="${id}" title="Eliminar">Eliminar</button>` : '')
-        + `</span></div>`;
+        + `</span><button type="button" class="px-ver-m" data-px-doc="view" data-px-did="${id}">Ver</button><button type="button" class="px-kebab" data-kebab aria-label="Mais opções" title="Mais opções"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></button></div>`;
     };
     // Ficheiros desta vista: na subpasta aberta, ou na pasta principal (sem subpasta / subpasta inexistente)
     const daVista = (pxDocs || []).filter(d => sub ? d.pasta === sub : (!d.pasta || !subs.includes(d.pasta)));
@@ -4919,7 +5003,7 @@ function renderPastas() {
       actions += pxBtn('zip-func', 'Download pasta');
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
-      const ficha = `<div class="px-card px-file"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
+      const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
       pxItems = subs.map(nomeSub => ({ scope, pais, empresa, funcId, sub: nomeSub }));
       const contar = nomeSub => (pxDocs || []).filter(d => d.pasta === nomeSub).length;
       const subsHtml = subs.length
@@ -5038,10 +5122,11 @@ function pxLigarEventos(root) {
       const d = pxDocPorId(id);
       const carregar = op => () => { const b = root.querySelector(`[data-px-doc="${op}"][data-px-did="${CSS.escape(id)}"]`); if (b) b.click(); };
       abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: d ? docFullName(d) : 'Ficheiro' },
-        { label: 'Ver', fn: carregar('view') }, { label: 'Descarregar', fn: carregar('down') },
-        isEditor() ? '-' : null,
-        isEditor() ? { label: 'Mudar o nome', fn: carregar('ren') } : null,
+        ehTelemovel() ? null : { label: 'Ver', fn: carregar('view') }, // no telemóvel há o botão "Ver" na linha
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
+        isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
+        { label: 'Descarregar', fn: carregar('down') },
+        { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
       return;
@@ -5050,7 +5135,7 @@ function pxLigarEventos(root) {
     if (!emp || !alvo || !alvo.sub) return;
     abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: alvo.sub },
       { label: 'Abrir', fn: () => pxGo(alvo) },
-      isEditor() ? { label: 'Mudar o nome', fn: () => pxRenomearSubpasta(emp, alvo.sub) } : null,
+      isEditor() ? { label: 'Renomear', fn: () => pxRenomearSubpasta(emp, alvo.sub) } : null,
       isAdmin() ? '-' : null,
       isAdmin() ? { label: 'Eliminar pasta', fn: () => pxEliminarSubpasta(emp, alvo.sub), perigo: true } : null]);
   });
@@ -5109,6 +5194,7 @@ function pxOnClick(ev) {
   }
   if (t.dataset.pxRow && !t.dataset.pxDoc) { // clique na linha do ficheiro: seleciona / desseleciona
     const id = t.dataset.pxRow;
+    if (ehTelemovel() && !pxSelecionados.size) { const v = t.querySelector('[data-px-doc="view"]'); if (v) v.click(); return; } // telemóvel: tocar abre
     if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id);
     renderPastas();
     return;
@@ -5436,6 +5522,8 @@ function switchArea(area) {
   if (area !== 'contabilidade' && !contabConfirmLeave()) return;
   fecharMenuContexto();
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
+  const ativo = document.querySelector('.area-tab.active');
+  if (ativo && ativo.scrollIntoView) try { ativo.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch (e) { /* navegador antigo */ }
   document.getElementById('areaPastas').style.display = area === 'pastas' ? '' : 'none';
   document.getElementById('areaFuncionarios').style.display = area === 'funcionarios' ? '' : 'none';
   document.getElementById('areaEmpresaDocs').style.display = area === 'empresa' ? '' : 'none';
@@ -8153,6 +8241,16 @@ function abrirMenuContexto(x, y, itens) {
   m.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
   const primeiro = m.querySelector('button'); if (primeiro) primeiro.focus({ preventScroll: true });
 }
+function ehTelemovel() { return !!(window.matchMedia && matchMedia('(max-width: 600px)').matches); }
+// Botão ⋮ das linhas: abre o mesmo menu do botão direito, junto ao botão
+document.addEventListener('click', ev => {
+  const k = ev.target.closest && ev.target.closest('[data-kebab]');
+  if (!k) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const linha = k.closest('[data-px-row],[data-ed-row]');
+  const r = k.getBoundingClientRect();
+  if (linha) linha.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.right, clientY: r.bottom + 4 }));
+}, true);
 function fecharMenuContexto() { const m = document.getElementById('ctxMenu'); if (m) m.classList.remove('open'); }
 document.addEventListener('mousedown', ev => { if (!ev.target.closest || !ev.target.closest('#ctxMenu')) fecharMenuContexto(); });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') fecharMenuContexto(); });
@@ -8299,7 +8397,7 @@ function renderEmpresaDocs() {
       + ` title="${selecionavel ? 'Clica para selecionar · duplo clique para abrir' : 'Clica para abrir'}${ed ? ' · arrasta para uma pasta para mover' : ''} · botão direito para mais opções">`
       + (selecionavel ? `<input type="checkbox" class="px-sel" data-ed-sel="${id}"${marcado ? ' checked' : ''} aria-label="Selecionar ${escapeHtml(edNome(x))}">` : '')
       + `<span class="px-ico">${ico}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(edNome(x))}">${escapeHtml(edNome(x))}</div><div class="px-sub">${escapeHtml(sub)}</div></span>`
-      + `<span class="px-fbtns">${botoes}</span></div>`;
+      + `<span class="px-fbtns">${botoes}</span><button type="button" class="px-ver-m" data-ed-op="${x.tipo === 'ficheiro' ? 'ver' : 'abrir'}" data-ed-id="${id}">${x.tipo === 'ficheiro' ? 'Ver' : 'Abrir'}</button><button type="button" class="px-kebab" data-kebab aria-label="Mais opções" title="Mais opções"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></button></div>`;
   };
 
   // ----- Pesquisa -----
@@ -8404,6 +8502,7 @@ function edLigarEventos(root) {
     const x = edItem(t.dataset.edRow);
     if (!x) return;
     if (x.tipo === 'pasta') return edGo(x.id);
+    if (ehTelemovel() && !edSel.size) return edOperacao(x.tipo === 'ficha' ? 'abrir' : 'ver', x); // telemóvel: tocar abre
     if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id);
     edAtualizarSelecao();
   });
@@ -8502,10 +8601,14 @@ function edMenuItem(x) {
   const ed = isEditor(), adm = isAdmin();
   const op = o => () => edOperacao(o, x);
   const itens = [{ titulo: edNome(x) }];
-  if (x.tipo === 'pasta') itens.push({ label: 'Abrir', fn: op('abrir') }, { label: 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
-  else if (x.tipo === 'ficha') itens.push({ label: 'Abrir / editar ficha', fn: op('abrir') }, { label: 'Gerar PDF', fn: op('pdf') });
-  else itens.push({ label: 'Ver', fn: op('ver') }, { label: 'Descarregar', fn: op('down') });
-  if (ed) itens.push('-', { label: 'Mudar o nome', fn: op('ren') }, { label: 'Mover para…', fn: op('mov') });
+  const tel = ehTelemovel();
+  if (x.tipo === 'pasta') itens.push({ label: 'Abrir', fn: op('abrir') });
+  else if (!tel) itens.push(x.tipo === 'ficha' ? { label: 'Abrir / editar ficha', fn: op('abrir') } : { label: 'Ver', fn: op('ver') });
+  if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
+  if (x.tipo === 'pasta') itens.push({ label: 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
+  else if (x.tipo === 'ficha') itens.push({ label: 'Descarregar PDF', fn: op('pdf') });
+  else itens.push({ label: 'Descarregar', fn: op('down') });
+  if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
   return itens;
 }
