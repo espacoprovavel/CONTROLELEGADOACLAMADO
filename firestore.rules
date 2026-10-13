@@ -6,23 +6,32 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Tem acesso à app = tem perfil em users/{uid} (criado pelo master).
-    // Todos os utilizadores com perfil podem criar, alterar e eliminar dados.
+    // Tem acesso à app = tem perfil em users/{uid} (criado pelo master em Utilizadores).
     function temPerfil() {
       return isAuth() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // Dois níveis de acesso:
+    //  - Master (users/{uid}.master == true): faz tudo — criar, alterar, substituir,
+    //    anexar, mover, eliminar, gerir utilizadores, logs e salários;
+    //  - Utilizador (perfil sem master): só vê e descarrega.
+    function isMaster() {
+      return temPerfil() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.master == true;
+    }
+
     function isAdmin() {
-      return temPerfil();
+      return isMaster();
     }
 
     function isEditor() {
-      return temPerfil();
+      return isMaster();
     }
 
-    // Administrador master: único com acesso às funcionalidades de salários/cálculos (recibos)
-    function isMaster() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.master == true;
+    // Marca da versão das regras: a app lê regras/v3 para confirmar que estas
+    // regras estão publicadas (se a leitura for recusada, avisa o master).
+    match /regras/{versao} {
+      allow read: if temPerfil() && versao == 'v3';
+      allow write: if false;
     }
 
     match /funcionarios/{docId} {

@@ -728,6 +728,33 @@ body.px-dragging .px-dropbar { display: flex; }
 .ctx-menu button:hover, .ctx-menu button:focus-visible { background: #eef3fa; color: var(--accent); outline: none; }
 .ctx-menu button.perigo { color: var(--red); }
 .ctx-menu hr { border: none; border-top: 1px solid var(--line); margin: 5px 4px; }
+/* ---------- Utilizadores e acessos ---------- */
+.acc-legenda { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.acc-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fff; }
+.acc-card p { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.45; }
+.acc-card p strong { color: var(--ink); }
+.acc-master { border-color: rgba(212,175,55,0.6); background: #fffbef; }
+.acc-tabela select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 13px; background: #fff; }
+.acc-tabela td { vertical-align: middle; }
+.acc-novo select { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 13.5px; }
+.acc-remover { color: var(--red); }
+.acc-tag { display: inline-block; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; }
+.acc-tag-master { background: #D4AF37; color: #2b2100; }
+.acc-tag-user { background: #e3ecf7; color: var(--accent); }
+.acc-novo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acc-novo input { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Poppins'; font-size: 13.5px; min-width: 0; }
+@media (max-width: 600px) { .acc-novo { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .acc-legenda { grid-template-columns: 1fr; } }
+/* Aviso ao master: regras por publicar */
+.regras-aviso { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; padding: 10px 16px; background: #fff4d6; border-bottom: 1px solid #f0d58a; color: #5c4400; font-size: 13px; text-align: center; }
+.regras-aviso[hidden] { display: none; }
+.regras-passos p { font-size: 13.5px; margin-bottom: 12px; line-height: 1.5; }
+.regras-passos ol { padding-left: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; }
+.regras-passos kbd { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: #eef2f7; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; }
+.regras-auto { margin-top: 18px; font-size: 12.5px; color: var(--ink-soft); }
+.regras-auto summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.regras-auto p { font-size: 12.5px; margin: 8px 0 0; }
+
 /* ---------- Janela de envio de ficheiros ---------- */
 .up-backdrop { position: fixed; inset: 0; z-index: 2500; display: none; align-items: center; justify-content: center; padding: 20px 16px; background: radial-gradient(1200px 600px at 50% -10%, rgba(212,175,55,0.18), transparent 60%), rgba(4,14,32,0.58); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
 .up-backdrop.open { display: flex; animation: upFade .22s ease; }
@@ -910,6 +937,11 @@ body.px-dragging .px-dropbar { display: flex; }
     </div>
   </nav>
 
+  <!-- Aviso ao master: regras de segurança por publicar -->
+  <div class="regras-aviso" id="regrasAviso" hidden>
+    <span><strong>Falta um passo:</strong> publicar as regras de segurança no Firebase. Sem isto, criar pastas na Empresa e os acessos Master/Utilizador não funcionam.</span>
+    <button type="button" class="btn btn-gold btn-sm" id="regrasAvisoBtn">Publicar agora</button>
+  </div>
   <!-- Aviso legal (só na Contabilidade) -->
   <div class="legal-banner" id="legalBanner" style="display:none;">
     <strong>Estimativas de apoio à gestão.</strong> Não substituem contabilidade certificada nem software de faturação certificado pela AT.
@@ -1128,31 +1160,57 @@ body.px-dragging .px-dropbar { display: flex; }
   </div>
 </div>
 
-<!-- Modal: Utilizadores -->
+<!-- Modal: Utilizadores e acessos (só o master) -->
 <div class="modal-backdrop" id="usersModal">
-  <div class="modal narrow">
+  <div class="modal">
     <div class="modal-head">
-      <h2>Gestão de Utilizadores</h2>
+      <h2>Utilizadores e acessos</h2>
       <button class="modal-close" id="usersClose" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
-      <table class="mini-table">
-        <thead><tr><th>Email</th><th>Nome</th><th>Role</th><th title="Acesso às funcionalidades de salários e cálculos">Master</th><th>Palavra-passe</th></tr></thead>
-        <tbody id="usersBody"></tbody>
-      </table>
-      <div class="form-section-title" style="margin-top:24px;">Criar novo utilizador</div>
-      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">Cria aqui a conta de acesso (email + palavra-passe) e o perfil. A palavra-passe tem de ter pelo menos <strong>6 caracteres</strong>. Continuas com a tua sessão iniciada.<br><strong>Todos os utilizadores criados aqui têm acesso total</strong> (criar, alterar, organizar e eliminar). Só o <strong>master</strong> gere utilizadores, logs e salários.</p>
-      <div class="add-user-row">
-        <input type="email" id="newUserEmail" placeholder="Email">
-        <input type="text" id="newUserNome" placeholder="Nome">
-        <input type="text" id="newUserPass" placeholder="Palavra-passe (mín. 6)">
-        <select id="newUserRole"><option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option></select>
+      <div class="acc-legenda">
+        <div class="acc-card acc-master"><span class="acc-tag acc-tag-master">Master</span><p><strong>Faz tudo:</strong> criar, editar, substituir, anexar, mover e eliminar. Gere utilizadores, vê os logs e os salários.</p></div>
+        <div class="acc-card acc-user"><span class="acc-tag acc-tag-user">Utilizador</span><p><strong>Só vê e descarrega.</strong> Não pode anexar, alterar nem eliminar nada.</p></div>
       </div>
-      <label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="newUserMaster"> Acesso <strong>master</strong> (salários e cálculos)</label>
+      <div class="table-wrap"><table class="mini-table acc-tabela">
+        <thead><tr><th>Email</th><th>Nome</th><th>Acesso</th><th>Palavra-passe</th><th></th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table></div>
+      <div class="form-section-title" style="margin-top:24px;">Criar novo utilizador</div>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">Cria a conta de acesso (email + palavra-passe, mínimo <strong>6 caracteres</strong>) e escolhe o que a pessoa pode fazer. Continuas com a tua sessão iniciada.</p>
+      <div class="add-user-row acc-novo">
+        <input type="email" id="newUserEmail" placeholder="Email" autocomplete="off">
+        <input type="text" id="newUserNome" placeholder="Nome">
+        <input type="text" id="newUserPass" placeholder="Palavra-passe (mín. 6)" autocomplete="off">
+        <select id="newUserAcesso" aria-label="Acesso"><option value="utilizador" selected>Utilizador — só ver e descarregar</option><option value="master">Master — faz tudo</option></select>
+      </div>
       <div><button class="btn btn-primary btn-sm" id="addUserBtn" style="margin-top:12px;">+ Criar utilizador</button></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="usersCloseFoot">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: publicar as regras de segurança (guia para o master) -->
+<div class="modal-backdrop" id="regrasModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>Publicar as regras de segurança</h2>
+      <button class="modal-close" id="regrasClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body regras-passos">
+      <p>As regras dizem ao Firebase quem pode fazer o quê (Master / Utilizador, pastas da Empresa…). Faz isto <strong>uma vez</strong>, demora 1 minuto:</p>
+      <ol>
+        <li><button type="button" class="btn btn-primary btn-sm" id="regrasCopiar">1. Copiar as regras</button></li>
+        <li><a class="btn btn-ghost btn-sm" id="regrasAbrir" href="https://console.firebase.google.com/project/controle-legado-aclamado/firestore/rules" target="_blank" rel="noopener">2. Abrir o Firebase (Regras)</a></li>
+        <li>No Firebase, clica dentro do texto, apaga tudo (<kbd>Ctrl</kbd>+<kbd>A</kbd> e <kbd>Delete</kbd>), cola (<kbd>Ctrl</kbd>+<kbd>V</kbd>) e carrega em <strong>Publicar</strong>.</li>
+        <li><button type="button" class="btn btn-gold btn-sm" id="regrasVerificar">4. Já publiquei — verificar</button></li>
+      </ol>
+      <details class="regras-auto"><summary>Para isto passar a ser automático no futuro</summary>
+        <p>No Google Cloud (IAM) do projeto <em>controle-legado-aclamado</em>, dá à conta de serviço <code>github-action-…@controle-legado-aclamado.iam.gserviceaccount.com</code> a função <strong>Firebase Rules Admin</strong>. A partir daí cada atualização da app publica as regras sozinha.</p>
+        <p><a href="https://console.cloud.google.com/iam-admin/iam?project=controle-legado-aclamado" target="_blank" rel="noopener">Abrir o IAM do projeto</a></p>
+      </details>
     </div>
   </div>
 </div>
@@ -1684,7 +1742,9 @@ function friendlyError(err) {
     'auth/invalid-credential': 'Email ou palavra-passe incorrectos.',
     'auth/too-many-requests': 'Demasiadas tentativas. Tente novamente mais tarde.',
     'auth/network-request-failed': 'Sem ligação à Internet. Verifique a rede.',
-    'permission-denied': 'Sem permissões para esta operação.',
+    'permission-denied': (typeof regrasDesatualizadas !== 'undefined' && regrasDesatualizadas && currentIsMaster)
+      ? 'Sem permissão: falta publicar as regras de segurança no Firebase (ver o aviso no topo).'
+      : 'Sem permissões para esta operação.',
     'unavailable': 'Serviço indisponível. Verifique a ligação à Internet.'
   };
   return map[code] || (err && err.message) || 'Ocorreu um erro inesperado.';
@@ -1704,12 +1764,14 @@ const GROUPS = [
 ];
 
 /* ---------- Permissions ---------- */
-// Quem tem acesso à app (perfil criado pelo master) pode criar, alterar, organizar
-// e eliminar tudo. Só utilizadores, logs e salários continuam reservados ao master.
+// Dois níveis de acesso, definidos pelo master em Utilizadores:
+//  - Master: faz tudo (criar, alterar, substituir, anexar, mover, eliminar,
+//    utilizadores, logs e salários);
+//  - Utilizador: só vê e descarrega.
 function temAcesso() { return currentHasProfile === true; }
-function isAdmin() { return temAcesso(); }
-function isEditor() { return temAcesso(); }
-function isMaster() { return currentIsMaster === true; }
+function isMaster() { return currentHasProfile === true && currentIsMaster === true; }
+function isAdmin() { return isMaster(); }
+function isEditor() { return isMaster(); }
 
 function applyRolePermissions() {
   const show = (id, cond) => { const el = document.getElementById(id); if (el) el.style.display = cond ? '' : 'none'; };
@@ -1717,11 +1779,17 @@ function applyRolePermissions() {
   show('btnImport', isEditor());
   show('btnUsers', isMaster());
   show('btnMarca', isEditor());
+  document.body.classList.toggle('so-leitura', temAcesso() && !isMaster());
+  // Contabilidade (finanças, salários): só o master
+  const tabContab = document.querySelector('.area-tab[data-area="contabilidade"]');
+  if (tabContab) tabContab.style.display = isMaster() ? '' : 'none';
   show('btnLogs', isMaster());
   show('btnDedup', isAdmin());
   show('btnNormEmp', isAdmin());
   show('detailEdit', isEditor());
   show('detailDelete', isAdmin());
+  show('detailFaltas', isEditor()); // faltas e A1 são registos que se editam
+  show('detailA1', isEditor());
   applyMasterVisibility();
 }
 
@@ -1798,7 +1866,7 @@ async function loadRole(user) {
     currentIsMaster = !!(doc.exists && doc.data().master === true);
     currentHasProfile = doc.exists;
     if (doc.exists) {
-      currentRole = 'admin'; // acesso total para todos os utilizadores com perfil
+      currentRole = currentIsMaster ? 'master' : 'utilizador';
     } else {
       currentRole = 'viewer';
       toast('Esta conta ainda não tem acesso. Peça ao utilizador master para a criar em Utilizadores.', true);
@@ -1815,13 +1883,10 @@ function paintUserBox() {
   document.getElementById('userEmail').textContent = currentUser.email;
   document.getElementById('footerUser').textContent = currentUser.email;
   const badge = document.getElementById('userRole');
-  badge.textContent = currentRole;
-  badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : currentRole === 'editor' ? 'role-editor' : 'role-viewer');
-  let mb = document.getElementById('userMasterBadge');
-  if (currentIsMaster) {
-    if (!mb) { mb = document.createElement('span'); mb.id = 'userMasterBadge'; badge.insertAdjacentElement('afterend', mb); }
-    mb.className = 'role-badge role-master'; mb.textContent = 'master';
-  } else if (mb) { mb.remove(); }
+  badge.textContent = isMaster() ? 'master' : (temAcesso() ? 'utilizador' : 'sem acesso');
+  badge.className = 'role-badge ' + (isMaster() ? 'role-master' : 'role-viewer');
+  badge.title = isMaster() ? 'Acesso total' : (temAcesso() ? 'Só pode ver e descarregar' : 'Peça acesso ao master');
+  const mb = document.getElementById('userMasterBadge'); if (mb) mb.remove();
 }
 
 auth.onAuthStateChanged(async user => {
@@ -1830,6 +1895,7 @@ auth.onAuthStateChanged(async user => {
     await loadRole(user);
     paintUserBox();
     applyRolePermissions();
+    verificarRegras(false);
     subscribeFuncionarios();
     showApp();
   } else {
@@ -3295,22 +3361,28 @@ async function renderUsers() {
   try {
     const snap = await db.collection('users').get();
     if (snap.empty) { body.innerHTML = '<tr><td colspan="5">Sem utilizadores.</td></tr>'; return; }
-    body.innerHTML = snap.docs.map(d => {
+    const docs = snap.docs.slice().sort((x, y) => (y.data().master === true) - (x.data().master === true) || String(x.data().email || '').localeCompare(String(y.data().email || '')));
+    body.innerHTML = docs.map(d => {
       const u = d.data();
       const isSelf = currentUser && d.id === currentUser.uid;
-      const sel = ['admin','editor','viewer'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('');
       const isM = u.master === true;
+      const acesso = isSelf
+        ? `<span class="acc-tag acc-tag-master" title="Não podes mudar o teu próprio acesso">Master</span>`
+        : `<select class="acesso-select" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" aria-label="Acesso de ${escapeHtml(u.email)}">
+             <option value="master"${isM ? ' selected' : ''}>Master — faz tudo</option>
+             <option value="utilizador"${isM ? '' : ' selected'}>Utilizador — só ver e descarregar</option>
+           </select>`;
       return `<tr>
         <td>${escapeHtml(u.email)}${isSelf ? ' <strong>(você)</strong>' : ''}</td>
         <td>${escapeHtml(u.nome)}</td>
-        <td>${isSelf ? `<span class="role-badge role-admin">${escapeHtml(u.role)}</span>` : `<select data-uid="${d.id}" data-email="${escapeHtml(u.email)}" class="role-select">${sel}</select>`}</td>
-        <td style="text-align:center;"><label style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="master-chk" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" ${isM ? 'checked' : ''}> ${isM ? '<span class="role-badge role-master">master</span>' : ''}</label></td>
+        <td>${acesso}</td>
         <td style="text-align:center;"><button class="btn btn-ghost btn-sm user-reset" data-email="${escapeHtml(u.email)}" title="Enviar email para o utilizador definir nova palavra-passe">Repor</button></td>
+        <td style="text-align:center;">${isSelf ? '' : `<button class="btn btn-ghost btn-sm acc-remover user-remover" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" title="Esta pessoa deixa de conseguir entrar na app">Retirar acesso</button>`}</td>
       </tr>`;
     }).join('');
-    body.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', e => changeRole(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
-    body.querySelectorAll('.master-chk').forEach(c => c.addEventListener('change', e => setMaster(e.target.dataset.uid, e.target.checked, e.target.dataset.email)));
+    body.querySelectorAll('.acesso-select').forEach(s => s.addEventListener('change', e => mudarAcesso(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
     body.querySelectorAll('.user-reset').forEach(b => b.addEventListener('click', e => resetUserPassword(e.currentTarget.dataset.email)));
+    body.querySelectorAll('.user-remover').forEach(b => b.addEventListener('click', e => retirarAcesso(e.currentTarget.dataset.uid, e.currentTarget.dataset.email)));
   } catch (err) {
     body.innerHTML = `<tr><td colspan="5">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
   }
@@ -3332,71 +3404,119 @@ async function resetUserPassword(email) {
     hideOverlay();
   }
 }
-async function setMaster(uidVal, makeMaster, email) {
+// Master (faz tudo) ou Utilizador (só ver e descarregar)
+async function mudarAcesso(uidVal, acesso, email) {
   if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
-  showOverlay('A actualizar acesso master…');
+  if (currentUser && uidVal === currentUser.uid) { toast('Não podes mudar o teu próprio acesso.', true); await renderUsers(); return; }
+  const master = acesso === 'master';
+  if (!confirm(master
+    ? `Dar acesso MASTER a ${email}?\n\nVai poder fazer tudo: criar, editar, substituir, anexar, mover e eliminar, gerir utilizadores, ver logs e salários.`
+    : `Passar ${email} a UTILIZADOR?\n\nSó vai poder ver e descarregar. Não poderá anexar, alterar nem eliminar nada.`)) { await renderUsers(); return; }
+  showOverlay('A atualizar acesso…');
   try {
-    await db.collection('users').doc(uidVal).update({ master: makeMaster });
-    await logAudit('user_role', uidVal, `${email} → master ${makeMaster ? 'concedido' : 'removido'}`);
-    toast(`Acesso master ${makeMaster ? 'concedido a' : 'removido de'} ${email}.`);
-    if (currentUser && uidVal === currentUser.uid) { currentIsMaster = makeMaster; paintUserBox(); applyMasterVisibility(); }
-    await renderUsers();
+    await db.collection('users').doc(uidVal).update({ master, role: master ? 'admin' : 'viewer' });
+    await logAudit('user_role', uidVal, `${email} → ${master ? 'master' : 'utilizador'}`);
+    toast(`${email} agora é ${master ? 'Master' : 'Utilizador (só ver e descarregar)'}.`);
   } catch (err) {
-    toast('Erro ao actualizar acesso master: ' + friendlyError(err), true);
-    await renderUsers();
+    toast('Erro ao atualizar acesso: ' + friendlyError(err), true);
   } finally {
     hideOverlay();
+    await renderUsers();
   }
 }
-async function changeRole(uidVal, role, email) {
+// Retira o acesso (apaga o perfil): a pessoa deixa de conseguir usar a app
+async function retirarAcesso(uidVal, email) {
   if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
-  showOverlay('A actualizar perfil…');
+  if (currentUser && uidVal === currentUser.uid) return;
+  if (!confirm(`Retirar o acesso de ${email}?\n\nEsta pessoa deixa de conseguir entrar na app. Podes voltar a criá-la mais tarde.`)) return;
+  showOverlay('A retirar acesso…');
   try {
-    await db.collection('users').doc(uidVal).update({ role: role });
-    await logAudit('user_role', uidVal, `${email} → ${role}`);
-    toast('Role actualizado para ' + role + '.');
-    if (currentUser && uidVal === currentUser.uid) { currentRole = role; paintUserBox(); applyRolePermissions(); }
+    await db.collection('users').doc(uidVal).delete();
+    await logAudit('user_remove', uidVal, `acesso retirado: ${email}`);
+    toast(`Acesso de ${email} retirado.`);
   } catch (err) {
-    toast('Erro ao actualizar role: ' + friendlyError(err), true);
-    await renderUsers();
+    toast('Erro ao retirar acesso: ' + friendlyError(err), true);
   } finally {
     hideOverlay();
+    await renderUsers();
   }
 }
 // Cria a conta de autenticação (email + palavra-passe) numa instância Firebase
-// SECUNDÁRIA, para o administrador atual NÃO ser desligado, e grava o perfil.
+// SECUNDÁRIA, para o master atual NÃO ser desligado, e grava o perfil.
+// Se a conta já existir (ex.: acesso retirado antes), basta voltar a criar o perfil — ver mensagem.
 async function addUser() {
   if (!isMaster()) { toast('Apenas o utilizador master.', true); return; }
   const email = document.getElementById('newUserEmail').value.trim();
   const nome = document.getElementById('newUserNome').value.trim();
   const pass = document.getElementById('newUserPass').value;
-  const role = document.getElementById('newUserRole').value;
-  const master = document.getElementById('newUserMaster').checked;
+  const master = document.getElementById('newUserAcesso').value === 'master';
   if (!email || !pass) { toast('Indique o email e a palavra-passe.', true); return; }
   if (pass.length < 6) { toast('A palavra-passe deve ter pelo menos 6 caracteres.', true); return; }
+  if (!confirm(`Criar ${email} como ${master ? 'MASTER (faz tudo)' : 'UTILIZADOR (só ver e descarregar)'}?`)) return;
   showOverlay('A criar utilizador…');
   let secAuth = null;
   try {
     const secApp = firebase.apps.find(a => a.name === 'secondaryAuth') || firebase.initializeApp(firebaseConfig, 'secondaryAuth');
     secAuth = secApp.auth();
     await secAuth.setPersistence(firebase.auth.Auth.Persistence.NONE);
-    const cred = await secAuth.createUserWithEmailAndPassword(email, pass);
-    const newUid = cred.user.uid;
-    await db.collection('users').doc(newUid).set({ email, nome, role, master, created_at: firebase.firestore.FieldValue.serverTimestamp() });
+    let newUid;
+    try {
+      newUid = (await secAuth.createUserWithEmailAndPassword(email, pass)).user.uid;
+    } catch (err) {
+      // conta já existe (acesso retirado antes): entra com a palavra-passe indicada para a reativar
+      if (err && err.code === 'auth/email-already-in-use') newUid = (await secAuth.signInWithEmailAndPassword(email, pass)).user.uid;
+      else throw err;
+    }
+    await db.collection('users').doc(newUid).set({ email, nome, master, role: master ? 'admin' : 'viewer', created_at: firebase.firestore.FieldValue.serverTimestamp() });
     await secAuth.signOut();
-    await logAudit('user_create', newUid, `utilizador criado: ${email} (${role}${master ? ', master' : ''})`);
+    await logAudit('user_create', newUid, `utilizador criado: ${email} (${master ? 'master' : 'utilizador'})`);
     document.getElementById('newUserEmail').value = '';
     document.getElementById('newUserNome').value = '';
     document.getElementById('newUserPass').value = '';
-    document.getElementById('newUserRole').value = 'viewer';
-    document.getElementById('newUserMaster').checked = false;
-    toast(`Utilizador ${email} criado.`);
+    document.getElementById('newUserAcesso').value = 'utilizador';
+    toast(`${email} criado como ${master ? 'Master' : 'Utilizador'}.`);
     await renderUsers();
   } catch (err) {
-    toast('Erro ao criar utilizador: ' + friendlyError(err), true);
+    const m = err && (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')
+      ? 'Já existe uma conta com esse email e a palavra-passe não coincide. Usa "Repor" na lista ou escreve a palavra-passe atual dessa conta.'
+      : friendlyError(err);
+    toast('Erro ao criar utilizador: ' + m, true);
     try { if (secAuth) await secAuth.signOut(); } catch (e) {}
   } finally {
     hideOverlay();
+  }
+}
+
+/* ---------- Regras de segurança publicadas? (só o master é avisado) ----------
+   firestore.rules autoriza a leitura de regras/<versão>; se a leitura for recusada,
+   as regras publicadas no Firebase são mais antigas do que esta versão da app. */
+const REGRAS_VERSAO = 'v3';
+let regrasDesatualizadas = false;
+async function verificarRegras(avisarOk) {
+  if (!isMaster()) { document.getElementById('regrasAviso').hidden = true; return; }
+  try {
+    await db.collection('regras').doc(REGRAS_VERSAO).get({ source: 'server' });
+    regrasDesatualizadas = false;
+    if (avisarOk) toast('Regras publicadas corretamente. Está tudo pronto.');
+  } catch (err) {
+    if (err && err.code === 'permission-denied') {
+      regrasDesatualizadas = true;
+      if (avisarOk) toast('Ainda não estão publicadas (ou ainda não chegaram). Confirma que carregaste em "Publicar" e tenta de novo daqui a 1 minuto.', true);
+    } else if (avisarOk) toast('Não foi possível verificar agora: ' + friendlyError(err), true);
+  }
+  document.getElementById('regrasAviso').hidden = !regrasDesatualizadas;
+  if (!regrasDesatualizadas) closeModal('regrasModal');
+}
+async function copiarRegras() {
+  try {
+    const r = await fetch('firestore.rules', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const texto = await r.text();
+    if (!/rules_version/.test(texto)) throw new Error('ficheiro inválido');
+    await navigator.clipboard.writeText(texto);
+    toast('Regras copiadas. Agora abre o Firebase e cola.');
+  } catch (err) {
+    toast('Não consegui copiar automaticamente (' + (err.message || err) + '). Abre o ficheiro firestore.rules no GitHub e copia o texto.', true);
   }
 }
 
@@ -3543,6 +3663,10 @@ function bind() {
     document.getElementById('mk_sigla').value = MARCA_PADRAO.sigla;
   });
   document.getElementById('usersCloseFoot').addEventListener('click', () => closeModal('usersModal'));
+  document.getElementById('regrasAvisoBtn').addEventListener('click', () => openModal('regrasModal'));
+  document.getElementById('regrasClose').addEventListener('click', () => closeModal('regrasModal'));
+  document.getElementById('regrasCopiar').addEventListener('click', copiarRegras);
+  document.getElementById('regrasVerificar').addEventListener('click', () => verificarRegras(true));
   document.getElementById('addUserBtn').addEventListener('click', addUser);
 
   // Logs modal
@@ -4269,7 +4393,7 @@ function ehCisSeppe(v) {
 }
 let pxMigracaoIniciada = false;
 async function migrarCisSeppe() {
-  if (pxMigracaoIniciada || !temAcesso() || !employees.length) return;
+  if (pxMigracaoIniciada || !isEditor() || !employees.length) return;
   pxMigracaoIniciada = true;
   try {
     const flag = await db.collection('config').doc('migracoes').get();
