@@ -23,7 +23,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 <style>
 :root {
   color-scheme: light;
@@ -703,6 +702,84 @@ body.px-dragging .px-dropbar { display: flex; }
 .ctx-menu button:hover, .ctx-menu button:focus-visible { background: #eef3fa; color: var(--accent); outline: none; }
 .ctx-menu button.perigo { color: var(--red); }
 .ctx-menu hr { border: none; border-top: 1px solid var(--line); margin: 5px 4px; }
+/* ---------- Janela de envio de ficheiros ---------- */
+.up-backdrop { position: fixed; inset: 0; z-index: 2500; display: none; align-items: center; justify-content: center; padding: 20px 16px; background: radial-gradient(1200px 600px at 50% -10%, rgba(212,175,55,0.18), transparent 60%), rgba(4,14,32,0.58); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
+.up-backdrop.open { display: flex; animation: upFade .22s ease; }
+@keyframes upFade { from { opacity: 0; } to { opacity: 1; } }
+.up-card { position: relative; width: 100%; max-width: 620px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; border-radius: 26px; background: linear-gradient(165deg, rgba(255,255,255,0.97), rgba(243,247,253,0.95)); border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 40px 90px -20px rgba(0,20,50,0.55), 0 0 0 1px rgba(0,51,102,0.06), inset 0 1px 0 rgba(255,255,255,0.9); overflow: hidden; animation: upIn .32s cubic-bezier(.2,.9,.25,1.15); }
+.up-card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, #003366, #1f6fd1 45%, #D4AF37); }
+@keyframes upIn { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+.up-head { display: flex; align-items: center; gap: 14px; padding: 22px 22px 14px; }
+.up-head-ico { width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; background: linear-gradient(140deg, #003366, #1f6fd1); box-shadow: 0 8px 20px -6px rgba(31,111,209,0.6); }
+.up-head-txt { flex: 1; min-width: 0; }
+.up-head-txt h2 { font-family: 'Montserrat', sans-serif; font-size: 19px; font-weight: 800; color: var(--accent-deep, #002244); letter-spacing: -0.2px; }
+.up-head-txt p { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-head-txt p b { color: var(--accent); font-weight: 600; }
+.up-x { width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; border: 1px solid rgba(0,51,102,0.1); background: rgba(0,51,102,0.04); color: var(--accent); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, transform .15s; }
+.up-x:hover { background: rgba(0,51,102,0.1); transform: rotate(90deg); }
+.up-drop { margin: 4px 22px 0; padding: 30px 20px 24px; border-radius: 22px; text-align: center; cursor: pointer; position: relative; outline: none; background: radial-gradient(420px 180px at 50% 0%, rgba(31,111,209,0.09), transparent 70%), linear-gradient(180deg, #f7faff, #eef3fb); border: 2px dashed rgba(0,51,102,0.22); transition: border-color .2s, box-shadow .2s, transform .2s, background .2s; }
+.up-drop:hover, .up-drop:focus-visible { border-color: rgba(31,111,209,0.6); box-shadow: 0 0 0 6px rgba(31,111,209,0.08); }
+.up-drop.over { border-style: solid; border-color: #D4AF37; transform: scale(1.012); box-shadow: 0 0 0 8px rgba(212,175,55,0.16), 0 18px 40px -18px rgba(212,175,55,0.7); background: radial-gradient(420px 200px at 50% 0%, rgba(212,175,55,0.16), transparent 70%), #fffdf5; }
+.up-orb { width: 78px; height: 78px; margin: 0 auto 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(145deg, #0a3f7a, #1f6fd1 60%, #4f9bff); box-shadow: 0 14px 30px -10px rgba(31,111,209,0.75), inset 0 2px 6px rgba(255,255,255,0.35); animation: upFloat 3.2s ease-in-out infinite; position: relative; }
+.up-orb::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 2px solid rgba(212,175,55,0.55); border-top-color: transparent; border-left-color: transparent; animation: upSpin 6s linear infinite; }
+.up-drop.over .up-orb { animation-duration: 1.2s; }
+@keyframes upFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes upSpin { to { transform: rotate(360deg); } }
+.up-drop-tit { display: block; font-family: 'Montserrat', sans-serif; font-size: 16.5px; font-weight: 700; color: var(--accent-deep, #002244); }
+.up-drop-ou { display: block; font-size: 12px; color: var(--ink-soft); margin: 6px 0 12px; text-transform: uppercase; letter-spacing: 2px; }
+.up-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.up-btn { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; border-radius: 14px; padding: 11px 20px; cursor: pointer; border: 1px solid transparent; transition: transform .15s, box-shadow .15s, background .15s; }
+.up-btn:active { transform: scale(.97); }
+.up-btn-pri { color: #fff; background: linear-gradient(135deg, #003366, #1f6fd1); box-shadow: 0 10px 22px -10px rgba(31,111,209,0.85); }
+.up-btn-pri:hover { box-shadow: 0 14px 28px -10px rgba(31,111,209,0.95); transform: translateY(-1px); }
+.up-btn-pri:disabled { opacity: .55; cursor: default; transform: none; }
+.up-btn-sec { color: var(--accent); background: #fff; border-color: rgba(0,51,102,0.15); }
+.up-btn-sec:hover { border-color: var(--accent); }
+.up-formatos { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.up-formatos span { font-size: 11px; font-weight: 600; letter-spacing: .4px; color: #4a5d75; background: rgba(0,51,102,0.06); border-radius: 999px; padding: 3px 10px; }
+.up-lista { padding: 14px 22px 4px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.up-lista:empty { display: none; }
+.up-item { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 16px; background: #fff; border: 1px solid rgba(0,51,102,0.08); box-shadow: 0 6px 18px -12px rgba(0,34,68,0.35); animation: upItem .25s ease; }
+@keyframes upItem { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.up-item .ftype { min-width: 44px; height: 44px; border-radius: 12px; font-size: 10px; }
+.up-item-txt { min-width: 0; }
+.up-item-nome { font-size: 13.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-item-meta { font-size: 11.5px; color: var(--ink-soft); margin-top: 1px; }
+.up-item.erro .up-item-meta { color: var(--red); }
+.up-barra { height: 6px; border-radius: 999px; background: rgba(0,51,102,0.08); margin-top: 7px; overflow: hidden; }
+.up-barra i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #1f6fd1, #D4AF37); background-size: 200% 100%; animation: upShine 1.4s linear infinite; transition: width .25s ease; }
+.up-item.ok .up-barra i { background: linear-gradient(90deg, #1f9d55, #3cc47c); animation: none; }
+.up-item.erro .up-barra i { background: var(--red); animation: none; }
+@keyframes upShine { from { background-position: 200% 0; } to { background-position: 0 0; } }
+.up-estado { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.up-item.ok .up-estado { background: #e5f6ec; color: #1f9d55; animation: upPop .35s cubic-bezier(.2,.9,.3,1.4); }
+.up-item.erro .up-estado { background: #fdeaea; color: var(--red); }
+.up-item.envio .up-estado::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(31,111,209,0.25); border-top-color: #1f6fd1; animation: upSpin .8s linear infinite; }
+@keyframes upPop { from { transform: scale(.4); } to { transform: none; } }
+.up-repetir { font-family: 'Poppins'; font-size: 11.5px; font-weight: 600; color: var(--accent); background: none; border: 1px solid rgba(0,51,102,0.18); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.up-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px 20px; }
+.up-resumo { font-size: 12.5px; color: var(--ink-soft); }
+.up-resumo b { color: var(--accent); }
+/* largar ficheiros do computador diretamente numa pasta */
+.up-alvo { position: relative; }
+.up-alvo::after { content: attr(data-up-msg); position: absolute; inset: -8px; z-index: 30; border-radius: 22px; display: flex; align-items: flex-start; justify-content: center; padding-top: 120px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 18px; color: var(--accent); background: rgba(255,253,245,0.86); border: 3px dashed #D4AF37; box-shadow: 0 0 0 8px rgba(212,175,55,0.14); pointer-events: none; }
+@media (max-width: 600px) {
+  .up-backdrop { align-items: flex-end; padding: 0; }
+  .up-card { max-width: none; border-radius: 26px 26px 0 0; max-height: 92vh; animation: upSheet .32s cubic-bezier(.2,.9,.25,1); }
+  @keyframes upSheet { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .up-drop { padding: 22px 14px 18px; }
+  .up-drop-tit { font-size: 15px; }
+  .up-btns .up-btn { flex: 1 1 140px; }
+}
+/* com ficheiros na lista, a zona de largar fica compacta */
+.up-card.com-itens .up-drop { padding: 16px 16px 14px; }
+.up-card.com-itens .up-orb { width: 50px; height: 50px; margin-bottom: 8px; }
+.up-card.com-itens .up-orb svg { width: 26px; height: 26px; }
+.up-card.com-itens .up-drop-ou { display: none !important; }
+.up-card.com-itens .up-drop-tit { font-size: 14.5px; margin-bottom: 10px; }
+.up-card.com-itens .up-formatos { margin-top: 10px; }
+@media (max-width: 600px) { .up-head-txt p { white-space: normal; } }
+@media (prefers-reduced-motion: reduce) { .up-orb, .up-orb::after, .up-barra i { animation: none; } }
 .ctx-menu .ctx-tit { font-size: 11px; font-weight: 600; color: var(--ink-soft); padding: 6px 12px 4px; text-transform: uppercase; letter-spacing: .5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Rodapé sempre no fundo da página */
@@ -1256,6 +1333,35 @@ body.px-dragging .px-dropbar { display: flex; }
 </div>
 
 <div id="toastWrap"></div>
+<!-- Janela de envio de ficheiros (substitui a do Cloudinary) -->
+<div class="up-backdrop" id="upModal" aria-hidden="true">
+  <div class="up-card" role="dialog" aria-modal="true" aria-labelledby="upTitulo">
+    <div class="up-head">
+      <div class="up-head-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></div>
+      <div class="up-head-txt"><h2 id="upTitulo">Anexar ficheiros</h2><p id="upDestino"></p></div>
+      <button type="button" class="up-x" id="upFechar" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="up-drop" id="upDrop" tabindex="0" role="button" aria-label="Escolher ficheiros para enviar">
+      <div class="up-orb" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="38" height="38" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 33h-2a9 9 0 1 1 2.2-17.7A12 12 0 0 1 38 19a7 7 0 0 1-1 14h-2"/><path d="M24 38V22"/><path d="m18 28 6-6 6 6"/></svg>
+      </div>
+      <strong class="up-drop-tit">Arrasta os ficheiros para aqui</strong>
+      <span class="up-drop-ou">ou</span>
+      <div class="up-btns">
+        <button type="button" class="up-btn up-btn-pri" id="upEscolher">Escolher ficheiros</button>
+        <button type="button" class="up-btn up-btn-sec" id="upCamara">Tirar foto</button>
+      </div>
+      <div class="up-formatos" id="upFormatos"></div>
+    </div>
+    <div class="up-lista" id="upLista"></div>
+    <div class="up-foot">
+      <span class="up-resumo" id="upResumo">Nenhum ficheiro escolhido</span>
+      <button type="button" class="up-btn up-btn-pri" id="upConcluir">Concluir</button>
+    </div>
+    <input type="file" id="upInput" multiple hidden>
+    <input type="file" id="upInputCam" accept="image/*" capture="environment" hidden>
+  </div>
+</div>
 <!-- Modal: nome da app e da empresa (aparece no topo, no rodapé, no ecrã de entrada e nos PDFs) -->
 <div class="modal-backdrop" id="marcaModal">
   <div class="modal narrow">
@@ -2208,30 +2314,187 @@ function renderDocs(docs) {
   }).join('');
 }
 
-function openUploadWidget(funcId, funcNome, pasta) {
-  if (!isEditor()) { toast('Sem permissões para anexar documentos.', true); return; }
-  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
-  const widget = cloudinary.createUploadWidget({
-    cloudName: CLOUDINARY_CLOUD_NAME,
-    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-    folder: `${CLOUDINARY_FOLDER}/${funcId}`,
-    resourceType: 'auto',
-    clientAllowedFormats: ['jpg','jpeg','png','pdf'],
-    maxFileSize: 10485760,
-    multiple: true,
-    sources: ['local','camera'],
-    language: 'pt',
-    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
-  }, (error, result) => {
-    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
-    if (result && result.event === 'success') {
-      saveDocumentMetadata(funcId, funcNome, result.info, pasta);
-    }
+/* ============================================================
+   Janela de envio de ficheiros (envio direto para o Cloudinary)
+   abrirEnvio({ titulo, destino, pastaCloud, formatos, ficheiros, guardar(info) → Promise<boolean> })
+   ============================================================ */
+const UP_MAX = 10 * 1024 * 1024;
+const UP_FORMATOS_DOC = ['pdf', 'jpg', 'jpeg', 'png'];
+const UP_ROTULOS = { pdf: 'PDF', jpg: 'JPG', jpeg: '', png: 'PNG', xls: '', xlsx: 'Excel', csv: 'CSV' };
+let upCtx = null;   // envio que está aberto
+let upItens = [];   // { id, file, ext, ctx, estado: 'fila'|'envio'|'ok'|'erro', prog, msg }
+let upSeq = 0, upAtivos = 0, upLigado = false;
+
+function upExt(nome) { const m = /\.([a-z0-9]{1,5})$/i.exec(nome || ''); return m ? m[1].toLowerCase() : ''; }
+function upToque() { return !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); }
+function upVisiveis() { return upItens.filter(i => i.ctx === upCtx); }
+
+function abrirEnvio(opts) {
+  if (!isEditor()) { toast('Sem permissões para anexar ficheiros.', true); return; }
+  upLigar();
+  upCtx = Object.assign({ titulo: 'Anexar ficheiros', destino: '', formatos: UP_FORMATOS_DOC }, opts);
+  upItens = upItens.filter(i => i.estado === 'fila' || i.estado === 'envio'); // envios anteriores continuam em segundo plano
+  document.getElementById('upTitulo').textContent = upCtx.titulo;
+  document.getElementById('upDestino').innerHTML = upCtx.destino ? `Destino: <b>${escapeHtml(upCtx.destino)}</b>` : '';
+  document.getElementById('upFormatos').innerHTML = upCtx.formatos
+    .map(f => (f in UP_ROTULOS ? UP_ROTULOS[f] : f.toUpperCase())).filter(Boolean)
+    .concat(['até 10 MB']).map(t => `<span>${escapeHtml(t)}</span>`).join('');
+  document.getElementById('upInput').accept = upCtx.formatos.map(f => '.' + f).join(',');
+  const toque = upToque();
+  document.getElementById('upCamara').style.display = toque ? '' : 'none';
+  document.querySelector('#upDrop .up-drop-tit').textContent = toque ? 'Toca para escolher ficheiros' : 'Arrasta os ficheiros para aqui';
+  document.querySelector('#upDrop .up-drop-ou').style.display = toque ? 'none' : '';
+  upDesenhar();
+  const m = document.getElementById('upModal');
+  m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
+  if (opts.ficheiros && opts.ficheiros.length) upJuntar(opts.ficheiros);
+}
+function upAberto() { return document.getElementById('upModal').classList.contains('open'); }
+function upFechar() {
+  const pend = upVisiveis().filter(i => i.estado === 'fila' || i.estado === 'envio').length;
+  if (pend && !confirm(`Ainda há ${pend} ficheiro(s) a enviar.\n\nFechar a janela? Os envios continuam em segundo plano.`)) return;
+  const m = document.getElementById('upModal');
+  m.classList.remove('open'); m.setAttribute('aria-hidden', 'true');
+}
+function upJuntar(files) {
+  [...files].forEach(file => {
+    const ext = upExt(file.name);
+    const it = { id: ++upSeq, file, ext, ctx: upCtx, estado: 'fila', prog: 0, msg: 'Na fila…' };
+    if (!upCtx.formatos.includes(ext)) { it.estado = 'erro'; it.fixo = true; it.msg = `Formato não aceite (${ext ? ext.toUpperCase() : 'sem extensão'}). Aceites: ${upCtx.formatos.join(', ').toUpperCase()}`; }
+    else if (file.size > UP_MAX) { it.estado = 'erro'; it.fixo = true; it.msg = `Tem ${formatBytes(file.size)} — o máximo é 10 MB`; }
+    upItens.push(it);
   });
-  widget.open();
+  upDesenhar();
+  upProximo();
+}
+function upProximo() {
+  while (upAtivos < 3) {
+    const it = upItens.find(i => i.estado === 'fila');
+    if (!it) break;
+    upAtivos++;
+    upEnviar(it).finally(() => { upAtivos--; upProximo(); });
+  }
+}
+function upCloudinary(file, pastaCloud, onProg) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    if (pastaCloud) fd.append('folder', pastaCloud);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`);
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProg(e.loaded / e.total); };
+    xhr.onload = () => {
+      let j = null; try { j = JSON.parse(xhr.responseText); } catch (e) { /* resposta inválida */ }
+      if (xhr.status >= 200 && xhr.status < 300 && j && j.secure_url) resolve(j);
+      else reject(new Error((j && j.error && j.error.message) || ('o servidor respondeu ' + xhr.status)));
+    };
+    xhr.onerror = () => reject(new Error('sem ligação ao servidor'));
+    xhr.send(fd);
+  });
+}
+async function upEnviar(it) {
+  it.estado = 'envio'; it.prog = 0; it.msg = 'A enviar…'; upAtualizar(it);
+  try {
+    if (navigator.onLine === false) throw new Error('sem Internet');
+    const info = await upCloudinary(it.file, it.ctx.pastaCloud, p => { it.prog = p; it.msg = `A enviar… ${Math.round(p * 100)}%`; upAtualizar(it); });
+    if (!info.original_filename) info.original_filename = it.file.name.replace(/\.[^.]+$/, '');
+    if (!info.format && it.ext) info.format = it.ext; // Excel/CSV chegam sem "format"
+    it.prog = 1; it.msg = 'A guardar…'; upAtualizar(it);
+    const guardado = await it.ctx.guardar(info, it.file);
+    if (guardado === false) throw new Error('não foi possível guardar na app');
+    it.estado = 'ok'; it.msg = `${formatBytes(it.file.size)} · enviado`;
+  } catch (err) {
+    it.estado = 'erro'; it.msg = 'Erro: ' + (err && err.message ? err.message : 'o envio falhou');
+  }
+  upAtualizar(it);
+}
+const UP_ICO_OK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+const UP_ICO_ERRO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>';
+function upClasse(it) { return it.estado === 'ok' ? 'ok' : (it.estado === 'erro' ? 'erro' : 'envio'); }
+function upAcaoHtml(it) {
+  if (it.estado === 'ok') return `<span class="up-estado">${UP_ICO_OK}</span>`;
+  if (it.estado === 'erro') return it.fixo ? `<span class="up-estado">${UP_ICO_ERRO}</span>` : `<button type="button" class="up-repetir" data-up-repetir="${it.id}">Tentar de novo</button>`;
+  return '<span class="up-estado"></span>';
+}
+function upItemHtml(it) {
+  const larg = it.estado === 'erro' ? 100 : Math.round(it.prog * 100);
+  return `<div class="up-item ${upClasse(it)}" data-up-id="${it.id}">${docIcon(it.ext)}`
+    + `<div class="up-item-txt"><div class="up-item-nome" title="${escapeHtml(it.file.name)}">${escapeHtml(it.file.name)}</div>`
+    + `<div class="up-item-meta">${escapeHtml(it.msg)}</div>${it.fixo ? '' : `<div class="up-barra"><i style="width:${larg}%"></i></div>`}</div>`
+    + `<div class="up-acao">${upAcaoHtml(it)}</div></div>`;
+}
+function upDesenhar() {
+  document.getElementById('upLista').innerHTML = upVisiveis().map(upItemHtml).join('');
+  document.querySelector('#upModal .up-card').classList.toggle('com-itens', upVisiveis().length > 0);
+  upResumo();
+}
+// Atualiza só o que muda (sem repetir a animação de entrada)
+function upAtualizar(it) {
+  if (it.ctx !== upCtx) return;
+  const el = document.querySelector(`#upLista [data-up-id="${it.id}"]`);
+  if (!el) { upDesenhar(); return; }
+  el.className = 'up-item ' + upClasse(it);
+  el.querySelector('.up-item-meta').textContent = it.msg;
+  const barra = el.querySelector('.up-barra i');
+  if (barra) barra.style.width = (it.estado === 'erro' ? 100 : Math.round(it.prog * 100)) + '%';
+  const acao = el.querySelector('.up-acao'), novo = upAcaoHtml(it);
+  if (acao.innerHTML !== novo) acao.innerHTML = novo;
+  upResumo();
+}
+function upResumo() {
+  const v = upVisiveis();
+  const ok = v.filter(i => i.estado === 'ok').length, erro = v.filter(i => i.estado === 'erro').length, pend = v.length - ok - erro;
+  const el = document.getElementById('upResumo');
+  if (!v.length) el.textContent = 'Nenhum ficheiro escolhido';
+  else el.innerHTML = (pend ? `A enviar <b>${pend}</b> de ${v.length}…` : `<b>${ok}</b> de ${v.length} enviado${v.length === 1 ? '' : 's'}`) + (erro ? ` · <b style="color:var(--red)">${erro}</b> com erro` : '');
+  document.getElementById('upConcluir').textContent = pend ? 'Continuar em segundo plano' : 'Concluir';
+}
+function upLigar() {
+  if (upLigado) return;
+  upLigado = true;
+  const modal = document.getElementById('upModal'), drop = document.getElementById('upDrop');
+  const input = document.getElementById('upInput'), cam = document.getElementById('upInputCam');
+  const escolher = () => input.click();
+  document.getElementById('upEscolher').addEventListener('click', ev => { ev.stopPropagation(); escolher(); });
+  document.getElementById('upCamara').addEventListener('click', ev => { ev.stopPropagation(); cam.click(); });
+  drop.addEventListener('click', escolher);
+  drop.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); escolher(); } });
+  [input, cam].forEach(i => i.addEventListener('change', () => { if (i.files.length) upJuntar(i.files); i.value = ''; }));
+  let nivel = 0;
+  drop.addEventListener('dragenter', ev => { ev.preventDefault(); nivel++; drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => { if (--nivel <= 0) { nivel = 0; drop.classList.remove('over'); } });
+  drop.addEventListener('dragover', ev => { ev.preventDefault(); try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) { /* navegador sem suporte */ } });
+  drop.addEventListener('drop', ev => { ev.preventDefault(); nivel = 0; drop.classList.remove('over'); if (ev.dataTransfer && ev.dataTransfer.files.length) upJuntar(ev.dataTransfer.files); });
+  // largar fora da zona (dentro da janela) não abre o ficheiro no navegador
+  modal.addEventListener('dragover', ev => ev.preventDefault());
+  modal.addEventListener('drop', ev => ev.preventDefault());
+  modal.addEventListener('mousedown', ev => { if (ev.target === modal) upFechar(); });
+  document.getElementById('upFechar').addEventListener('click', upFechar);
+  document.getElementById('upConcluir').addEventListener('click', () => {
+    const m = document.getElementById('upModal');
+    m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); // envios em curso continuam
+  });
+  document.getElementById('upLista').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-up-repetir]'); if (!b) return;
+    const it = upItens.find(i => i.id === Number(b.dataset.upRepetir));
+    if (it) { it.estado = 'fila'; it.prog = 0; it.msg = 'Na fila…'; upAtualizar(it); upProximo(); }
+  });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && upAberto()) upFechar(); });
 }
 
-async function saveDocumentMetadata(funcId, funcNome, info, pasta) {
+function openUploadWidget(funcId, funcNome, pasta, ficheiros) {
+  abrirEnvio({
+    titulo: 'Anexar documentos',
+    destino: (funcNome || 'Funcionário') + (pasta ? ' › ' + pasta : ''),
+    pastaCloud: `${CLOUDINARY_FOLDER}/${funcId}`,
+    formatos: UP_FORMATOS_DOC,
+    ficheiros,
+    guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true)
+  });
+}
+
+async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
   try {
     await db.collection('funcionarios').doc(funcId).collection('documentos').add({
       ...(pasta ? { pasta } : {}), // subpasta dentro da pasta do funcionário (Pastas)
@@ -2249,9 +2512,11 @@ async function saveDocumentMetadata(funcId, funcNome, info, pasta) {
       doc_count: firebase.firestore.FieldValue.increment(1)
     });
     await logAuditDoc('document_upload', funcId, funcNome, `${info.original_filename}.${info.format}`, info.bytes);
-    toast('Documento anexado.');
+    if (!silencioso) toast('Documento anexado.');
+    return true;
   } catch (err) {
     toast('Erro ao guardar documento: ' + friendlyError(err), true);
+    return false;
   }
 }
 
@@ -4499,6 +4764,15 @@ function renderPastas() {
 
 function pxLigarEventos(root) {
   root.addEventListener('click', pxOnClick);
+  // Ficheiros do computador largados dentro da pasta de um funcionário
+  ligarLargarFicheiros(root, () => {
+    if (!pxPath.funcId || pxSearchTerm()) return null;
+    const e = employees.find(x => x.id === pxPath.funcId);
+    return e ? (e.nome || 'Funcionário') + (pxPath.sub ? ' › ' + pxPath.sub : '') : null;
+  }, fs => {
+    const e = employees.find(x => x.id === pxPath.funcId);
+    if (e) openUploadWidget(e.id, e.nome, pxPath.sub || null, fs);
+  });
   // Caixas de seleção
   root.addEventListener('change', ev => {
     const cb = ev.target;
@@ -5255,7 +5529,6 @@ function wireDespesas() {
 
 function openDespesaUpload(mes) {
   if (!isEditor()) { toast('Sem permissões para anexar faturas.', true); return; }
-  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
   const descEl = document.getElementById('desp_desc');
   const fornEl = document.getElementById('desp_fornecedor');
   const valEl = document.getElementById('desp_valor');
@@ -5265,27 +5538,16 @@ function openDespesaUpload(mes) {
   const valorRaw = valEl ? valEl.value.trim() : '';
   const valor = valorRaw === '' ? null : num(valorRaw, 0);
   const categoria = catEl ? catEl.value : 'Geral';
-  const widget = cloudinary.createUploadWidget({
-    cloudName: CLOUDINARY_CLOUD_NAME,
-    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-    folder: `legado-aclamado/despesas/${mes}`,
-    resourceType: 'auto',
-    clientAllowedFormats: ['jpg','jpeg','png','pdf'],
-    maxFileSize: 10485760,
-    multiple: true,
-    sources: ['local','camera'],
-    language: 'pt',
-    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
-  }, (error, result) => {
-    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
-    if (result && result.event === 'success') {
-      saveDespesaMetadata(mes, { descricao, fornecedor, valor, categoria }, result.info);
-    }
+  abrirEnvio({
+    titulo: 'Anexar faturas',
+    destino: `Despesas de ${mes}` + (descricao ? ` · ${descricao}` : ''),
+    pastaCloud: `legado-aclamado/despesas/${mes}`,
+    formatos: UP_FORMATOS_DOC,
+    guardar: info => saveDespesaMetadata(mes, { descricao, fornecedor, valor, categoria }, info, true)
   });
-  widget.open();
 }
 
-async function saveDespesaMetadata(mes, meta, info) {
+async function saveDespesaMetadata(mes, meta, info, silencioso) {
   try {
     await db.collection('despesas').add({
       mes: mes,
@@ -5303,13 +5565,15 @@ async function saveDespesaMetadata(mes, meta, info) {
       created_by: currentUser ? currentUser.email : ''
     });
     await logAudit('despesa_upload', mes, `Despesa ${mes} · ${meta.descricao || info.original_filename || ''}`);
-    toast('Fatura anexada.');
+    if (!silencioso) toast('Fatura anexada.');
     // Limpa os campos do formulário
     const ids = ['desp_desc', 'desp_fornecedor', 'desp_valor'];
     ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const catEl = document.getElementById('desp_categoria'); if (catEl) catEl.value = 'Geral';
+    return true;
   } catch (err) {
     toast('Erro ao guardar fatura: ' + friendlyError(err), true);
+    return false;
   }
 }
 
@@ -7601,6 +7865,40 @@ async function relContabConsolidadoPdf() {
 }
 
 /* ============================================================
+   Largar ficheiros do computador diretamente numa pasta aberta
+   destino() → texto da pasta (ou null se não der para anexar ali); abrir(ficheiros)
+   ============================================================ */
+function temFicheirosArrastados(ev) { return !!(ev.dataTransfer && [...(ev.dataTransfer.types || [])].includes('Files')); }
+function ligarLargarFicheiros(root, destino, abrir) {
+  let nivel = 0;
+  const limpar = () => { nivel = 0; root.classList.remove('up-alvo'); };
+  root.addEventListener('dragenter', ev => {
+    if (!temFicheirosArrastados(ev) || !isEditor()) return;
+    const d = destino(); if (!d) return;
+    nivel++;
+    root.dataset.upMsg = 'Larga aqui para anexar em ' + d;
+    root.classList.add('up-alvo');
+  });
+  root.addEventListener('dragover', ev => {
+    if (!temFicheirosArrastados(ev) || !isEditor() || !destino()) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) { /* navegador sem suporte */ }
+  });
+  root.addEventListener('dragleave', ev => { if (temFicheirosArrastados(ev) && --nivel <= 0) limpar(); });
+  root.addEventListener('drop', ev => {
+    if (!temFicheirosArrastados(ev)) return;
+    ev.preventDefault();
+    limpar();
+    if (!isEditor() || !destino()) return;
+    const fs = [...ev.dataTransfer.files];
+    if (fs.length) abrir(fs);
+  });
+}
+// Ficheiros largados fora de uma pasta não abrem no navegador (a app não se perde)
+window.addEventListener('dragover', ev => { if (temFicheirosArrastados(ev)) ev.preventDefault(); });
+window.addEventListener('drop', ev => { if (temFicheirosArrastados(ev)) ev.preventDefault(); });
+
+/* ============================================================
    MENU DO BOTÃO DIREITO (usado na Empresa e nas Pastas)
    itens: [{ label, fn, perigo }] · '-' = separador · { titulo } = cabeçalho
    ============================================================ */
@@ -7852,6 +8150,8 @@ function edBarraSelecao() {
 
 // ---------- Eventos ----------
 function edLigarEventos(root) {
+  // Ficheiros do computador largados na pasta aberta
+  ligarLargarFicheiros(root, () => (((document.getElementById('edSearch') || {}).value || '').trim() ? null : edCaminhoTxt(edPasta)), fs => edUpload(edPasta, fs));
   root.addEventListener('click', ev => {
     if (ev.target.closest('input, label.px-selall')) return; // caixas: evento "change"
     const t = ev.target.closest('[data-ed-act],[data-ed-go],[data-ed-open],[data-ed-op],[data-ed-bulk],[data-ed-row]');
@@ -8139,27 +8439,17 @@ function edExtensao(info) {
   const m = /\.([a-z0-9]{2,5})$/i.exec(info.public_id || '') || /\.([a-z0-9]{2,5})$/i.exec(info.secure_url || '');
   return m ? m[1].toLowerCase() : '';
 }
-function edUpload(pai) {
-  if (!isEditor()) { toast('Sem permissões para anexar ficheiros.', true); return; }
-  if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
-  const widget = cloudinary.createUploadWidget({
-    cloudName: CLOUDINARY_CLOUD_NAME,
-    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-    folder: ED_CLOUD_FOLDER,
-    resourceType: 'auto',
-    clientAllowedFormats: ED_FORMATOS,
-    maxFileSize: 10485760,
-    multiple: true,
-    sources: ['local', 'camera'],
-    language: 'pt',
-    text: { 'pt': { 'or': 'ou', 'menu': { 'files': 'Os Meus Ficheiros', 'camera': 'Câmara' }, 'queue': { 'title': 'Fila de Upload' } } }
-  }, (error, result) => {
-    if (error) { toast('Erro no upload. Tente novamente.', true); return; }
-    if (result && result.event === 'success') edGuardarFicheiro(pai, result.info);
+function edUpload(pai, ficheiros) {
+  abrirEnvio({
+    titulo: 'Anexar ficheiros',
+    destino: edCaminhoTxt(pai),
+    pastaCloud: ED_CLOUD_FOLDER,
+    formatos: ED_FORMATOS,
+    ficheiros,
+    guardar: info => edGuardarFicheiro(pai, info, true)
   });
-  widget.open();
 }
-async function edGuardarFicheiro(pai, info) {
+async function edGuardarFicheiro(pai, info, silencioso) {
   const format = edExtensao(info);
   let base = info.original_filename || 'documento';
   if (format && base.toLowerCase().endsWith('.' + format)) base = base.slice(0, -(format.length + 1));
@@ -8170,8 +8460,9 @@ async function edGuardarFicheiro(pai, info) {
       uploaded_by_email: currentUser ? currentUser.email : ''
     }));
     logAudit('empresa_docs', ref.id, `ficheiro anexado: ${edCaminhoTxt(pai)} › ${base}${format ? '.' + format : ''}`);
-    toast('Ficheiro anexado.');
-  } catch (err) { toast('Erro ao guardar ficheiro: ' + friendlyError(err), true); }
+    if (!silencioso) toast('Ficheiro anexado.');
+    return true;
+  } catch (err) { toast('Erro ao guardar ficheiro: ' + friendlyError(err), true); return false; }
 }
 
 // ---------- Fichas (campos escolhidos pelo utilizador) ----------
