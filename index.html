@@ -1041,6 +1041,12 @@ footer .ver { color: #9ca3af; }
 .px-dropbar { border-color: #c7cdd6; border-radius: 14px; }
 
 .toolbar .tb-extra { display: none !important; }
+.tab-cadeado { vertical-align: -1px; margin-left: 3px; opacity: .55; }
+.cl-ico { width: 52px; height: 52px; border-radius: 16px; background: #f2f4f7; color: var(--ink); display: flex; align-items: center; justify-content: center; margin: 2px auto 14px; }
+.cl-texto { text-align: center; font-size: 14px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px; }
+.cl-texto strong { color: var(--ink); }
+.acc-contab { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--ink-soft); cursor: pointer; }
+.acc-contab input { accent-color: var(--accent); }
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -1190,7 +1196,7 @@ footer .ver { color: #9ca3af; }
       <button class="area-tab active" data-area="pastas">Pastas</button>
       <button class="area-tab" data-area="funcionarios">Funcionários</button>
       <button class="area-tab" data-area="empresa">Empresa</button>
-      <button class="area-tab" data-area="contabilidade">Contabilidade</button>
+      <button class="area-tab" data-area="contabilidade">Contabilidade <svg class="tab-cadeado" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="protegida"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></button>
     </div>
   </nav>
 
@@ -1795,6 +1801,27 @@ footer .ver { color: #9ca3af; }
   </div>
 </div>
 
+<!-- Modal: palavra-passe da Contabilidade -->
+<div class="modal-backdrop" id="contabLockModal">
+  <div class="modal narrow cl-modal">
+    <div class="modal-head">
+      <h2 id="clTitulo">Contabilidade protegida</h2>
+      <button class="modal-close" id="clFechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="cl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <p class="cl-texto" id="clTexto">Escreve a tua palavra-passe para entrar.</p>
+      <div class="cfg-field"><label for="clPass">Palavra-passe</label><input type="password" id="clPass" autocomplete="current-password"></div>
+      <div class="login-error" id="clErro" style="margin-top:10px;"></div>
+      <button type="button" class="login-reset" id="clEsqueci">Esqueci a palavra-passe</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="clCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="clEntrar">Entrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Menu do botão direito (pastas e ficheiros) -->
 <div class="ctx-menu" id="ctxMenu" role="menu"></div>
 
@@ -2040,8 +2067,7 @@ function applyRolePermissions() {
   show('btnMarca', isEditor());
   document.body.classList.toggle('so-leitura', temAcesso() && !isMaster());
   // Contabilidade (finanças, salários): só o master
-  const tabContab = document.querySelector('.area-tab[data-area="contabilidade"]');
-  if (tabContab) tabContab.style.display = isMaster() ? '' : 'none';
+  aplicarVisibilidadeContab();
   show('btnLogs', isMaster());
   show('btnDedup', isAdmin());
   show('btnNormEmp', isAdmin());
@@ -2054,7 +2080,8 @@ function applyRolePermissions() {
 
 // Mostra/esconde as funcionalidades de salários e cálculos (marcadas com .master-only)
 function applyMasterVisibility() {
-  document.body.classList.toggle('is-master', isMaster());
+  // salários e cálculos (.master-only): só quem pode ver a Contabilidade
+  document.body.classList.toggle('is-master', typeof podeVerContab === 'function' ? podeVerContab() : isMaster());
 }
 
 /* ============================================================
@@ -2155,6 +2182,7 @@ auth.onAuthStateChanged(async user => {
     paintUserBox();
     applyRolePermissions();
     verificarRegras(false);
+    carregarAcessoContab();
     subscribeFuncionarios();
     showApp();
   } else {
@@ -2162,6 +2190,8 @@ auth.onAuthStateChanged(async user => {
     currentRole = 'viewer';
     currentIsMaster = false;
     currentHasProfile = false;
+    contabDesbloqueadoAte = 0;
+    contabEstado = { carregado: false, ativada: false, temAcesso: false, regrasAntigas: false };
     applyMasterVisibility();
     employees = [];
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
@@ -3620,6 +3650,11 @@ async function renderUsers() {
   try {
     const snap = await db.collection('users').get();
     if (snap.empty) { body.innerHTML = '<tr><td colspan="5">Sem utilizadores.</td></tr>'; return; }
+    // quem tem acesso à Contabilidade (só aparece a quem também tem)
+    let comContab = null;
+    if (podeVerContab() && contabEstado.ativada && !contabEstado.regrasAntigas) {
+      try { comContab = new Set((await db.collection('acesso_contab').get()).docs.map(x => x.id)); } catch (e) { comContab = null; }
+    }
     const docs = snap.docs.slice().sort((x, y) => (y.data().master === true) - (x.data().master === true) || String(x.data().email || '').localeCompare(String(y.data().email || '')));
     body.innerHTML = docs.map(d => {
       const u = d.data();
@@ -3631,16 +3666,20 @@ async function renderUsers() {
              <option value="master"${isM ? ' selected' : ''}>Master — faz tudo</option>
              <option value="utilizador"${isM ? '' : ' selected'}>Utilizador — só ver e descarregar</option>
            </select>`;
+      const contab = comContab && isM
+        ? `<label class="acc-contab" title="Pode ver a Contabilidade e os salários (entra com a palavra-passe dela)"><input type="checkbox" class="contab-chk" data-uid="${d.id}" data-email="${escapeHtml(u.email)}"${comContab.has(d.id) ? ' checked' : ''}${isSelf ? ' disabled' : ''}> Contabilidade</label>`
+        : '';
       return `<tr>
         <td>${escapeHtml(u.email)}${isSelf ? ' <strong>(você)</strong>' : ''}</td>
         <td>${escapeHtml(u.nome)}</td>
-        <td>${acesso}</td>
+        <td>${acesso}${contab}</td>
         <td style="text-align:center;"><button class="btn btn-ghost btn-sm user-reset" data-email="${escapeHtml(u.email)}" title="Enviar email para o utilizador definir nova palavra-passe">Repor</button></td>
         <td style="text-align:center;">${isSelf ? '' : `<button class="btn btn-ghost btn-sm acc-remover user-remover" data-uid="${d.id}" data-email="${escapeHtml(u.email)}" title="Esta pessoa deixa de conseguir entrar na app">Retirar acesso</button>`}</td>
       </tr>`;
     }).join('');
     body.querySelectorAll('.acesso-select').forEach(s => s.addEventListener('change', e => mudarAcesso(e.target.dataset.uid, e.target.value, e.target.dataset.email)));
     body.querySelectorAll('.user-reset').forEach(b => b.addEventListener('click', e => resetUserPassword(e.currentTarget.dataset.email)));
+    body.querySelectorAll('.contab-chk').forEach(c => c.addEventListener('change', e => mudarAcessoContab(e.target.dataset.uid, e.target.dataset.email, e.target.checked)));
     body.querySelectorAll('.user-remover').forEach(b => b.addEventListener('click', e => retirarAcesso(e.currentTarget.dataset.uid, e.currentTarget.dataset.email)));
   } catch (err) {
     body.innerHTML = `<tr><td colspan="5">Erro: ${escapeHtml(friendlyError(err))}</td></tr>`;
@@ -3749,7 +3788,7 @@ async function addUser() {
 /* ---------- Regras de segurança publicadas? (só o master é avisado) ----------
    firestore.rules autoriza a leitura de regras/<versão>; se a leitura for recusada,
    as regras publicadas no Firebase são mais antigas do que esta versão da app. */
-const REGRAS_VERSAO = 'v3';
+const REGRAS_VERSAO = 'v4';
 let regrasDesatualizadas = false;
 async function verificarRegras(avisarOk) {
   if (!isMaster()) { document.getElementById('regrasAviso').hidden = true; return; }
@@ -3766,6 +3805,117 @@ async function verificarRegras(avisarOk) {
   document.getElementById('regrasAviso').hidden = !regrasDesatualizadas;
   if (!regrasDesatualizadas) closeModal('regrasModal');
 }
+/* ---------- Contabilidade protegida: só quem tem acesso, e sempre com palavra-passe ----------
+   acesso_contab/{uid} existe → essa pessoa (master) pode ver a Contabilidade e os salários.
+   acesso_contab/_inicial marca que a proteção já foi ativada (a 1.ª pessoa fica como dona).
+   Para entrar pede a palavra-passe da conta (confirmada pelo Firebase); bloqueia após 15 min sem uso. */
+const CONTAB_INATIVIDADE_MS = 15 * 60 * 1000;
+let contabEstado = { carregado: false, ativada: false, temAcesso: false, regrasAntigas: false };
+let contabDesbloqueadoAte = 0;
+let contabDepois = null;
+async function carregarAcessoContab() {
+  contabEstado = { carregado: false, ativada: false, temAcesso: false, regrasAntigas: false };
+  if (!isMaster() || !currentUser) { contabEstado.carregado = true; aplicarVisibilidadeContab(); return; }
+  try {
+    const [meu, inicial] = await Promise.all([
+      db.collection('acesso_contab').doc(currentUser.uid).get(),
+      db.collection('acesso_contab').doc('_inicial').get()
+    ]);
+    contabEstado.ativada = inicial.exists;
+    contabEstado.temAcesso = meu.exists;
+  } catch (err) {
+    // regras ainda por publicar: mantém o master com acesso, mas continua a pedir a palavra-passe
+    contabEstado.regrasAntigas = true;
+    contabEstado.temAcesso = true;
+    contabEstado.ativada = true;
+  }
+  contabEstado.carregado = true;
+  aplicarVisibilidadeContab();
+}
+// Quem vê a Contabilidade (e os salários): master com acesso; antes da ativação, qualquer master (para a poder ativar)
+function podeVerContab() {
+  if (!isMaster()) return false;
+  if (!contabEstado.carregado) return false;
+  return contabEstado.temAcesso || !contabEstado.ativada;
+}
+function contabDesbloqueado() { return Date.now() < contabDesbloqueadoAte; }
+function contabAtividade() { if (contabDesbloqueado()) contabDesbloqueadoAte = Date.now() + CONTAB_INATIVIDADE_MS; }
+function bloquearContab(avisar) {
+  const estava = contabDesbloqueado();
+  contabDesbloqueadoAte = 0;
+  const area = document.getElementById('areaEmpresa');
+  if (area && area.style.display !== 'none') { switchArea('pastas'); if (avisar && estava) toast('A Contabilidade foi bloqueada por inatividade.'); }
+}
+function aplicarVisibilidadeContab() {
+  const tab = document.querySelector('.area-tab[data-area="contabilidade"]');
+  if (tab) tab.style.display = podeVerContab() ? '' : 'none';
+  applyMasterVisibility();
+}
+// Pede a palavra-passe (ou ativa a proteção na 1.ª vez) e depois corre "depois"
+function exigirContab(depois) {
+  if (!podeVerContab()) { toast('A Contabilidade está reservada.', true); return; }
+  if (contabDesbloqueado()) { contabAtividade(); depois(); return; }
+  contabDepois = depois;
+  const primeira = !contabEstado.ativada;
+  document.getElementById('clTitulo').textContent = primeira ? 'Proteger a Contabilidade' : 'Contabilidade protegida';
+  document.getElementById('clTexto').innerHTML = primeira
+    ? 'A Contabilidade e os salários passam a ficar <strong>só para ti</strong>. Para entrar vais usar sempre a tua palavra-passe (a mesma com que entras na app). Depois podes autorizar outras pessoas em Utilizadores.'
+    : 'Escreve a tua palavra-passe para entrar.';
+  document.getElementById('clEntrar').textContent = primeira ? 'Proteger e entrar' : 'Entrar';
+  document.getElementById('clPass').value = '';
+  const e = document.getElementById('clErro'); e.textContent = ''; e.classList.remove('show');
+  openModal('contabLockModal');
+  setTimeout(() => document.getElementById('clPass').focus(), 60);
+}
+async function confirmarSenhaContab() {
+  const pass = document.getElementById('clPass').value;
+  const erro = document.getElementById('clErro');
+  const mostrarErro = m => { erro.textContent = m; erro.classList.add('show'); };
+  if (!pass) { mostrarErro('Escreve a palavra-passe.'); return; }
+  const btn = document.getElementById('clEntrar'); btn.disabled = true;
+  try {
+    await currentUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(currentUser.email, pass));
+    if (!contabEstado.ativada && !contabEstado.regrasAntigas) {
+      const b = db.batch();
+      b.set(db.collection('acesso_contab').doc(currentUser.uid), { email: currentUser.email, desde: firebase.firestore.FieldValue.serverTimestamp(), dono: true });
+      b.set(db.collection('acesso_contab').doc('_inicial'), { por: currentUser.uid, email: currentUser.email, em: firebase.firestore.FieldValue.serverTimestamp() });
+      await b.commit();
+      contabEstado.ativada = true; contabEstado.temAcesso = true;
+      logAudit('contab_protecao', currentUser.uid, `Contabilidade protegida: só ${currentUser.email}`);
+      toast('Contabilidade protegida. Só tu tens acesso.');
+      aplicarVisibilidadeContab();
+    }
+    contabDesbloqueadoAte = Date.now() + CONTAB_INATIVIDADE_MS;
+    closeModal('contabLockModal');
+    const f = contabDepois; contabDepois = null;
+    if (f) f();
+  } catch (err) {
+    const c = err && err.code;
+    mostrarErro(c === 'auth/wrong-password' || c === 'auth/invalid-credential' || c === 'auth/invalid-login-credentials'
+      ? 'Palavra-passe incorreta.' : friendlyError(err));
+  } finally { btn.disabled = false; }
+}
+// Dar / retirar acesso à Contabilidade a outra pessoa (só quem já tem acesso)
+async function mudarAcessoContab(uidVal, email, dar) {
+  if (!podeVerContab() || contabEstado.regrasAntigas) return;
+  if (currentUser && uidVal === currentUser.uid) { toast('Não podes retirar o teu próprio acesso à Contabilidade.', true); await renderUsers(); return; }
+  if (!confirm(dar ? `Dar acesso à Contabilidade e aos salários a ${email}?\n\nVai entrar com a palavra-passe dela.` : `Retirar o acesso de ${email} à Contabilidade e aos salários?`)) { await renderUsers(); return; }
+  try {
+    const ref = db.collection('acesso_contab').doc(uidVal);
+    if (dar) await ref.set({ email, desde: firebase.firestore.FieldValue.serverTimestamp(), por: currentUser.email });
+    else await ref.delete();
+    logAudit('contab_acesso', uidVal, `${email} → Contabilidade ${dar ? 'autorizada' : 'retirada'}`);
+    toast(dar ? `${email} pode entrar na Contabilidade.` : `${email} deixou de ter acesso à Contabilidade.`);
+  } catch (err) { toast('Erro: ' + friendlyError(err), true); }
+  await renderUsers();
+}
+// Bloqueio automático por inatividade
+['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, ev => {
+  const area = document.getElementById('areaEmpresa');
+  if (area && area.style.display !== 'none' && area.contains(ev.target)) contabAtividade();
+}, true));
+setInterval(() => { if (contabDesbloqueadoAte && !contabDesbloqueado()) bloquearContab(true); }, 20000);
+
 async function copiarRegras() {
   try {
     const r = await fetch('firestore.rules', { cache: 'no-store' });
@@ -5694,6 +5844,7 @@ async function pxApplyImport() {
    NAVEGAÇÃO ENTRE ÁREAS
    ============================================================ */
 function switchArea(area) {
+  if (area === 'contabilidade' && !contabDesbloqueado()) { exigirContab(() => switchArea('contabilidade')); return; }
   if (area !== 'contabilidade' && !contabConfirmLeave()) return;
   fecharMenuContexto();
   document.querySelectorAll('.area-tab').forEach(t => t.classList.toggle('active', t.dataset.area === area));
@@ -8429,7 +8580,7 @@ function abrirMenuMais(btn) {
     item('btnZipAll', 'ZIP completo'),
     item('btnBackup', 'Backup (JSON)'),
     item('btnImport', 'Importar'),
-    item('btnRelContab', 'Relatório para o contabilista', isMaster()),
+    item('btnRelContab', 'Relatório para o contabilista', podeVerContab()),
     isMaster() ? '-' : null,
     item('btnUsers', 'Utilizadores e acessos'),
     item('btnLogs', 'Registo de atividade (logs)'),
@@ -9218,8 +9369,8 @@ function bindFiscal() {
   document.getElementById('btnExportAll').addEventListener('click', exportarTudo);
 
   // Botões da ficha do funcionário
-  document.getElementById('detailSalary').addEventListener('click', () => { if (currentDetailEmp) openSalary(currentDetailEmp); });
-  document.getElementById('detailContab').addEventListener('click', () => { if (currentDetailEmp) openToolContab(currentDetailEmp); });
+  document.getElementById('detailSalary').addEventListener('click', () => { if (currentDetailEmp) { const e = currentDetailEmp; exigirContab(() => openSalary(e)); } });
+  document.getElementById('detailContab').addEventListener('click', () => { if (currentDetailEmp) { const e = currentDetailEmp; exigirContab(() => openToolContab(e)); } });
   document.getElementById('detailFaltas').addEventListener('click', () => { if (currentDetailEmp) switchFichaTab('faltas'); });
   // Delegação dos botões das abas da ficha
   document.getElementById('detailBody').addEventListener('click', e => {
@@ -9245,7 +9396,12 @@ function bindFiscal() {
   document.getElementById('a1Save').addEventListener('click', saveA1);
 
   // Ferramentas de cálculo (área Funcionários)
-  document.getElementById('btnRelContab').addEventListener('click', openRelContab);
+  document.getElementById('btnRelContab').addEventListener('click', () => exigirContab(openRelContab));
+  document.getElementById('clEntrar').addEventListener('click', confirmarSenhaContab);
+  document.getElementById('clPass').addEventListener('keydown', ev => { if (ev.key === 'Enter') confirmarSenhaContab(); });
+  document.getElementById('clCancelar').addEventListener('click', () => { contabDepois = null; closeModal('contabLockModal'); });
+  document.getElementById('clFechar').addEventListener('click', () => { contabDepois = null; closeModal('contabLockModal'); });
+  document.getElementById('clEsqueci').addEventListener('click', () => { closeModal('contabLockModal'); resetUserPassword(currentUser.email); });
   document.getElementById('toolHorasClose').addEventListener('click', () => closeModal('toolHorasModal'));
   document.getElementById('toolHorasCloseFoot').addEventListener('click', () => closeModal('toolHorasModal'));
   document.getElementById('th_calc').addEventListener('click', runToolHoras);
