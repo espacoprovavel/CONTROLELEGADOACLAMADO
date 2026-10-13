@@ -612,7 +612,7 @@ footer strong { color: var(--ink); }
 .px-crumbs .cur { padding: 4px 6px; }
 .px-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .px-section-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-soft); margin: 18px 0 8px; font-weight: 600; }
-.px-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 12px; }
+.px-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .px-card { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; box-shadow: var(--shadow); text-align: left; font: inherit; color: var(--ink); width: 100%; min-width: 0; }
 .px-card:hover { border-color: var(--accent); background: #f9fbfe; }
 .px-ico { flex-shrink: 0; display: inline-flex; }
@@ -650,6 +650,9 @@ footer strong { color: var(--ink); }
 .px-back { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--accent); color: var(--gold); font-size: 22px; font-weight: 700; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: transform .15s ease, background .15s ease; }
 .px-back:hover, .px-back:focus-visible { background: var(--accent-hover); transform: translateX(-2px); outline: none; }
 #pxContent .px-empty { margin-top: 18px; }
+.px-grid-sub { justify-content: start; margin-top: 4px; grid-template-columns: repeat(auto-fill, minmax(170px, 200px)); gap: 14px; }
+.px-grid-sub .px-tile { min-height: 132px; padding: 16px 10px 14px; }
+.px-grid-sub .px-folder-ico { width: 58px; height: 47px; }
 
 /* Rodapé sempre no fundo da página */
 #appScreen { flex-direction: column; min-height: 100vh; }
@@ -1202,6 +1205,25 @@ footer strong { color: var(--ink); }
       <button class="btn btn-ghost" id="marcaReset">Repor original</button>
       <button class="btn btn-ghost" id="marcaCancel">Cancelar</button>
       <button class="btn btn-primary" id="marcaSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: mover ficheiro para outra pasta (dentro da pasta do funcionário) -->
+<div class="modal-backdrop" id="pxMoverModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>Mover ficheiro</h2>
+      <button class="modal-close" id="pxMoverClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:12px;">Ficheiro: <strong id="pxMoverInfo"></strong></p>
+      <div class="cfg-field" style="margin-bottom:12px;"><label for="pxMoverSel">Mover para</label><select id="pxMoverSel" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:'Poppins';font-size:14px;"></select></div>
+      <div class="cfg-field"><label for="pxMoverNova">ou para uma pasta nova</label><input type="text" id="pxMoverNova" maxlength="80" placeholder="Nome da nova pasta (opcional)"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="pxMoverCancel">Cancelar</button>
+      <button class="btn btn-primary" id="pxMoverOk">Mover</button>
     </div>
   </div>
 </div>
@@ -2072,7 +2094,7 @@ function renderDocs(docs) {
   }).join('');
 }
 
-function openUploadWidget(funcId, funcNome) {
+function openUploadWidget(funcId, funcNome, pasta) {
   if (!isEditor()) { toast('Sem permissões para anexar documentos.', true); return; }
   if (typeof cloudinary === 'undefined') { toast('Serviço de upload indisponível. Verifique a ligação à Internet.', true); return; }
   const widget = cloudinary.createUploadWidget({
@@ -2089,15 +2111,16 @@ function openUploadWidget(funcId, funcNome) {
   }, (error, result) => {
     if (error) { toast('Erro no upload. Tente novamente.', true); return; }
     if (result && result.event === 'success') {
-      saveDocumentMetadata(funcId, funcNome, result.info);
+      saveDocumentMetadata(funcId, funcNome, result.info, pasta);
     }
   });
   widget.open();
 }
 
-async function saveDocumentMetadata(funcId, funcNome, info) {
+async function saveDocumentMetadata(funcId, funcNome, info, pasta) {
   try {
     await db.collection('funcionarios').doc(funcId).collection('documentos').add({
+      ...(pasta ? { pasta } : {}), // subpasta dentro da pasta do funcionário (Pastas)
       url: info.secure_url,
       public_id: info.public_id,
       original_filename: info.original_filename,
@@ -3689,7 +3712,7 @@ const PX_SEM_EMP = '(Sem empresa)';
 const PX_EX = 'Ex-colaboradores';
 const PX_FORMATOS = ['pdf', 'jpg', 'jpeg', 'png'];
 const PX_MAX_BYTES = 10485760; // 10 MB, igual ao upload manual
-let pxPath = { scope: 'ativos', pais: null, empresa: null, funcId: null };
+let pxPath = { scope: 'ativos', pais: null, empresa: null, funcId: null, sub: null };
 let pxItems = [];   // itens clicáveis da vista atual (cartões)
 let pxCrumbs = [];  // caminhos do breadcrumb
 let pxDocs = [];    // documentos do funcionário aberto
@@ -3822,6 +3845,114 @@ async function migrarCisSeppe() {
     pxMigracaoIniciada = false; // tenta de novo na próxima atualização
     console.warn('Unificação Cis & Seppe:', err);
   }
+}
+
+/* ---------- Subpastas e ficheiros dentro da pasta do funcionário ----------
+   Subpastas guardadas em funcionarios/{id}.subpastas (lista de nomes);
+   cada documento tem o campo "pasta" (nome da subpasta) ou nenhum (pasta principal). */
+function pxSubpastas(e) { return Array.isArray(e && e.subpastas) ? e.subpastas.filter(Boolean) : []; }
+function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
+
+async function pxNovaSubpasta(emp) {
+  if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  const nome = pxNomeValido(prompt(`Nome da nova pasta dentro de "${emp.nome}" (ex.: Contratos, Recibos):`));
+  if (!nome) return;
+  const subs = pxSubpastas(emp);
+  if (subs.some(x => pxNorm(x) === pxNorm(nome))) { toast('Já existe uma pasta com esse nome.', true); return; }
+  try {
+    await db.collection('funcionarios').doc(emp.id).set({ subpastas: subs.concat([nome]) }, { merge: true });
+    logAudit('pastas', emp.id, `${emp.nome}: pasta criada "${nome}"`);
+    toast(`Pasta "${nome}" criada.`);
+  } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
+}
+
+async function pxRenomearSubpasta(emp, sub) {
+  if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
+  const novo = pxNomeValido(prompt(`Novo nome para a pasta "${sub}":`, sub));
+  if (!novo || novo === sub) return;
+  const subs = pxSubpastas(emp);
+  if (subs.some(x => x !== sub && pxNorm(x) === pxNorm(novo))) { toast('Já existe uma pasta com esse nome.', true); return; }
+  const dentro = (pxDocs || []).filter(d => d.pasta === sub);
+  if (!confirm(`Renomear a pasta "${sub}" para "${novo}"?${dentro.length ? `\n\nOs ${dentro.length} ficheiro(s) lá dentro mantêm-se na pasta.` : ''}`)) return;
+  showOverlay('A renomear pasta…');
+  try {
+    const b = db.batch();
+    dentro.forEach(d => b.update(db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id), { pasta: novo }));
+    b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.map(x => x === sub ? novo : x) }, { merge: true });
+    await b.commit();
+    logAudit('pastas', emp.id, `${emp.nome}: pasta "${sub}" → "${novo}"`);
+    pxPath = Object.assign({}, pxPath, { sub: novo });
+    toast('Pasta renomeada.');
+    renderPastas();
+  } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); } finally { hideOverlay(); }
+}
+
+async function pxEliminarSubpasta(emp, sub) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar pastas.', true); return; }
+  const dentro = (pxDocs || []).filter(d => d.pasta === sub);
+  if (dentro.length) {
+    alert(`A pasta "${sub}" tem ${dentro.length} ficheiro(s).\n\nPara a eliminar, primeiro move os ficheiros para outra pasta (Mover) ou elimina-os.`);
+    return;
+  }
+  if (!confirm(`Eliminar a pasta vazia "${sub}"?`)) return;
+  try {
+    await db.collection('funcionarios').doc(emp.id).set({ subpastas: pxSubpastas(emp).filter(x => x !== sub) }, { merge: true });
+    logAudit('pastas', emp.id, `${emp.nome}: pasta eliminada "${sub}"`);
+    toast('Pasta eliminada.');
+    pxGo(Object.assign({}, pxPath, { sub: null }));
+  } catch (err) { toast('Erro ao eliminar pasta: ' + friendlyError(err), true); }
+}
+
+async function pxRenomearFicheiro(emp, d) {
+  if (!isEditor()) { toast('Sem permissões para renomear ficheiros.', true); return; }
+  const atual = d.original_filename || 'documento';
+  const ext = d.format ? '.' + String(d.format).toLowerCase() : '';
+  let novo = prompt(`Novo nome para "${docFullName(d)}"${ext ? ` (a extensão ${ext} mantém-se)` : ''}:`, atual);
+  if (novo == null) return;
+  novo = String(novo).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ');
+  if (ext && novo.toLowerCase().endsWith(ext)) novo = novo.slice(0, -ext.length).trim();
+  if (!novo || novo === atual) return;
+  try {
+    await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({ original_filename: novo.slice(0, 120) });
+    logAudit('document_rename', emp.id, `${emp.nome}: "${docFullName(d)}" → "${novo}${ext}"`);
+    toast('Ficheiro renomeado.');
+  } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); }
+}
+
+let pxMoverDoc = null;
+function pxAbrirMover(emp, d) {
+  if (!isEditor()) { toast('Sem permissões para mover ficheiros.', true); return; }
+  pxMoverDoc = { emp, d };
+  const subs = pxSubpastas(emp);
+  const atual = d.pasta && subs.includes(d.pasta) ? d.pasta : '';
+  const sel = document.getElementById('pxMoverSel');
+  sel.innerHTML = `<option value="">Pasta principal de ${escapeHtml(emp.nome)}</option>` + subs.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  sel.value = atual;
+  document.getElementById('pxMoverInfo').textContent = docFullName(d);
+  document.getElementById('pxMoverNova').value = '';
+  openModal('pxMoverModal');
+}
+async function pxConfirmarMover() {
+  if (!pxMoverDoc) return;
+  const { emp, d } = pxMoverDoc;
+  let destino = document.getElementById('pxMoverSel').value;
+  const nova = pxNomeValido(document.getElementById('pxMoverNova').value);
+  const subs = pxSubpastas(emp);
+  if (nova) { const existente = subs.find(x => pxNorm(x) === pxNorm(nova)); destino = existente || nova; }
+  const atual = d.pasta && subs.includes(d.pasta) ? d.pasta : '';
+  if (destino === atual) { closeModal('pxMoverModal'); return; }
+  if (!confirm(`Mover "${docFullName(d)}" para ${destino ? `a pasta "${destino}"` : 'a pasta principal'}?`)) return;
+  try {
+    const b = db.batch();
+    const ref = db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id);
+    if (destino) b.update(ref, { pasta: destino });
+    else b.update(ref, { pasta: firebase.firestore.FieldValue.delete() });
+    if (destino && !subs.includes(destino)) b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.concat([destino]) }, { merge: true });
+    await b.commit();
+    logAudit('document_move', emp.id, `${emp.nome}: "${docFullName(d)}" → ${destino || 'pasta principal'}`);
+    closeModal('pxMoverModal');
+    toast('Ficheiro movido.');
+  } catch (err) { toast('Erro ao mover: ' + friendlyError(err), true); }
 }
 
 // Nova pasta: sem país → novo país; com país → nova empresa dentro dele
@@ -3962,7 +4093,7 @@ function pxStopDocs() {
   pxDocsFor = null; pxDocs = [];
 }
 function pxGo(p) {
-  pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, funcId: null }, p);
+  pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, funcId: null, sub: null }, p);
   renderPastas();
 }
 function pxOnEmployeesChanged() {
@@ -4020,8 +4151,12 @@ function renderPastas() {
   }
 
   // Dentro da pasta de um funcionário, o caminho segue os dados atuais dele
-  if (pxPath.funcId) { const e0 = employees.find(x => x.id === pxPath.funcId); if (e0) pxPath = pxPathOf(e0); }
-  const { scope, pais, empresa, funcId } = pxPath;
+  if (pxPath.funcId) {
+    const e0 = employees.find(x => x.id === pxPath.funcId);
+    // mantém a subpasta aberta (pode ter acabado de ser criada/renomeada e os dados ainda não chegaram)
+    if (e0) pxPath = Object.assign(pxPathOf(e0), { sub: pxPath.sub || null });
+  }
+  const { scope, pais, empresa, funcId, sub } = pxPath;
 
   // Breadcrumb
   pxCrumbs = [{ scope: 'ativos' }];
@@ -4034,6 +4169,7 @@ function renderPastas() {
     emp = employees.find(x => x.id === funcId);
     if (!emp) { pxGo({ scope, pais, empresa }); return; }
     pxCrumbs.push({ scope, pais, empresa, funcId }); labels.push(emp.nome || '(sem nome)');
+    if (sub) { pxCrumbs.push({ scope, pais, empresa, funcId, sub }); labels.push(sub); }
   }
   const crumbsHtml = labels.map((l, i) => i === labels.length - 1
     ? `<span class="cur">${escapeHtml(l)}</span>`
@@ -4054,22 +4190,51 @@ function renderPastas() {
         if (pxPath.funcId === funcId) renderPastas();
       }, err => toast('Erro ao carregar documentos: ' + friendlyError(err), true));
     }
-    if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
-    actions += pxBtn('ficha', 'Gerar PDF');
-    actions += pxBtn('detalhe', 'Ficha completa');
-    if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
-    actions += pxBtn('zip-func', 'Download pasta');
-    actions += pxBtn('offline', 'Guardar offline');
-    if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
-    const ficha = `<div class="px-card px-file"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
-    let docsHtml;
-    if (pxDocs === null) docsHtml = '<div class="px-empty">A carregar documentos…</div>';
-    else if (!pxDocs.length) docsHtml = `<div class="px-empty">Ainda não há documentos nesta pasta.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
-    else docsHtml = '<div class="px-grid">' + pxDocs.map((d, i) => {
+    const subs = pxSubpastas(emp);
+    const docRow = d => {
       const nome = docFullName(d);
-      return `<div class="px-card px-file"><span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns"><button type="button" data-px-doc="view" data-px-d="${i}" title="Ver">Ver</button><button type="button" data-px-doc="down" data-px-d="${i}" title="Descarregar">Descarregar</button>${isAdmin() ? `<button type="button" data-px-doc="del" data-px-d="${i}" title="Eliminar">Eliminar</button>` : ''}</span></div>`;
-    }).join('') + '</div>';
-    body = `<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title">Documentos</div>${docsHtml}`;
+      const id = escapeHtml(d.id);
+      return `<div class="px-card px-file"><span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
+        + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
+        + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
+        + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
+        + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
+        + (isAdmin() ? `<button type="button" data-px-doc="del" data-px-did="${id}" title="Eliminar">Eliminar</button>` : '')
+        + `</span></div>`;
+    };
+    // Ficheiros desta vista: na subpasta aberta, ou na pasta principal (sem subpasta / subpasta inexistente)
+    const daVista = (pxDocs || []).filter(d => sub ? d.pasta === sub : (!d.pasta || !subs.includes(d.pasta)));
+    const vazio = sub
+      ? `<div class="px-empty">Esta pasta está vazia.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> ou <strong>Mover</strong> um ficheiro para aqui.' : ''}</div>`
+      : `<div class="px-empty">Ainda não há documentos soltos nesta pasta.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
+    const docsHtml = pxDocs === null ? '<div class="px-empty">A carregar documentos…</div>'
+      : (daVista.length ? '<div class="px-grid">' + daVista.map(docRow).join('') + '</div>' : vazio);
+    if (sub) {
+      // ----- Subpasta dentro da pasta do funcionário -----
+      if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros', 'btn-primary');
+      if (isEditor()) actions += pxBtn('renomear-sub', 'Renomear pasta');
+      if (isAdmin()) actions += pxBtn('eliminar-sub', 'Eliminar pasta', 'btn-danger');
+      body = `<div class="px-section-title">Ficheiros</div>${docsHtml}`;
+    } else {
+      if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
+      actions += pxBtn('ficha', 'Gerar PDF');
+      actions += pxBtn('detalhe', 'Ficha completa');
+      if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
+      if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
+      actions += pxBtn('zip-func', 'Download pasta');
+      actions += pxBtn('offline', 'Guardar offline');
+      if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
+      const ficha = `<div class="px-card px-file"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
+      pxItems = subs.map(nomeSub => ({ scope, pais, empresa, funcId, sub: nomeSub }));
+      const contar = nomeSub => (pxDocs || []).filter(d => d.pasta === nomeSub).length;
+      const subsHtml = subs.length
+        ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + subs.map((nomeSub, i) => {
+            const n = contar(nomeSub);
+            return pxCard(i, 'pasta', nomeSub, pxDocs === null ? '…' : (n ? `${n} ficheiro${n === 1 ? '' : 's'}` : 'Pasta vazia'));
+          }).join('') + '</div>'
+        : '';
+      body = `${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title">Documentos</div>${docsHtml}`;
+    }
   } else {
     pxStopDocs();
     const list = pxList(scope);
@@ -4141,22 +4306,27 @@ function pxOnClick(ev) {
   if (t.dataset.pxI !== undefined) {
     const p = pxItems[+t.dataset.pxI]; if (!p) return;
     if (p.limparPesquisa) { const s = document.getElementById('pxSearch'); if (s) s.value = ''; }
-    pxGo({ scope: p.scope, pais: p.pais, empresa: p.empresa, funcId: p.funcId });
+    pxGo({ scope: p.scope, pais: p.pais, empresa: p.empresa, funcId: p.funcId, sub: p.sub || null });
     return;
   }
   if (t.dataset.pxDoc) {
-    const d = (pxDocs || [])[+t.dataset.pxD]; if (!d) return;
+    const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
     if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d));
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
+    else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
+    else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, d);
     else if (t.dataset.pxDoc === 'del' && emp) deleteDocument(emp.id, emp.nome, d.id, docFullName(d), d.bytes);
     return;
   }
-  const { scope, pais, empresa, funcId } = pxPath;
+  const { scope, pais, empresa, funcId, sub } = pxPath;
   const emp = funcId ? employees.find(x => x.id === funcId) : null;
   const hoje = dateStamp();
   switch (t.dataset.pxAct) {
-    case 'upload': if (emp) openUploadWidget(emp.id, emp.nome); break;
+    case 'upload': if (emp) openUploadWidget(emp.id, emp.nome, sub || null); break;
+    case 'nova-subpasta': if (emp) pxNovaSubpasta(emp); break;
+    case 'renomear-sub': if (emp && sub) pxRenomearSubpasta(emp, sub); break;
+    case 'eliminar-sub': if (emp && sub) pxEliminarSubpasta(emp, sub); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
     case 'limpar-pesquisa': { const s = document.getElementById('pxSearch'); if (s) s.value = ''; renderPastas(); break; }
     case 'nova-pasta': pxNovaPasta(pais || null); break;
@@ -4237,12 +4407,17 @@ async function pxDownloadZip(entries, zipName) {
       const folder = zip.folder(pasta);
       folder.file(`Ficha_${slug(e.nome)}.pdf`, pxFichaBlob(e));
       const snap = await db.collection('funcionarios').doc(e.id).collection('documentos').get();
+      const subs = pxSubpastas(e);
+      subs.forEach(x => folder.folder(pxSafe(x))); // subpastas (mesmo vazias)
       const usados = {};
       snap.docs.forEach(d => {
         const meta = d.data();
+        const naSub = meta.pasta && subs.includes(meta.pasta) ? pxSafe(meta.pasta) : '';
+        const alvo = naSub ? folder.folder(naSub) : folder;
         let nome = pxSafe(docFullName(meta));
-        if (usados[nome]) { const n = ++usados[nome]; nome = nome.replace(/(\.[^.]+)?$/, `_${n}$1`); } else usados[nome] = 1;
-        if (meta.url) jobs.push({ folder, nome, url: meta.url });
+        const chave = naSub + '/' + nome;
+        if (usados[chave]) { const n = ++usados[chave]; nome = nome.replace(/(\.[^.]+)?$/, `_${n}$1`); } else usados[chave] = 1;
+        if (meta.url) jobs.push({ folder: alvo, nome, url: meta.url });
       });
       setMsg(`A ler pastas… ${++lidos}/${entries.length}`);
     });
@@ -4328,9 +4503,10 @@ async function pxImportZip(file) {
   grupos.forEach(g => {
     if (!g.files.length) { ignoradosSoltos += g.ignorados.length; return; }
     let match = { status: 'none' };
+    g.subpasta = '';
     for (let i = g.segs.length - 1; i >= 0; i--) {
       const r = pxMatchEmployee(g.segs[i]);
-      if (r.status !== 'none') { match = r; break; }
+      if (r.status !== 'none') { match = r; g.subpasta = pxNomeValido(g.segs.slice(i + 1).join(' - ')); break; }
     }
     linhas.push(Object.assign(g, { match }));
   });
@@ -4346,7 +4522,7 @@ async function pxImportZip(file) {
     const aviso = l.match.status === 'ambiguous' ? '<div class="px-imp-path">vários funcionários possíveis — escolhe</div>'
       : l.match.status === 'none' ? '<div class="px-imp-path">não encontrado — escolhe ou ignora</div>' : '';
     const ign = l.ignorados.length ? `<div class="px-imp-path">${l.ignorados.length} ignorado(s) (formato não suportado)</div>` : '';
-    return `<tr><td><strong>${escapeHtml(pasta)}</strong><div class="px-imp-path">${escapeHtml(l.key)}</div></td>`
+    return `<tr><td><strong>${escapeHtml(pasta)}</strong><div class="px-imp-path">${escapeHtml(l.key)}</div>${l.subpasta ? `<div class="px-imp-path">→ entra na pasta "${escapeHtml(l.subpasta)}"</div>` : ''}</td>`
       + `<td style="white-space:nowrap;">${l.files.length} ficheiro(s)${ign}</td>`
       + `<td><select data-px-imp="${i}"><option value="">— Ignorar —</option>${opts}</select>${aviso}</td></tr>`;
   }).join('');
@@ -4378,7 +4554,7 @@ async function pxApplyImport() {
   pxImportPlan.linhas.forEach((l, i) => {
     const sel = document.querySelector(`[data-px-imp="${i}"]`);
     const funcId = sel ? sel.value : '';
-    if (funcId) l.files.forEach(f => tarefas.push({ funcId, f }));
+    if (funcId) l.files.forEach(f => tarefas.push({ funcId, f, pasta: l.subpasta || '' }));
   });
   if (!tarefas.length) { toast('Nenhuma pasta foi ligada a um funcionário.', true); return; }
   const nFunc = new Set(tarefas.map(t => t.funcId)).size;
@@ -4394,7 +4570,8 @@ async function pxApplyImport() {
       const snap = await db.collection('funcionarios').doc(funcId).collection('documentos').get();
       existentes[funcId] = new Set(snap.docs.map(d => docFullName(d.data()).toLowerCase()));
     }
-    await pxRunLimited(tarefas, 3, async ({ funcId, f }) => {
+    const novasSubs = {}; // funcId -> Set de subpastas usadas
+    await pxRunLimited(tarefas, 3, async ({ funcId, f, pasta }) => {
       try {
         if (existentes[funcId].has(f.nome.toLowerCase())) { dup++; return; }
         existentes[funcId].add(f.nome.toLowerCase());
@@ -4402,6 +4579,7 @@ async function pxApplyImport() {
         if (blob.size > PX_MAX_BYTES) { grandes++; return; }
         const info = await pxUploadCloudinary(blob, f.nome, funcId);
         await db.collection('funcionarios').doc(funcId).collection('documentos').add({
+          ...(pasta ? { pasta } : {}),
           url: info.secure_url,
           public_id: info.public_id,
           original_filename: info.original_filename || f.nome.replace(/\.[^.]+$/, ''),
@@ -4414,6 +4592,7 @@ async function pxApplyImport() {
           origem: 'importacao_zip'
         });
         await db.collection('funcionarios').doc(funcId).update({ doc_count: firebase.firestore.FieldValue.increment(1) });
+        if (pasta) (novasSubs[funcId] = novasSubs[funcId] || new Set()).add(pasta);
         ok++;
       } catch (err) {
         falhas++;
@@ -4421,6 +4600,13 @@ async function pxApplyImport() {
         setMsg(`A importar… ${++feitos}/${tarefas.length}`);
       }
     });
+    // Regista as subpastas criadas pela importação (ex.: Harihar/Contratos → pasta "Contratos")
+    for (const [funcId, conj] of Object.entries(novasSubs)) {
+      const e = employees.find(x => x.id === funcId);
+      const atuais = pxSubpastas(e);
+      const juntas = atuais.concat([...conj].filter(x => !atuais.includes(x)));
+      if (juntas.length !== atuais.length) await db.collection('funcionarios').doc(funcId).set({ subpastas: juntas }, { merge: true });
+    }
     await logAudit('import_docs_zip', '', `${ok} ficheiro(s) importados para ${nFunc} funcionário(s)`);
     const extra = [dup ? `${dup} já existiam` : '', grandes ? `${grandes} acima de 10 MB` : '', falhas ? `${falhas} com erro` : ''].filter(Boolean).join(', ');
     toast(`Importação concluída: ${ok} ficheiro(s) importados.` + (extra ? ` (${extra})` : ''), falhas > 0);
@@ -7112,6 +7298,9 @@ function bindFiscal() {
   document.getElementById('pxImportClose').addEventListener('click', () => closeModal('pxImportModal'));
   document.getElementById('pxImportCancel').addEventListener('click', () => closeModal('pxImportModal'));
   document.getElementById('pxImportApply').addEventListener('click', pxApplyImport);
+  document.getElementById('pxMoverClose').addEventListener('click', () => closeModal('pxMoverModal'));
+  document.getElementById('pxMoverCancel').addEventListener('click', () => closeModal('pxMoverModal'));
+  document.getElementById('pxMoverOk').addEventListener('click', () => pxConfirmarMover());
   document.querySelectorAll('[data-emp-tab]').forEach(b => b.addEventListener('click', () => switchEmpTab(b.dataset.empTab)));
   document.getElementById('btnExportAll').addEventListener('click', exportarTudo);
 
