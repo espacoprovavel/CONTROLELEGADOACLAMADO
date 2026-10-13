@@ -382,8 +382,34 @@ footer strong { color: var(--ink); }
 .doc-meta { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
 .doc-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
 .docbadge { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent); font-weight: 500; }
-#viewerBody img { max-width: 100%; height: auto; border-radius: 8px; }
-#viewerBody iframe { width: 100%; height: 70vh; border: none; border-radius: 8px; }
+/* Visualizador: janela que se move, muda de tamanho e maximiza */
+.vw-backdrop { padding: 0; overflow: hidden; }
+.vw-backdrop.open { display: block; }
+.vw-janela { position: fixed; display: flex; flex-direction: column; max-width: none; min-width: 300px; min-height: 220px; border-radius: 14px; transition: border-radius .15s; }
+.vw-janela.max { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; border-radius: 0; animation: none; }
+.vw-janela.max .vw-h { display: none; }
+.vw-head { cursor: move; user-select: none; -webkit-user-select: none; gap: 12px; padding: 12px 14px 12px 22px; touch-action: none; }
+.vw-janela.max .vw-head { cursor: default; }
+.vw-head h2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+.vw-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.vw-btn { width: 32px; height: 32px; border-radius: 8px; border: none; cursor: pointer; background: rgba(255,255,255,0.15); color: #fff; display: flex; align-items: center; justify-content: center; }
+.vw-btn:hover { background: rgba(255,255,255,0.28); }
+.vw-body { flex: 1; min-height: 0; max-height: none; padding: 12px; overflow: auto; display: flex; background: #eef2f7; }
+#viewerBody img { max-width: 100%; max-height: 100%; object-fit: contain; margin: auto; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,34,68,0.15); }
+#viewerBody iframe { flex: 1; width: 100%; min-height: 0; border: none; border-radius: 8px; background: #fff; }
+#viewerBody .doc-empty { margin: auto; }
+.vw-janela.vw-ativo iframe { pointer-events: none; } /* o PDF não "rouba" o rato enquanto se arrasta */
+.vw-janela.vw-ativo { user-select: none; transition: none; }
+.vw-h { position: absolute; z-index: 5; touch-action: none; }
+.vw-n, .vw-s { left: 14px; right: 14px; height: 10px; cursor: ns-resize; }
+.vw-n { top: -4px; } .vw-s { bottom: -4px; }
+.vw-e, .vw-w { top: 14px; bottom: 14px; width: 10px; cursor: ew-resize; }
+.vw-e { right: -4px; } .vw-w { left: -4px; }
+.vw-ne, .vw-nw, .vw-se, .vw-sw { width: 20px; height: 20px; }
+.vw-ne { top: -4px; right: -4px; cursor: nesw-resize; } .vw-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+.vw-nw { top: -4px; left: -4px; cursor: nwse-resize; } .vw-se { bottom: -2px; right: -2px; cursor: nwse-resize; }
+/* pega visível no canto */
+.vw-se::after { content: ''; position: absolute; right: 5px; bottom: 5px; width: 10px; height: 10px; background: linear-gradient(135deg, transparent 45%, var(--accent) 45%, var(--accent) 55%, transparent 55%, transparent 70%, var(--accent) 70%, var(--accent) 80%, transparent 80%); opacity: .55; }
 
 /* ============================================================
    v3.0 — Gestão Fiscal e Salarial
@@ -1157,13 +1183,20 @@ body.px-dragging .px-dropbar { display: flex; }
 </div>
 
 <!-- Modal: Visualizador de documento -->
-<div class="modal-backdrop" id="viewerModal">
-  <div class="modal" style="max-width:920px;">
-    <div class="modal-head">
+<div class="modal-backdrop vw-backdrop" id="viewerModal">
+  <div class="modal vw-janela" id="viewerJanela" role="dialog" aria-labelledby="viewerTitle">
+    <div class="modal-head vw-head" id="viewerHead" title="Arrasta para mover · duplo clique para maximizar">
       <h2 id="viewerTitle">Documento</h2>
-      <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
+      <div class="vw-btns">
+        <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
+        <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
+      </div>
     </div>
-    <div class="modal-body" id="viewerBody" style="text-align:center;"></div>
+    <div class="modal-body vw-body" id="viewerBody"></div>
+    <span class="vw-h vw-n" data-vw="n"></span><span class="vw-h vw-s" data-vw="s"></span>
+    <span class="vw-h vw-e" data-vw="e"></span><span class="vw-h vw-w" data-vw="w"></span>
+    <span class="vw-h vw-ne" data-vw="ne"></span><span class="vw-h vw-nw" data-vw="nw"></span>
+    <span class="vw-h vw-sw" data-vw="sw"></span><span class="vw-h vw-se" data-vw="se" title="Arrasta para mudar o tamanho"></span>
   </div>
 </div>
 
@@ -2521,6 +2554,80 @@ async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
 }
 
 let viewerObjectUrl = null;
+/* ---------- Janela do visualizador: mover, mudar o tamanho, maximizar ----------
+   Posição e tamanho ficam guardados neste aparelho para a próxima vez. */
+const VW_MIN_L = 300, VW_MIN_A = 220;
+const VW_ICO_MAX = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
+const VW_ICO_REST = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="8" width="12" height="12" rx="2"/><path d="M8 8V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-3"/></svg>';
+let vwEstado = null; // { x, y, l, a, max }
+function vwPadrao() {
+  const W = window.innerWidth, H = window.innerHeight;
+  const l = Math.min(980, W - 32), a = Math.min(Math.round(H * 0.88), H - 32);
+  return { x: Math.round((W - l) / 2), y: Math.max(16, Math.round((H - a) / 2)), l, a, max: W <= 600 };
+}
+function vwGuardar() { try { localStorage.setItem('legado_visualizador', JSON.stringify(vwEstado)); } catch (e) { /* sem armazenamento */ } }
+function vwLer() {
+  try { const v = JSON.parse(localStorage.getItem('legado_visualizador') || 'null'); if (v && v.l > 0 && v.a > 0) return v; } catch (e) { /* sem armazenamento */ }
+  return null;
+}
+function vwLimitar() {
+  const W = window.innerWidth, H = window.innerHeight, e = vwEstado;
+  e.l = Math.max(Math.min(VW_MIN_L, W), Math.min(e.l, W));
+  e.a = Math.max(Math.min(VW_MIN_A, H), Math.min(e.a, H));
+  e.x = Math.max(0, Math.min(e.x, W - e.l));
+  e.y = Math.max(0, Math.min(e.y, H - e.a));
+}
+function vwAplicar() {
+  const j = document.getElementById('viewerJanela'), e = vwEstado;
+  j.classList.toggle('max', !!e.max);
+  j.style.left = e.x + 'px'; j.style.top = e.y + 'px'; j.style.width = e.l + 'px'; j.style.height = e.a + 'px';
+  const b = document.getElementById('viewerMax');
+  b.innerHTML = e.max ? VW_ICO_REST : VW_ICO_MAX;
+  b.title = e.max ? 'Restaurar tamanho' : 'Maximizar';
+  b.setAttribute('aria-label', b.title);
+}
+function vwAbrir() {
+  if (!vwEstado) vwEstado = vwLer() || vwPadrao();
+  vwLimitar(); vwAplicar();
+  openModal('viewerModal');
+}
+function vwAlternarMax() { vwEstado.max = !vwEstado.max; vwLimitar(); vwAplicar(); vwGuardar(); }
+// Arrastar: título (mover) ou bordas/cantos (tamanho)
+function vwLigar() {
+  const j = document.getElementById('viewerJanela'), head = document.getElementById('viewerHead');
+  let op = null;
+  const inicio = (ev, dir) => {
+    if (vwEstado.max || (ev.button !== undefined && ev.button !== 0)) return;
+    ev.preventDefault();
+    op = { dir, px: ev.clientX, py: ev.clientY, e0: Object.assign({}, vwEstado) };
+    j.classList.add('vw-ativo');
+    try { ev.target.setPointerCapture(ev.pointerId); } catch (e) { /* sem captura */ }
+  };
+  head.addEventListener('pointerdown', ev => { if (!ev.target.closest('button')) inicio(ev, 'mover'); });
+  j.querySelectorAll('[data-vw]').forEach(h => h.addEventListener('pointerdown', ev => inicio(ev, h.dataset.vw)));
+  document.addEventListener('pointermove', ev => {
+    if (!op) return;
+    const dx = ev.clientX - op.px, dy = ev.clientY - op.py, o = op.e0, e = vwEstado;
+    const W = window.innerWidth, H = window.innerHeight;
+    if (op.dir === 'mover') {
+      e.x = Math.max(0, Math.min(o.x + dx, W - o.l));
+      e.y = Math.max(0, Math.min(o.y + dy, H - o.a));
+    } else {
+      if (op.dir.includes('e')) e.l = Math.max(VW_MIN_L, Math.min(o.l + dx, W - o.x));
+      if (op.dir.includes('s')) e.a = Math.max(VW_MIN_A, Math.min(o.a + dy, H - o.y));
+      if (op.dir.includes('w')) { const nx = Math.max(0, Math.min(o.x + dx, o.x + o.l - VW_MIN_L)); e.l = o.l + (o.x - nx); e.x = nx; }
+      if (op.dir.includes('n')) { const ny = Math.max(0, Math.min(o.y + dy, o.y + o.a - VW_MIN_A)); e.a = o.a + (o.y - ny); e.y = ny; }
+    }
+    vwAplicar();
+  });
+  const fim = () => { if (!op) return; op = null; j.classList.remove('vw-ativo'); vwGuardar(); };
+  document.addEventListener('pointerup', fim);
+  document.addEventListener('pointercancel', fim);
+  head.addEventListener('dblclick', ev => { if (!ev.target.closest('button')) vwAlternarMax(); });
+  document.getElementById('viewerMax').addEventListener('click', vwAlternarMax);
+  window.addEventListener('resize', () => { if (vwEstado && document.getElementById('viewerModal').classList.contains('open')) { vwLimitar(); vwAplicar(); } });
+}
+
 function viewDocument(url, format, filename) {
   document.getElementById('viewerTitle').textContent = filename || 'Documento';
   const body = document.getElementById('viewerBody');
@@ -2538,7 +2645,7 @@ function viewDocument(url, format, filename) {
           : `<iframe src="${escapeHtml(url)}" title="${escapeHtml(filename)}"></iframe>`;
       });
   }
-  openModal('viewerModal');
+  vwAbrir();
 }
 
 // Descarrega o ficheiro (também offline, se estiver guardado); recorre ao link direto em último caso.
@@ -3417,6 +3524,7 @@ function bind() {
   });
 
   // Visualizador de documento
+  vwLigar();
   document.getElementById('viewerClose').addEventListener('click', () => {
     closeModal('viewerModal');
     document.getElementById('viewerBody').innerHTML = '';
