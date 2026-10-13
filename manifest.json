@@ -1,7 +1,7 @@
 {
-  "name": "Legado RH — Gestão de Funcionários",
+  "name": "Legado RH — Gestão de Colaboradores",
   "short_name": "Legado RH",
-  "description": "Sistema interno de gestão de funcionários da LEGADO ACLAMADO — UNIPESSOAL LDA.",
+  "description": "Sistema interno de gestão de colaboradores da LEGADO ACLAMADO — UNIPESSOAL LDA.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

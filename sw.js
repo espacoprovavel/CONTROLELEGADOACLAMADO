@@ -3,18 +3,20 @@
      recente com Internet; a cópia guardada só entra quando não há ligação).
    - Bibliotecas externas (Firebase, jsPDF, ZIP, fontes…): guardadas para a app
      abrir sem Internet; atualizadas em segundo plano.
-   - Documentos dos funcionários (Cloudinary): guardados na primeira vez que são
+   - Documentos dos colaboradores (Cloudinary): guardados na primeira vez que são
      abertos/descarregados ou com "📶 Guardar offline"; o mesmo endereço é sempre
      o mesmo ficheiro, por isso serve-se a cópia guardada.
    - Pedidos à base de dados (Firestore/autenticação) e uploads NÃO passam por
      aqui: o próprio Firebase trata do modo offline. */
-const CACHE = 'legado-rh-v2';
+const CACHE = 'legado-rh-v3';
 const DOCS_CACHE = 'legado-docs-v1';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
