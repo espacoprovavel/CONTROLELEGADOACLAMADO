@@ -1151,6 +1151,20 @@ footer .ver { color: #9ca3af; }
 }
 @media (prefers-reduced-motion: reduce) { .sc.open, .sc-flashfx.on, .sc-pilha.pulo { animation: none; } }
 
+/* Janela para escrever um nome */
+#textoModal { z-index: 1100; }
+.tx-texto { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 12px; }
+.tx-texto:empty { display: none; }
+#txInput { font-size: 16px; }
+.tx-sug { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tx-sug:empty { display: none; }
+.tx-sug button { background: #f2f4f7; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--ink); cursor: pointer; }
+.tx-sug button:hover { border-color: #c7cdd6; }
+/* Pasta "+ Nova pasta" (sempre à vista) */
+.px-tile.px-tile-nova { border: 1.5px dashed #c7cdd6; background: transparent; box-shadow: none; }
+.px-tile.px-tile-nova:hover { border-color: var(--accent); background: #f8faff; }
+.px-plus { width: 50px; height: 50px; border-radius: 15px; background: #eef4ff; color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.px-tile-nova .px-name { color: var(--accent) !important; }
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -2043,6 +2057,25 @@ footer .ver { color: #9ca3af; }
   </div>
 </div>
 
+<!-- Janela para escrever um nome (substitui a caixa "prompt" do navegador) -->
+<div class="modal-backdrop" id="textoModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2 id="txTitulo">Nome</h2>
+      <button class="modal-close" id="txFechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="tx-texto" id="txTexto"></p>
+      <div class="cfg-field"><label for="txInput" id="txRotulo">Nome</label><input type="text" id="txInput" maxlength="120" autocomplete="off"></div>
+      <div class="tx-sug" id="txSug"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="txCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="txOk">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Menu do botão direito (pastas e ficheiros) -->
 <div class="ctx-menu" id="ctxMenu" role="menu"></div>
 
@@ -2201,6 +2234,35 @@ function toast(msg, isErr) {
   el.textContent = msg;
   wrap.appendChild(el);
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 3600);
+}
+// Pede um texto numa janela da app (a caixa "prompt" do navegador não aparece em alguns telemóveis)
+// o: { titulo, texto, rotulo, valor, placeholder, botao, sugestoes }  →  Promise<string|null>
+let txResolver = null, txLigado = false;
+function pedirTexto(o) {
+  o = o || {};
+  const el = id => document.getElementById(id);
+  if (!txLigado) {
+    txLigado = true;
+    const fechar = v => { closeModal('textoModal'); const r = txResolver; txResolver = null; if (r) r(v); };
+    el('txOk').addEventListener('click', () => fechar(el('txInput').value));
+    el('txCancelar').addEventListener('click', () => fechar(null));
+    el('txFechar').addEventListener('click', () => fechar(null));
+    el('txInput').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); fechar(el('txInput').value); } else if (ev.key === 'Escape') fechar(null); });
+    el('txSug').addEventListener('click', ev => { const b = ev.target.closest('[data-tx-sug]'); if (b) { el('txInput').value = b.dataset.txSug; el('txInput').focus(); } });
+  }
+  return new Promise(resolve => {
+    if (txResolver) txResolver(null);
+    txResolver = resolve;
+    el('txTitulo').textContent = o.titulo || 'Nome';
+    el('txTexto').textContent = o.texto || '';
+    el('txRotulo').textContent = o.rotulo || 'Nome';
+    el('txInput').value = o.valor || '';
+    el('txInput').placeholder = o.placeholder || '';
+    el('txOk').textContent = o.botao || 'OK';
+    el('txSug').innerHTML = (o.sugestoes || []).map(t => `<button type="button" data-tx-sug="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
+    openModal('textoModal');
+    setTimeout(() => { const i = el('txInput'); i.focus(); i.select(); }, 60);
+  });
 }
 function showOverlay(msg) {
   document.getElementById('overlayMsg').textContent = msg || '';
@@ -4795,7 +4857,7 @@ async function handleListaSelectChange(sel) {
     return;
   }
   const label = tipo === 'paises' ? 'país' : 'empresa';
-  const nome = (prompt(`Novo ${label}:`) || '').trim();
+  const nome = ((await pedirTexto({ titulo: `Novo ${label}`, rotulo: label === 'país' ? 'Nome do país' : 'Nome da empresa', botao: 'Adicionar' })) || '').trim();
   if (!nome) { sel.value = ''; return; }
   const ok = await adicionarItemLista(tipo, nome);
   // O snapshot vai disparar refreshListaSelects(); seleciona o novo depois
@@ -5355,7 +5417,7 @@ function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
 
 async function pxNovaSubpasta(emp) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
-  const nome = pxNomeValido(prompt(`Nome da nova pasta dentro de "${emp.nome}" (ex.: Contratos, Recibos):`));
+  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${emp.nome}"`, rotulo: 'Nome da pasta', placeholder: 'Ex.: Contratos', botao: 'Criar pasta', sugestoes: ['Recibos de vencimento', 'Contratos', 'Documentos pessoais', 'A1 / Destacamento', 'Faltas e baixas', 'Seguros'] }));
   if (!nome) return;
   const subs = pxSubpastas(emp);
   if (subs.some(x => pxNorm(x) === pxNorm(nome))) { toast('Já existe uma pasta com esse nome.', true); return; }
@@ -5368,7 +5430,7 @@ async function pxNovaSubpasta(emp) {
 
 async function pxRenomearSubpasta(emp, sub) {
   if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
-  const novo = pxNomeValido(prompt(`Novo nome para a pasta "${sub}":`, sub));
+  const novo = pxNomeValido(await pedirTexto({ titulo: 'Renomear pasta', rotulo: 'Novo nome', valor: sub, botao: 'Guardar' }));
   if (!novo || novo === sub) return;
   const subs = pxSubpastas(emp);
   if (subs.some(x => x !== sub && pxNorm(x) === pxNorm(novo))) { toast('Já existe uma pasta com esse nome.', true); return; }
@@ -5407,7 +5469,7 @@ async function pxRenomearFicheiro(emp, d) {
   if (!isEditor()) { toast('Sem permissões para renomear ficheiros.', true); return; }
   const atual = d.original_filename || 'documento';
   const ext = d.format ? '.' + String(d.format).toLowerCase() : '';
-  let novo = prompt(`Novo nome para "${docFullName(d)}"${ext ? ` (a extensão ${ext} mantém-se)` : ''}:`, atual);
+  let novo = await pedirTexto({ titulo: 'Renomear ficheiro', texto: ext ? `A extensão ${ext} mantém-se.` : '', rotulo: 'Novo nome', valor: atual, botao: 'Guardar' });
   if (novo == null) return;
   novo = String(novo).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ');
   if (ext && novo.toLowerCase().endsWith(ext)) novo = novo.slice(0, -ext.length).trim();
@@ -5522,7 +5584,7 @@ async function pxDescarregarVarios(emp, docs) {
 // Nova pasta: sem país → novo país; com país → nova empresa dentro dele
 async function pxNovaPasta(pais) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
-  const nome = pxNomeValido(prompt(pais ? `Nome da nova empresa dentro de "${pais}":` : 'Nome do novo país:'));
+  const nome = pxNomeValido(await pedirTexto(pais ? { titulo: 'Nova empresa', texto: `Dentro de "${pais}"`, rotulo: 'Nome da empresa', botao: 'Criar pasta' } : { titulo: 'Novo país', rotulo: 'Nome do país', botao: 'Criar pasta', sugestoes: ['Bélgica', 'Portugal', 'França', 'Países Baixos', 'Alemanha', 'Luxemburgo'] }));
   if (!nome) return;
   const est = pxEstClone();
   const n = pxNorm(nome);
@@ -5550,7 +5612,7 @@ async function pxNovaPasta(pais) {
 async function pxRenomearPasta(pais, empresa) {
   if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
   const atual = empresa || pais;
-  const novo = pxNomeValido(prompt(`Novo nome para a pasta "${atual}":`, atual));
+  const novo = pxNomeValido(await pedirTexto({ titulo: 'Renomear pasta', rotulo: 'Novo nome', valor: atual, botao: 'Guardar' }));
   if (!novo || novo === atual) return;
   const afetados = pxNaPasta(pais, empresa);
   if (!confirm(`Renomear a pasta "${atual}" para "${novo}"?\n\n${afetados.length} colaborador(es) desta pasta (incluindo ex-colaboradores) passam a ter ${empresa ? 'a empresa' : 'o país'} "${novo}".`)) return;
@@ -5803,19 +5865,19 @@ function renderPastas() {
       body = `${faixa}<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}`;
     } else {
       if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
+      if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
+      if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
+      if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
       actions += pxBtn('ficha', 'Gerar PDF');
       actions += pxBtn('detalhe', 'Ficha completa');
-      if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
-      if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
-      if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
       actions += pxBtn('zip-func', partilhaNoTelemovel() ? 'Enviar pasta' : 'Download pasta');
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
       const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
       pxItems = subs.map(nomeSub => ({ scope, pais, empresa, funcId, sub: nomeSub }));
       const contar = nomeSub => (pxDocs || []).filter(d => d.pasta === nomeSub).length;
-      const subsHtml = subs.length
-        ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + subs.map((nomeSub, i) => {
+      const subsHtml = subs.length || isEditor()
+        ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + (isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-subpasta" title="Criar uma pasta nova"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Criar pasta</span></button>` : '') + subs.map((nomeSub, i) => {
             const n = contar(nomeSub);
             return pxCard(i, 'pasta', nomeSub, pxDocs === null ? '…' : (n ? `${n} ficheiro${n === 1 ? '' : 's'}` : 'Pasta vazia'), isEditor() ? `data-px-drop="${escapeHtml(nomeSub)}"` : '');
           }).join('') + '</div>'
@@ -7044,9 +7106,9 @@ async function contabCopyPrev() {
   }
 }
 
-function contabAddEmpresa() {
+async function contabAddEmpresa() {
   if (!isEditor()) { toast('Sem permissões para editar.', true); return; }
-  const nome = (prompt('Nome da empresa-cliente:', '') || '').trim();
+  const nome = ((await pedirTexto({ titulo: 'Nova empresa-cliente', rotulo: 'Nome da empresa-cliente', botao: 'Adicionar' })) || '').trim();
   if (nome === '') return;
   if (!contabModel.grupos) contabModel.grupos = [];
   contabModel.grupos.push({ id: uid(), nome: nome, linhas: [contabNovaLinha()] });
@@ -9280,8 +9342,9 @@ function renderEmpresaDocs() {
     ? `<div class="px-dropbar"><span>Largar aqui para mover:</span>${destinos.map(d => `<span class="px-drop-chip" data-ed-drop="${escapeHtml(d.id)}">${escapeHtml(d.nome)}</span>`).join('')}</div>`
     : '';
 
-  const pastasHtml = pastas.length
-    ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">${pastas.map(pastaTile).join('')}</div>`
+  const novaTile = ed ? `<button type="button" class="px-tile px-tile-nova" data-ed-act="nova-pasta" title="Criar uma pasta nova"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Criar pasta</span></button>` : '';
+  const pastasHtml = pastas.length || ed
+    ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">${novaTile}${pastas.map(pastaTile).join('')}</div>`
     : '';
   const vazio = !filhos.length
     ? `<div class="px-empty">${edPasta ? 'Esta pasta está vazia.' : 'Ainda não há pastas.'}${ed ? ' Usa <strong>+ Nova pasta</strong>, <strong>+ Nova ficha</strong> ou <strong>Anexar ficheiros</strong> (PDF, JPG, PNG ou Excel).' : ''}</div>`
@@ -9474,7 +9537,7 @@ function edMenuFundo() {
 // ---------- Criar, renomear, mover, eliminar ----------
 async function edNovaPasta(pai) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
-  const nome = pxNomeValido(prompt(`Nome da nova pasta dentro de "${edNome(edItem(pai))}":`));
+  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${edNome(edItem(pai))}"`, rotulo: 'Nome da pasta', botao: 'Criar pasta', sugestoes: ['Contratos', 'Seguros', 'Alojamentos', 'Viaturas', 'Faturas', 'Fábricas'] }));
   if (!nome) return;
   if (edNomeDuplicado(pai, nome, 'pasta')) { toast('Já existe uma pasta com esse nome aqui.', true); return; }
   try {
@@ -9489,7 +9552,7 @@ async function edRenomear(x) {
   if (x.tipo === 'ficheiro') {
     const atual = x.original_filename || 'documento';
     const ext = x.format ? '.' + String(x.format).toLowerCase() : '';
-    let novo = prompt(`Novo nome para "${docFullName(x)}"${ext ? ` (a extensão ${ext} mantém-se)` : ''}:`, atual);
+    let novo = await pedirTexto({ titulo: 'Renomear ficheiro', texto: ext ? `A extensão ${ext} mantém-se.` : '', rotulo: 'Novo nome', valor: atual, botao: 'Guardar' });
     if (novo == null) return;
     novo = String(novo).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ');
     if (ext && novo.toLowerCase().endsWith(ext)) novo = novo.slice(0, -ext.length).trim();
@@ -9502,7 +9565,7 @@ async function edRenomear(x) {
     return;
   }
   const rotulo = x.tipo === 'pasta' ? 'pasta' : 'ficha';
-  const novo = pxNomeValido(prompt(`Novo nome para a ${rotulo} "${edNome(x)}":`, edNome(x)));
+  const novo = pxNomeValido(await pedirTexto({ titulo: `Renomear ${rotulo}`, rotulo: 'Novo nome', valor: edNome(x), botao: 'Guardar' }));
   if (!novo || novo === edNome(x)) return;
   if (edNomeDuplicado(edPaiDe(x), novo, x.tipo, x.id)) { toast(`Já existe uma ${rotulo} com esse nome aqui.`, true); return; }
   try {
