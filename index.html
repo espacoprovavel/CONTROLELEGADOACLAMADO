@@ -1056,6 +1056,101 @@ footer .ver { color: #9ca3af; }
 .pdfv { width: max-content; min-width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; transform-origin: top center; }
 .pdfv-pag { margin: 0 auto; background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 8px 20px -10px rgba(0,0,0,0.25); }
 .pdfv-pag canvas { display: block; width: 100%; height: 100%; }
+/* ---------- Digitalizador ---------- */
+.sc { position: fixed; inset: 0; z-index: 5000; background: #0a0c0f; color: #fff; display: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.sc.open { display: block; animation: scEntrar .25s ease; }
+@keyframes scEntrar { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+.sc-ecra { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.sc-ecra[hidden] { display: none; }
+.sc-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: max(12px, env(safe-area-inset-top)) 14px 10px; position: relative; z-index: 3; }
+.sc-titulo { flex: 1; min-width: 0; text-align: center; line-height: 1.25; }
+.sc-titulo strong { display: block; font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+.sc-titulo span { display: block; font-size: 12px; color: rgba(255,255,255,0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-topo-dir { display: flex; gap: 8px; align-items: center; }
+.sc-ic { width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background .15s, transform .15s; }
+.sc-ic:active { transform: scale(.94); background: rgba(255,255,255,0.22); }
+.sc-ic[hidden] { display: none; }
+.sc-ic.on { background: #ffd54a; color: #1a1400; }
+.sc-ic-grande { width: 52px; height: 52px; }
+.sc-auto { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.28); background: transparent; color: rgba(255,255,255,0.75); font-weight: 600; font-size: 13px; cursor: pointer; }
+.sc-auto[aria-pressed="true"] { background: #fff; color: #0a0c0f; border-color: #fff; }
+.sc-palco { flex: 1; position: relative; overflow: hidden; }
+.sc-palco video, .sc-palco #scOverlay { position: absolute; }
+.sc-palco video { object-fit: fill; background: #000; }
+.sc-dica { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(10,12,15,0.62); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: background .2s, color .2s; z-index: 2; }
+.sc-dica.ok { background: rgba(31,157,85,0.92); }
+.sc-dica.quase { background: rgba(255,213,74,0.95); color: #1a1400; }
+.sc-semcam { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; text-align: center; }
+.sc-semcam[hidden] { display: none; }
+.sc-semcam p { color: rgba(255,255,255,0.75); font-size: 14px; max-width: 300px; line-height: 1.5; margin-bottom: 6px; }
+.sc-flashfx { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.sc-flashfx.on { animation: scFlash .35s ease-out; }
+@keyframes scFlash { from { opacity: .85; } to { opacity: 0; } }
+.sc-baixo { display: flex; align-items: center; justify-content: space-between; padding: 18px 30px max(24px, env(safe-area-inset-bottom)); position: relative; z-index: 3; }
+.sc-disparo { position: relative; width: 78px; height: 78px; border-radius: 50%; border: none; background: transparent; cursor: pointer; padding: 0; }
+.sc-disparo span { position: absolute; inset: 9px; border-radius: 50%; background: #fff; transition: transform .12s, background .2s; }
+.sc-disparo:active span { transform: scale(.9); }
+.sc-anel { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.sc-anel circle { fill: none; stroke: rgba(255,255,255,0.9); stroke-width: 4; stroke-dasharray: 226.2; stroke-dashoffset: 0; transition: stroke .2s; }
+.sc-disparo.contar .sc-anel circle { stroke: #ffd54a; }
+.sc-pilha { position: relative; width: 52px; height: 52px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.85); background: rgba(255,255,255,0.08); padding: 0; cursor: pointer; overflow: visible; }
+.sc-pilha:disabled { opacity: .35; cursor: default; }
+.sc-pilha-img { position: absolute; inset: 0; border-radius: 10px; background-size: cover; background-position: center; }
+.sc-pilha-n { position: absolute; right: -8px; top: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #ffd54a; color: #1a1400; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.sc-pilha.pulo { animation: scPulo .35s cubic-bezier(.2,.9,.3,1.5); }
+@keyframes scPulo { 50% { transform: scale(1.15); } }
+.sc-btn { border: none; border-radius: 14px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.sc-btn:active { transform: scale(.97); }
+.sc-btn-claro { background: #fff; color: #0a0c0f; }
+.sc-btn-vidro { background: rgba(255,255,255,0.14); color: #fff; }
+.sc-btn-largo { width: 100%; padding: 14px; font-size: 16px; }
+.sc-btn:disabled { opacity: .5; }
+/* rever */
+.sc-folha { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 6px 18px 10px; }
+.sc-folha canvas { max-width: 100%; max-height: 100%; border-radius: 4px; box-shadow: 0 20px 50px -12px rgba(0,0,0,0.7); background: #fff; touch-action: pan-x pan-y; }
+.sc-proc { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+.sc-proc.on { display: flex; }
+.sc-proc span { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.25); border-top-color: #fff; animation: upSpin .8s linear infinite; }
+.sc-filtros { display: flex; gap: 8px; justify-content: center; padding: 4px 12px 8px; overflow-x: auto; scrollbar-width: none; }
+.sc-filtros::-webkit-scrollbar { display: none; }
+.sc-filtros button { flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.8); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.sc-filtros button.on { background: #fff; color: #0a0c0f; border-color: #fff; }
+.sc-ferr { display: flex; justify-content: space-around; padding: 4px 8px; }
+.sc-ferr button { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; color: rgba(255,255,255,0.88); font-size: 11.5px; cursor: pointer; padding: 6px 8px; border-radius: 12px; min-width: 56px; }
+.sc-ferr button:active { background: rgba(255,255,255,0.1); }
+.sc-ferr button:disabled { opacity: .3; }
+.sc-ferr .sc-perigo { color: #ff8a80; }
+.sc-miniaturas { display: flex; gap: 8px; padding: 6px 14px; overflow-x: auto; scrollbar-width: none; }
+.sc-miniaturas::-webkit-scrollbar { display: none; }
+.sc-mini { position: relative; flex-shrink: 0; width: 46px; height: 60px; border-radius: 6px; border: 2px solid transparent; background: #222 center / cover no-repeat; cursor: pointer; padding: 0; }
+.sc-mini.on { border-color: #ffd54a; }
+.sc-mini b { position: absolute; left: 3px; bottom: 2px; font-size: 10px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+.sc-mini.aviso::after { content: '!'; position: absolute; right: -5px; top: -5px; width: 16px; height: 16px; border-radius: 50%; background: #ffd54a; color: #1a1400; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.sc-mini-mais { width: 46px; height: 60px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.4); background: transparent; color: #fff; font-size: 22px; cursor: pointer; flex-shrink: 0; }
+.sc-guardar { padding: 8px 16px max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
+.sc-guardar input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.16); color: #fff !important; -webkit-text-fill-color: #fff !important; caret-color: #fff; border-radius: 12px; padding: 12px 14px; font-size: 16px; outline: none; -webkit-user-select: text; user-select: text; }
+.sc-guardar input::placeholder { color: rgba(255,255,255,0.45); -webkit-text-fill-color: rgba(255,255,255,0.45); }
+.sc-guardar input:focus { border-color: rgba(255,255,255,0.5); }
+.sc-sug { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.sc-sug::-webkit-scrollbar { display: none; }
+.sc-sug button { flex-shrink: 0; background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.8); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+/* cortar */
+.sc-txtbtn { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 15px; cursor: pointer; padding: 8px 6px; min-width: 70px; text-align: left; }
+.sc-txtbtn-forte { color: #ffd54a; font-weight: 700; text-align: right; }
+#scCortarImg, #scCortarSvg { position: absolute; }
+#scCortarSvg { overflow: visible; touch-action: none; }
+.sc-poli { fill: rgba(255,213,74,0.16); stroke: #ffd54a; stroke-width: 2; }
+.sc-canto { fill: rgba(10,12,15,0.25); stroke: #fff; stroke-width: 2.5; cursor: grab; }
+.sc-canto-toque { fill: transparent; cursor: grab; }
+.sc-lupa { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: none; z-index: 4; background: #000; }
+.sc-lupa[hidden] { display: none; }
+.sc-cortar-baixo { display: flex; gap: 10px; justify-content: center; padding: 14px 16px max(20px, env(safe-area-inset-bottom)); }
+@media (min-width: 900px) {
+  .sc-folha { padding: 10px 40px; }
+  .sc-guardar { max-width: 520px; width: 100%; margin: 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .sc.open, .sc-flashfx.on, .sc-pilha.pulo { animation: none; } }
+
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -1709,6 +1804,92 @@ footer .ver { color: #9ca3af; }
 </div>
 
 <div id="toastWrap"></div>
+<!-- Digitalizador de documentos (câmara → cantos → filtros → PDF) -->
+<div class="sc" id="scan" aria-hidden="true">
+  <!-- 1) Câmara -->
+  <section class="sc-ecra sc-camara" id="scCamara">
+    <div class="sc-topo">
+      <button type="button" class="sc-ic" id="scFechar" aria-label="Fechar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="sc-titulo"><strong>Digitalizar</strong><span id="scDestino"></span></div>
+      <div class="sc-topo-dir">
+        <button type="button" class="sc-ic" id="scFlash" aria-label="Flash" title="Flash" hidden><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+        <button type="button" class="sc-auto" id="scAuto" aria-pressed="true" title="Captura automática quando o documento está parado">Auto</button>
+      </div>
+    </div>
+    <div class="sc-palco" id="scPalco">
+      <video id="scVideo" playsinline muted autoplay></video>
+      <canvas id="scOverlay"></canvas>
+      <div class="sc-dica" id="scDica">A abrir a câmara…</div>
+      <div class="sc-semcam" id="scSemCam" hidden>
+        <p id="scSemCamTxt">Não foi possível abrir a câmara aqui.</p>
+        <button type="button" class="sc-btn sc-btn-claro" id="scFotoNativa">Tirar foto</button>
+        <button type="button" class="sc-btn sc-btn-vidro" id="scGaleria2">Escolher da galeria</button>
+      </div>
+      <div class="sc-flashfx" id="scFlashFx"></div>
+    </div>
+    <div class="sc-baixo">
+      <button type="button" class="sc-ic sc-ic-grande" id="scGaleria" aria-label="Importar da galeria" title="Importar da galeria"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg></button>
+      <button type="button" class="sc-disparo" id="scDisparo" aria-label="Fotografar">
+        <svg class="sc-anel" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="36"/></svg>
+        <span></span>
+      </button>
+      <button type="button" class="sc-pilha" id="scPilha" aria-label="Ver páginas" disabled>
+        <span class="sc-pilha-img" id="scPilhaImg"></span>
+        <span class="sc-pilha-n" id="scPilhaN">0</span>
+      </button>
+    </div>
+    <input type="file" id="scInFoto" accept="image/*" capture="environment" hidden>
+    <input type="file" id="scInGaleria" accept="image/*" multiple hidden>
+  </section>
+
+  <!-- 2) Rever páginas -->
+  <section class="sc-ecra sc-rever" id="scRever" hidden>
+    <div class="sc-topo">
+      <button type="button" class="sc-ic" id="scVoltarCam" aria-label="Voltar à câmara"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="sc-titulo"><strong id="scRevTitulo">Página 1 de 1</strong><span id="scRevSub">Toca em Cortar para acertar os cantos</span></div>
+      <button type="button" class="sc-ic" id="scFechar2" aria-label="Fechar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sc-folha" id="scFolha"><div class="sc-proc" id="scProc"><span></span></div></div>
+    <div class="sc-filtros" id="scFiltros" role="radiogroup" aria-label="Filtro">
+      <button type="button" data-sc-filtro="documento">Documento</button>
+      <button type="button" data-sc-filtro="cor">Cor</button>
+      <button type="button" data-sc-filtro="pb">Preto e branco</button>
+      <button type="button" data-sc-filtro="original">Original</button>
+    </div>
+    <div class="sc-ferr">
+      <button type="button" data-sc-ferr="cortar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span>Cortar</span></button>
+      <button type="button" data-sc-ferr="rodar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Rodar</span></button>
+      <button type="button" data-sc-ferr="esq"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Antes</span></button>
+      <button type="button" data-sc-ferr="dir"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span>Depois</span></button>
+      <button type="button" data-sc-ferr="apagar" class="sc-perigo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg><span>Apagar</span></button>
+    </div>
+    <div class="sc-miniaturas" id="scMinis"></div>
+    <div class="sc-guardar">
+      <input type="text" id="scNome" maxlength="90" placeholder="Nome do documento" aria-label="Nome do documento">
+      <div class="sc-sug" id="scSug"></div>
+      <button type="button" class="sc-btn sc-btn-claro sc-btn-largo" id="scGuardar">Guardar PDF</button>
+    </div>
+  </section>
+
+  <!-- 3) Cortar (acertar os cantos) -->
+  <section class="sc-ecra sc-cortar" id="scCortar" hidden>
+    <div class="sc-topo">
+      <button type="button" class="sc-txtbtn" id="scCortarCancelar">Cancelar</button>
+      <div class="sc-titulo"><strong>Acertar os cantos</strong><span>Arrasta os círculos para os cantos da folha</span></div>
+      <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="scCortarOk">Aplicar</button>
+    </div>
+    <div class="sc-palco" id="scCortarPalco">
+      <img id="scCortarImg" alt="">
+      <svg id="scCortarSvg"></svg>
+      <canvas class="sc-lupa" id="scLupa" width="240" height="240" hidden></canvas>
+    </div>
+    <div class="sc-cortar-baixo">
+      <button type="button" class="sc-btn sc-btn-vidro" id="scDetetar">Detetar folha</button>
+      <button type="button" class="sc-btn sc-btn-vidro" id="scInteira">Página inteira</button>
+    </div>
+  </section>
+</div>
+
 <!-- Janela de envio de ficheiros (substitui a do Cloudinary) -->
 <div class="up-backdrop" id="upModal" aria-hidden="true">
   <div class="up-card" role="dialog" aria-modal="true" aria-labelledby="upTitulo">
@@ -1726,6 +1907,7 @@ footer .ver { color: #9ca3af; }
       <div class="up-btns">
         <button type="button" class="up-btn up-btn-pri" id="upEscolher">Escolher ficheiros</button>
         <button type="button" class="up-btn up-btn-sec" id="upCamara">Tirar foto</button>
+        <button type="button" class="up-btn up-btn-sec" id="upDigitalizar">Digitalizar documento</button>
       </div>
       <div class="up-formatos" id="upFormatos"></div>
     </div>
@@ -2885,6 +3067,11 @@ function upLigar() {
   const escolher = () => input.click();
   document.getElementById('upEscolher').addEventListener('click', ev => { ev.stopPropagation(); escolher(); });
   document.getElementById('upCamara').addEventListener('click', ev => { ev.stopPropagation(); cam.click(); });
+  document.getElementById('upDigitalizar').addEventListener('click', ev => {
+    ev.stopPropagation();
+    const ctx = upCtx;
+    abrirScanner({ destino: ctx && ctx.destino, aoTerminar: f => { if (upCtx === ctx) upJuntar([f]); } });
+  });
   drop.addEventListener('click', escolher);
   drop.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); escolher(); } });
   [input, cam].forEach(i => i.addEventListener('change', () => { if (i.files.length) upJuntar(i.files); i.value = ''; }));
@@ -5610,6 +5797,7 @@ function renderPastas() {
     if (sub) {
       // ----- Subpasta dentro da pasta do colaborador -----
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros', 'btn-primary');
+      if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
       if (isEditor()) actions += pxBtn('renomear-sub', 'Renomear pasta');
       if (isAdmin()) actions += pxBtn('eliminar-sub', 'Eliminar pasta', 'btn-danger');
       body = `${faixa}<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}`;
@@ -5618,6 +5806,7 @@ function renderPastas() {
       actions += pxBtn('ficha', 'Gerar PDF');
       actions += pxBtn('detalhe', 'Ficha completa');
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
+      if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
       if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
       actions += pxBtn('zip-func', partilhaNoTelemovel() ? 'Enviar pasta' : 'Download pasta');
       actions += pxBtn('offline', 'Guardar offline');
@@ -5843,6 +6032,7 @@ function pxOnClick(ev) {
   const hoje = dateStamp();
   switch (t.dataset.pxAct) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome, sub || null); break;
+    case 'scan': if (emp) abrirScanner({ destino: emp.nome + (sub ? ' › ' + sub : ''), aoTerminar: f => openUploadWidget(emp.id, emp.nome, sub || null, [f]) }); break;
     case 'nova-subpasta': if (emp) pxNovaSubpasta(emp); break;
     case 'renomear-sub': if (emp && sub) pxRenomearSubpasta(emp, sub); break;
     case 'eliminar-sub': if (emp && sub) pxEliminarSubpasta(emp, sub); break;
@@ -9067,7 +9257,7 @@ function renderEmpresaDocs() {
   const voltar = edPasta ? `<button type="button" class="px-back" data-ed-go="${escapeHtml(edPaiDe(edItem(edPasta)))}" title="Voltar" aria-label="Voltar à pasta anterior">←</button>` : '';
 
   let actions = '';
-  if (ed) actions += pxBtn('ed-nova-pasta', '+ Nova pasta', 'btn-primary') + pxBtn('ed-nova-ficha', '+ Nova ficha') + pxBtn('ed-upload', 'Anexar ficheiros');
+  if (ed) actions += pxBtn('ed-nova-pasta', '+ Nova pasta', 'btn-primary') + pxBtn('ed-nova-ficha', '+ Nova ficha') + pxBtn('ed-upload', 'Anexar ficheiros') + pxBtn('ed-scan', 'Digitalizar');
   actions += pxBtn('ed-zip', partilhaNoTelemovel() ? (edPasta ? 'Enviar pasta' : 'Enviar tudo') : (edPasta ? 'Download pasta' : 'Download tudo'));
   actions += pxBtn('ed-offline', 'Guardar offline');
   if (edPasta && ed) actions += pxBtn('ed-ren-pasta', 'Renomear pasta') + pxBtn('ed-mov-pasta', 'Mover pasta');
@@ -9225,6 +9415,7 @@ function edAcao(a) {
   else if (a === 'nova-pasta') edNovaPasta(edPasta);
   else if (a === 'nova-ficha') edAbrirFicha(null, edPasta);
   else if (a === 'upload') edUpload(edPasta);
+  else if (a === 'scan') { const pasta = edPasta; abrirScanner({ destino: edCaminhoTxt(pasta), aoTerminar: f => edUpload(pasta, [f]) }); }
   else if (a === 'zip') edDescarregar(edPasta ? [edPasta] : edFilhos('').map(x => x.id), edPasta ? null : ED_RAIZ);
   else if (a === 'offline') edGuardarOffline(edPasta);
   else if (a === 'ren-pasta' && pasta) edRenomear(pasta);
@@ -9276,7 +9467,8 @@ function edMenuFundo() {
   return [{ titulo: edNome(edItem(edPasta)) },
     { label: '+ Nova pasta', fn: () => edNovaPasta(edPasta) },
     { label: '+ Nova ficha', fn: () => edAbrirFicha(null, edPasta) },
-    { label: 'Anexar ficheiros', fn: () => edUpload(edPasta) }];
+    { label: 'Anexar ficheiros', fn: () => edUpload(edPasta) },
+    { label: 'Digitalizar documento', fn: () => edAcao('scan') }];
 }
 
 // ---------- Criar, renomear, mover, eliminar ----------
@@ -9818,6 +10010,860 @@ if ('serviceWorker' in navigator) {
     }
   });
 })();
+</script>
+<script>
+/* ============================================================
+   DIGITALIZADOR — motor de imagem (sem bibliotecas externas)
+   - scDetetarFolha: encontra os 4 cantos da folha numa imagem pequena
+   - scEndireitar: corrige a perspetiva (homografia + interpolação bilinear)
+   - scFiltrar: Documento / Cor / P&B / Original (iluminação uniforme)
+   ============================================================ */
+function scCinza(d, n) {
+  const g = new Float32Array(n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) g[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+  return g;
+}
+function scDesfocar(g, w, h) { // caixa 3x3
+  const o = new Float32Array(g.length);
+  for (let y = 0; y < h; y++) {
+    const y0 = y > 0 ? y - 1 : 0, y1 = y < h - 1 ? y + 1 : h - 1;
+    for (let x = 0; x < w; x++) {
+      const x0 = x > 0 ? x - 1 : 0, x1 = x < w - 1 ? x + 1 : w - 1;
+      o[y * w + x] = (g[y0 * w + x0] + g[y0 * w + x] + g[y0 * w + x1] + g[y * w + x0] + g[y * w + x] + g[y * w + x1] + g[y1 * w + x0] + g[y1 * w + x] + g[y1 * w + x1]) / 9;
+    }
+  }
+  return o;
+}
+function scOtsu(g) {
+  const hist = new Float64Array(256);
+  for (let i = 0; i < g.length; i++) hist[Math.max(0, Math.min(255, g[i] | 0))]++;
+  const n = g.length; let soma = 0;
+  for (let i = 0; i < 256; i++) soma += i * hist[i];
+  let sB = 0, wB = 0, melhor = 0, t = 127;
+  for (let i = 0; i < 256; i++) {
+    wB += hist[i]; if (!wB) continue;
+    const wF = n - wB; if (!wF) break;
+    sB += i * hist[i];
+    const mB = sB / wB, mF = (soma - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+    if (v > melhor) { melhor = v; t = i; }
+  }
+  return t;
+}
+function scMorfo(m, w, h, maximo) { // erosão (mínimo) ou dilatação (máximo) 3x3
+  const o = new Uint8Array(m.length);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let v = maximo ? 0 : 1;
+    for (let dy = -1; dy <= 1; dy++) {
+      const yy = y + dy; if (yy < 0 || yy >= h) { if (!maximo) v = 0; continue; }
+      for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx; if (xx < 0 || xx >= w) { if (!maximo) v = 0; continue; }
+        const p = m[yy * w + xx];
+        if (maximo) { if (p) v = 1; } else if (!p) v = 0;
+      }
+    }
+    o[y * w + x] = v;
+  }
+  return o;
+}
+function scInvolucro(pts) { // envolvente convexa (cadeia monótona)
+  pts = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+  if (pts.length < 3) return pts;
+  const cruz = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const baixo = [], cima = [];
+  for (const p of pts) { while (baixo.length >= 2 && cruz(baixo[baixo.length - 2], baixo[baixo.length - 1], p) <= 0) baixo.pop(); baixo.push(p); }
+  for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (cima.length >= 2 && cruz(cima[cima.length - 2], cima[cima.length - 1], p) <= 0) cima.pop(); cima.push(p); }
+  cima.pop(); baixo.pop();
+  return baixo.concat(cima);
+}
+function scAreaPoligono(p) {
+  let a = 0;
+  for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i].x * q.y - q.x * p[i].y; }
+  return Math.abs(a) / 2;
+}
+function scQuatroCantos(hull) { // reduz a envolvente a 4 vértices, tirando o que menos área perde
+  const p = hull.slice();
+  const tri = (a, b, c) => Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
+  while (p.length > 4) {
+    let melhor = 0, perda = Infinity;
+    for (let i = 0; i < p.length; i++) {
+      const v = tri(p[(i - 1 + p.length) % p.length], p[i], p[(i + 1) % p.length]);
+      if (v < perda) { perda = v; melhor = i; }
+    }
+    p.splice(melhor, 1);
+  }
+  return p.length === 4 ? scOrdenarCantos(p) : null;
+}
+// Ordem: superior-esquerdo, superior-direito, inferior-direito, inferior-esquerdo
+function scOrdenarCantos(p) {
+  const cx = p.reduce((s, q) => s + q.x, 0) / p.length, cy = p.reduce((s, q) => s + q.y, 0) / p.length;
+  const o = p.slice().sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+  let i0 = 0; o.forEach((q, i) => { if (q.x + q.y < o[i0].x + o[i0].y) i0 = i; });
+  return o.slice(i0).concat(o.slice(0, i0));
+}
+function scAngulosOk(q) {
+  for (let i = 0; i < 4; i++) {
+    const a = q[(i + 3) % 4], b = q[i], c = q[(i + 1) % 4];
+    const v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+    const cos = (v1x * v2x + v1y * v2y) / (Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y) || 1);
+    const ang = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
+    if (ang < 45 || ang > 135) return false;
+  }
+  return true;
+}
+// Avalia um componente (rótulo) e devolve o quadrilátero, se parecer uma folha
+function scAvaliarComponente(rot, lab, area, w, h) {
+  const n = w * h, pts = [];
+  for (let y = 0; y < h; y++) {
+    let x0 = -1, x1 = -1;
+    for (let x = 0; x < w; x++) if (rot[y * w + x] === lab) { if (x0 < 0) x0 = x; x1 = x; }
+    if (x0 >= 0) { pts.push({ x: x0, y }); if (x1 !== x0) pts.push({ x: x1 + 1, y }); }
+  }
+  const q = scQuatroCantos(scInvolucro(pts));
+  if (!q || !scAngulosOk(q)) return null;
+  const aq = scAreaPoligono(q), enchimento = area / aq;
+  if (aq < n * 0.1 || aq > n * 0.985 || enchimento < 0.8) return null;
+  // cantos encostados à moldura da foto = quase sempre a mesa, não a folha
+  const enc = q.filter(c => c.x < w * 0.012 || c.y < h * 0.012 || c.x > w * 0.988 || c.y > h * 0.988).length;
+  if (enc >= 3) return null;
+  return { cantos: q, nota: aq / n * Math.min(1, enchimento) * (enc ? 0.85 : 1) };
+}
+function scComponentes(m, w, h) {
+  const n = w * h, rot = new Int32Array(n), pilha = new Int32Array(n), areas = [0];
+  let k = 0;
+  for (let i = 0; i < n; i++) {
+    if (!m[i] || rot[i]) continue;
+    k++; let topo = 0, area = 0; pilha[topo++] = i; rot[i] = k;
+    while (topo) {
+      const p = pilha[--topo]; area++;
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0 && m[p - 1] && !rot[p - 1]) { rot[p - 1] = k; pilha[topo++] = p - 1; }
+      if (x < w - 1 && m[p + 1] && !rot[p + 1]) { rot[p + 1] = k; pilha[topo++] = p + 1; }
+      if (y > 0 && m[p - w] && !rot[p - w]) { rot[p - w] = k; pilha[topo++] = p - w; }
+      if (y < h - 1 && m[p + w] && !rot[p + w]) { rot[p + w] = k; pilha[topo++] = p + w; }
+    }
+    areas.push(area);
+  }
+  return { rot, areas };
+}
+// Tapa os buracos de uma máscara (zonas vazias que não tocam na moldura), ex.: o texto dentro da folha
+function scTaparBuracos(m, w, h) {
+  const n = w * h, fora = new Uint8Array(n), pilha = new Int32Array(n); let topo = 0;
+  const semear = i => { if (!m[i] && !fora[i]) { fora[i] = 1; pilha[topo++] = i; } };
+  for (let x = 0; x < w; x++) { semear(x); semear((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { semear(y * w); semear(y * w + w - 1); }
+  while (topo) {
+    const p = pilha[--topo], x = p % w, y = (p / w) | 0;
+    if (x > 0) semear(p - 1); if (x < w - 1) semear(p + 1); if (y > 0) semear(p - w); if (y < h - 1) semear(p + w);
+  }
+  const o = new Uint8Array(n); for (let i = 0; i < n; i++) o[i] = fora[i] ? 0 : 1;
+  return o;
+}
+// img: { data, width, height } (imagem pequena, ~256-360 px). Devolve { ok, cantos }.
+function scDetetarFolha(img) {
+  const w = img.width, h = img.height, n = w * h;
+  let g = scCinza(img.data, n);
+  g = scDesfocar(scDesfocar(g, w, h), w, h);
+  const mascaras = [];
+  // 1) brilho: folha clara em fundo escuro (ou o contrário)
+  const t = scOtsu(g);
+  for (const escuro of [false, true]) {
+    const m = new Uint8Array(n);
+    for (let i = 0; i < n; i++) m[i] = escuro ? (g[i] <= t ? 1 : 0) : (g[i] > t ? 1 : 0);
+    mascaras.push(scMorfo(scMorfo(m, w, h, false), w, h, true)); // abertura
+  }
+  // 1b) folha branca em mesa clara: segundo corte de brilho só dentro da zona clara
+  const claros = []; for (let i = 0; i < n; i++) if (g[i] > t) claros.push(g[i]);
+  if (claros.length > n * 0.3) {
+    const t2 = scOtsu(Float32Array.from(claros));
+    if (t2 - t > 4) {
+      const m = new Uint8Array(n); for (let i = 0; i < n; i++) m[i] = g[i] > t2 ? 1 : 0;
+      mascaras.push(scMorfo(scMorfo(m, w, h, false), w, h, true));
+    }
+  }
+  // 2) bordas: zonas fechadas por um contorno
+  const mag = new Float32Array(n);
+  let maxMag = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    const gx = g[i - w + 1] + 2 * g[i + 1] + g[i + w + 1] - g[i - w - 1] - 2 * g[i - 1] - g[i + w - 1];
+    const gy = g[i + w - 1] + 2 * g[i + w] + g[i + w + 1] - g[i - w - 1] - 2 * g[i - w] - g[i - w + 1];
+    const v = Math.hypot(gx, gy); mag[i] = v; if (v > maxMag) maxMag = v;
+  }
+  if (maxMag > 0) {
+    // limiar a partir do "ruído" típico da foto (mediana), para apanhar bordas fracas (folha branca em mesa clara)
+    const amostra = []; for (let i = 0; i < n; i += 7) amostra.push(mag[i]);
+    amostra.sort((a, b) => a - b);
+    const te = Math.max(8, amostra[amostra.length >> 1] * 3.5);
+    let borda = new Uint8Array(n); for (let i = 0; i < n; i++) borda[i] = mag[i] > te ? 1 : 0;
+    borda = scMorfo(borda, w, h, true); // fecha pequenas falhas no contorno
+    // o que se alcança a partir da moldura sem atravessar bordas é "fora"
+    const fora = new Uint8Array(n), pilha = new Int32Array(n); let topo = 0;
+    const semear = i => { if (!borda[i] && !fora[i]) { fora[i] = 1; pilha[topo++] = i; } };
+    for (let x = 0; x < w; x++) { semear(x); semear((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { semear(y * w); semear(y * w + w - 1); }
+    while (topo) {
+      const p = pilha[--topo], x = p % w, y = (p / w) | 0;
+      if (x > 0) semear(p - 1); if (x < w - 1) semear(p + 1); if (y > 0) semear(p - w); if (y < h - 1) semear(p + w);
+    }
+    const dentro = new Uint8Array(n); for (let i = 0; i < n; i++) dentro[i] = fora[i] ? 0 : 1;
+    mascaras.push(scMorfo(dentro, w, h, false));
+  }
+  // todas as estratégias; ganha a maior folha plausível (o bloco de texto dentro da folha perde para a folha)
+  let melhor = null;
+  mascaras.forEach(m0 => {
+    const m = scTaparBuracos(m0, w, h);
+    const { rot, areas } = scComponentes(m, w, h);
+    const cand = areas.map((a, i) => [i, a]).filter(([i, a]) => i > 0 && a > n * 0.08).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    for (const [lab, area] of cand) {
+      const r = scAvaliarComponente(rot, lab, area, w, h);
+      if (r && (!melhor || r.nota > melhor.nota)) melhor = r;
+    }
+  });
+  if (melhor) return { ok: true, cantos: scAfinarCantos(melhor.cantos, mag, w, h) };
+  const mx = w * 0.06, my = h * 0.06;
+  return { ok: false, cantos: [{ x: mx, y: my }, { x: w - mx, y: my }, { x: w - mx, y: h - my }, { x: mx, y: h - my }] };
+}
+
+// Afina os cantos: em cada lado procura a borda mais forte (na perpendicular)
+// e ajusta uma reta; os cantos passam a ser os cruzamentos das 4 retas.
+function scAfinarCantos(q, mag, w, h) {
+  const diag = Math.hypot(w, h), alcance = Math.max(3, Math.round(diag * 0.025));
+  const retas = [];
+  for (let s = 0; s < 4; s++) {
+    const A = q[s], B = q[(s + 1) % 4];
+    const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L, ny = dx / L;
+    const pts = [];
+    for (let k = 1; k < 40; k++) {
+      const t = k / 40; if (t < 0.08 || t > 0.92) continue; // longe dos cantos
+      const px = A.x + dx * t, py = A.y + dy * t;
+      let melhorV = 0, mx = px, my = py;
+      for (let o = -alcance; o <= alcance; o++) {
+        const x = Math.round(px + nx * o), y = Math.round(py + ny * o);
+        if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1) continue;
+        const v = mag[y * w + x];
+        if (v > melhorV) { melhorV = v; mx = x; my = y; }
+      }
+      if (melhorV > 0) pts.push({ x: mx, y: my, v: melhorV });
+    }
+    if (pts.length < 8) return q;
+    // reta por mínimos quadrados totais, sem os 25% de pontos mais afastados
+    const ajustar = P => {
+      const cx = P.reduce((a, p) => a + p.x, 0) / P.length, cy = P.reduce((a, p) => a + p.y, 0) / P.length;
+      let sxx = 0, syy = 0, sxy = 0; P.forEach(p => { sxx += (p.x - cx) ** 2; syy += (p.y - cy) ** 2; sxy += (p.x - cx) * (p.y - cy); });
+      const ang = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+      return { cx, cy, ux: Math.cos(ang), uy: Math.sin(ang) };
+    };
+    let r = ajustar(pts);
+    const dist = p => Math.abs((p.x - r.cx) * -r.uy + (p.y - r.cy) * r.ux);
+    const bons = pts.slice().sort((a, b) => dist(a) - dist(b)).slice(0, Math.max(6, Math.ceil(pts.length * 0.75)));
+    r = ajustar(bons);
+    retas.push(r);
+  }
+  const cruzar = (r1, r2) => {
+    const det = r1.ux * r2.uy - r1.uy * r2.ux; if (Math.abs(det) < 1e-6) return null;
+    const t = ((r2.cx - r1.cx) * r2.uy - (r2.cy - r1.cy) * r2.ux) / det;
+    return { x: r1.cx + r1.ux * t, y: r1.cy + r1.uy * t };
+  };
+  const novo = [];
+  for (let i = 0; i < 4; i++) { // canto i fica entre o lado (i-1) e o lado i
+    const c = cruzar(retas[(i + 3) % 4], retas[i]);
+    if (!c || Math.hypot(c.x - q[i].x, c.y - q[i].y) > diag * 0.05) return q; // afinação duvidosa: fica o original
+    novo.push(c);
+  }
+  return scAngulosOk(novo) ? novo : q;
+}
+
+// Homografia que leva 4 pontos "de" para 4 pontos "para"
+function scHomografia(de, para) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const { x, y } = de[i], u = para[i].x, v = para[i].y;
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  for (let c = 0; c < 8; c++) { // eliminação de Gauss com pivô
+    let piv = c;
+    for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+    [A[c], A[piv]] = [A[piv], A[c]]; [b[c], b[piv]] = [b[piv], b[c]];
+    const d = A[c][c] || 1e-12;
+    for (let r = 0; r < 8; r++) {
+      if (r === c) continue;
+      const f = A[r][c] / d;
+      if (!f) continue;
+      for (let k = c; k < 8; k++) A[r][k] -= f * A[c][k];
+      b[r] -= f * b[c];
+    }
+  }
+  return b.map((v, i) => v / A[i][i]);
+}
+// Proporção real da folha (largura/altura) a partir da perspetiva da câmara
+// (método de Zhang & He: estima a distância focal e "desfaz" a inclinação).
+// Devolve null quando a foto está quase de frente (aí as medidas diretas já servem).
+function scProporcaoReal(cantos, imgW, imgH) {
+  const u0 = imgW / 2, v0 = imgH / 2;
+  const m = i => [cantos[i].x - u0, cantos[i].y - v0, 1];
+  const m1 = m(0), m2 = m(1), m4 = m(2), m3 = m(3); // m1=SE, m2=SD, m3=IE, m4=ID
+  const cruz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const esc = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const c14 = cruz(m1, m4);
+  const k2 = esc(c14, m3) / esc(cruz(m2, m4), m3), k3 = esc(c14, m2) / esc(cruz(m3, m4), m2);
+  const n2 = [k2 * m2[0] - m1[0], k2 * m2[1] - m1[1], k2 * m2[2] - m1[2]];
+  const n3 = [k3 * m3[0] - m1[0], k3 * m3[1] - m1[1], k3 * m3[2] - m1[2]];
+  const den = n2[2] * n3[2];
+  if (!isFinite(k2) || !isFinite(k3) || Math.abs(den) < 1e-9) return null;
+  const f2 = -(n2[0] * n3[0] + n2[1] * n3[1]) / den;
+  const diag = Math.hypot(imgW, imgH);
+  if (!(f2 > 0) || Math.sqrt(f2) < diag * 0.3 || Math.sqrt(f2) > diag * 6) return null; // focal pouco credível
+  const r = Math.sqrt((n2[0] * n2[0] + n2[1] * n2[1]) / f2 + n2[2] * n2[2]) / Math.sqrt((n3[0] * n3[0] + n3[1] * n3[1]) / f2 + n3[2] * n3[2]);
+  return isFinite(r) && r > 0.2 && r < 5 ? r : null;
+}
+// Tamanho da folha endireitada (proporção real), limitado a "maxLado".
+// Se a proporção ficar muito perto de A4 ou de um cartão (CC, residência), acerta-a exatamente.
+function scTamanho(cantos, maxLado, imgW, imgH, minLado) {
+  const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const L = Math.max(d(cantos[0], cantos[1]), d(cantos[3], cantos[2]));
+  const A = Math.max(d(cantos[0], cantos[3]), d(cantos[1], cantos[2]));
+  let prop = L / A; // largura/altura medida na foto
+  const real = imgW && imgH ? scProporcaoReal(cantos, imgW, imgH) : null;
+  if (real && real / prop < 1.8 && prop / real < 1.8) prop = real;
+  for (const alvo of [1 / Math.SQRT2, Math.SQRT2, 54 / 85.6, 85.6 / 54]) if (Math.abs(prop / alvo - 1) < 0.045) prop = alvo;
+  const lado = Math.max(L, A); // mantém a resolução do lado maior
+  let w = prop >= 1 ? lado : lado * prop, h = prop >= 1 ? lado / prop : lado;
+  // fotos com pouca resolução: amplia (até 2x) com suavização, para as letras ficarem lisas depois do filtro
+  const M = Math.max(w, h), f = Math.min(maxLado / M, Math.max(1, Math.min(2, (minLado || 0) / M)));
+  return { w: Math.max(8, Math.round(w * f)), h: Math.max(8, Math.round(h * f)) };
+}
+// src: ImageData da foto; cantos na foto; devolve ImageData endireitada (ow x oh)
+function scEndireitar(src, cantos, ow, oh) {
+  // corta 0,5% para dentro da folha: tira restos da mesa nas bordas
+  const mx = ow * 0.005, my = oh * 0.005;
+  const H = scHomografia([{ x: -mx, y: -my }, { x: ow + mx, y: -my }, { x: ow + mx, y: oh + my }, { x: -mx, y: oh + my }], cantos);
+  const s = src.data, sw = src.width, sh = src.height;
+  const out = new ImageData(ow, oh), o = out.data;
+  for (let y = 0; y < oh; y++) {
+    const yy = y + 0.5;
+    let nx = H[0] * 0.5 + H[1] * yy + H[2], ny = H[3] * 0.5 + H[4] * yy + H[5], nw = H[6] * 0.5 + H[7] * yy + 1;
+    for (let x = 0; x < ow; x++, nx += H[0], ny += H[3], nw += H[6]) {
+      let fx = nx / nw - 0.5, fy = ny / nw - 0.5;
+      if (fx < 0) fx = 0; else if (fx > sw - 1.001) fx = sw - 1.001;
+      if (fy < 0) fy = 0; else if (fy > sh - 1.001) fy = sh - 1.001;
+      const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0;
+      const i00 = (y0 * sw + x0) * 4, i01 = i00 + 4, i10 = i00 + sw * 4, i11 = i10 + 4;
+      const w00 = (1 - ax) * (1 - ay), w01 = ax * (1 - ay), w10 = (1 - ax) * ay, w11 = ax * ay;
+      const j = (y * ow + x) * 4;
+      o[j] = s[i00] * w00 + s[i01] * w01 + s[i10] * w10 + s[i11] * w11;
+      o[j + 1] = s[i00 + 1] * w00 + s[i01 + 1] * w01 + s[i10 + 1] * w10 + s[i11 + 1] * w11;
+      o[j + 2] = s[i00 + 2] * w00 + s[i01 + 2] * w01 + s[i10 + 2] * w10 + s[i11 + 2] * w11;
+      o[j + 3] = 255;
+    }
+  }
+  return out;
+}
+// Fundo (papel) de um canal, em baixa resolução: média por blocos, dilatação (ignora a tinta) e desfoque
+function scFundo(canal, w, h) {
+  const B = Math.max(8, Math.round(Math.max(w, h) / 90));
+  const lw = Math.ceil(w / B), lh = Math.ceil(h / B);
+  let low = new Float32Array(lw * lh);
+  for (let by = 0; by < lh; by++) for (let bx = 0; bx < lw; bx++) {
+    let s = 0, c = 0;
+    const y1 = Math.min(h, (by + 1) * B), x1 = Math.min(w, (bx + 1) * B);
+    for (let y = by * B; y < y1; y += 2) for (let x = bx * B; x < x1; x += 2) { s += canal[y * w + x]; c++; }
+    low[by * lw + bx] = c ? s / c : 255;
+  }
+  const dil = a => { const o = new Float32Array(a.length); for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { let m = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = Math.min(lh - 1, Math.max(0, y + dy)), xx = Math.min(lw - 1, Math.max(0, x + dx)); const v = a[yy * lw + xx]; if (v > m) m = v; } o[y * lw + x] = m; } return o; };
+  const blur = a => { const o = new Float32Array(a.length); for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { let s = 0, c = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || xx < 0 || yy >= lh || xx >= lw) continue; s += a[yy * lw + xx]; c++; } o[y * lw + x] = s / c; } return o; };
+  low = blur(dil(dil(low)));
+  return { low, lw, lh, B };
+}
+function scFundoEm(f, x, y) { // interpolação bilinear do fundo
+  const fx = Math.min(f.lw - 1.001, Math.max(0, x / f.B - 0.5)), fy = Math.min(f.lh - 1.001, Math.max(0, y / f.B - 0.5));
+  const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, L = f.low, W = f.lw;
+  const x1 = Math.min(f.lw - 1, x0 + 1), y1 = Math.min(f.lh - 1, y0 + 1);
+  return (L[y0 * W + x0] * (1 - ax) + L[y0 * W + x1] * ax) * (1 - ay) + (L[y1 * W + x0] * (1 - ax) + L[y1 * W + x1] * ax) * ay;
+}
+// filtro: 'documento' | 'cor' | 'pb' | 'original'  (altera a ImageData)
+function scFiltrar(img, filtro) {
+  if (filtro === 'original') return img;
+  const w = img.width, h = img.height, d = img.data, n = w * h;
+  if (filtro === 'cor') {
+    for (let c = 0; c < 3; c++) {
+      const canal = new Float32Array(n);
+      for (let i = 0; i < n; i++) canal[i] = d[i * 4 + c];
+      const f = scFundo(canal, w, h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x, bg = Math.max(70, scFundoEm(f, x, y));
+        let v = canal[i] / bg; // 1 = papel
+        v = v >= 0.97 ? 1 : Math.pow(v / 0.97, 1.25);
+        d[i * 4 + c] = v * 252;
+      }
+    }
+    for (let i = 0; i < n; i++) { // um pouco mais de cor
+      const j = i * 4, m = (d[j] + d[j + 1] + d[j + 2]) / 3;
+      d[j] = m + (d[j] - m) * 1.2; d[j + 1] = m + (d[j + 1] - m) * 1.2; d[j + 2] = m + (d[j + 2] - m) * 1.2;
+    }
+    return img;
+  }
+  const g = scCinza(d, n), f = scFundo(g, w, h);
+  const lo = filtro === 'pb' ? 0.70 : 0.50, hi = filtro === 'pb' ? 0.80 : 0.90;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, r = g[i] / Math.max(60, scFundoEm(f, x, y));
+    let t = (r - lo) / (hi - lo); t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const v = 255 * t * t * (3 - 2 * t), j = i * 4;
+    d[j] = d[j + 1] = d[j + 2] = v;
+  }
+  return img;
+}
+
+/* ============================================================
+   DIGITALIZADOR — ecrãs (câmara, rever, cortar) e criação do PDF
+   abrirScanner({ destino, aoTerminar(file) })
+   ============================================================ */
+const SC_MAX_ORIG = 2600, SC_MAX_FINAL = 2200, SC_MAX_PREV = 1400, SC_DET = 256;
+const SC_SUGESTOES = ['Recibo de vencimento', 'Contrato', 'Cartão de residência', 'Passaporte', 'Fatura', 'Declaração', 'Seguro', 'NIF'];
+let sc = null;
+const $sc = id => document.getElementById(id);
+
+function abrirScanner(opts) {
+  if (typeof isEditor === 'function' && !isEditor()) { toast('Sem permissões para digitalizar.', true); return; }
+  scLigar();
+  sc = { destino: opts.destino || '', aoTerminar: opts.aoTerminar, paginas: [], atual: 0, filtro: 'documento', auto: true, stream: null, raf: 0, ultimaDet: 0, vivos: null, ultimosCantos: null, estavelDesde: 0, ultimaCaptura: 0, ocupado: false, tDet: 60 };
+  $sc('scDestino').textContent = sc.destino ? 'Guardar em: ' + sc.destino : '';
+  $sc('scAuto').setAttribute('aria-pressed', 'true');
+  $sc('scNome').value = '';
+  scAtualizarPilha();
+  const raiz = $sc('scan');
+  raiz.classList.add('open'); raiz.setAttribute('aria-hidden', 'false');
+  document.documentElement.style.overflow = 'hidden';
+  scMostrar('camara');
+}
+function fecharScanner(forcar) {
+  if (!sc) return;
+  if (!forcar && sc.paginas.length && !confirm(`Descartar ${sc.paginas.length === 1 ? 'a página digitalizada' : 'as ' + sc.paginas.length + ' páginas digitalizadas'}?`)) return;
+  scPararCamera();
+  sc.paginas.forEach(p => { if (p.url) URL.revokeObjectURL(p.url); });
+  if (sc.cortarUrl) URL.revokeObjectURL(sc.cortarUrl);
+  sc = null;
+  const raiz = $sc('scan');
+  raiz.classList.remove('open'); raiz.setAttribute('aria-hidden', 'true');
+  document.documentElement.style.overflow = '';
+}
+function scMostrar(ecra) {
+  ['camara', 'rever', 'cortar'].forEach(e => { $sc('sc' + e[0].toUpperCase() + e.slice(1)).hidden = e !== ecra; });
+  sc.ecra = ecra;
+  if (ecra === 'camara') scIniciarCamera(); else scPararCamera();
+  if (ecra === 'rever') scRenderRever();
+}
+
+/* ---------- Câmara ---------- */
+async function scIniciarCamera() {
+  if (!sc || sc.stream) return;
+  const video = $sc('scVideo');
+  $sc('scSemCam').hidden = true; $sc('scDica').hidden = false;
+  scDica('A abrir a câmara…');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scSemCamera('Este navegador não deixa usar a câmara ao vivo.'); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } } });
+    if (!sc || sc.ecra !== 'camara') { stream.getTracks().forEach(t => t.stop()); return; }
+    sc.stream = stream;
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); setTimeout(r, 1500); });
+    scLayoutVideo();
+    // flash (lanterna), quando o telemóvel deixa
+    const track = stream.getVideoTracks()[0];
+    const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+    $sc('scFlash').hidden = !caps.torch; $sc('scFlash').classList.remove('on');
+    scDica('Aponte para o documento');
+    sc.raf = requestAnimationFrame(scLoop);
+  } catch (err) {
+    scSemCamera(err && err.name === 'NotAllowedError' ? 'Sem autorização para usar a câmara. Pode tirar a foto com a câmara do telemóvel ou escolher da galeria.' : 'Não foi possível abrir a câmara aqui. Pode tirar a foto com a câmara do telemóvel ou escolher da galeria.');
+  }
+}
+function scSemCamera(txt) {
+  $sc('scSemCamTxt').textContent = txt;
+  $sc('scSemCam').hidden = false; $sc('scDica').hidden = true;
+  $sc('scDisparo').disabled = false;
+}
+function scPararCamera() {
+  if (!sc) return;
+  cancelAnimationFrame(sc.raf); sc.raf = 0;
+  if (sc.stream) { sc.stream.getTracks().forEach(t => t.stop()); sc.stream = null; }
+  const v = $sc('scVideo'); v.srcObject = null;
+  const o = $sc('scOverlay'); o.getContext('2d').clearRect(0, 0, o.width, o.height);
+  sc.vivos = null; sc.estavelDesde = 0; scAnel(0);
+}
+function scLayoutVideo() {
+  const v = $sc('scVideo'), o = $sc('scOverlay'), palco = $sc('scPalco');
+  const vw = v.videoWidth || 1280, vh = v.videoHeight || 720, pw = palco.clientWidth, ph = palco.clientHeight;
+  const k = Math.min(pw / vw, ph / vh), dw = Math.round(vw * k), dh = Math.round(vh * k), l = Math.round((pw - dw) / 2), t = Math.round((ph - dh) / 2);
+  [v, o].forEach(el => { el.style.left = l + 'px'; el.style.top = t + 'px'; el.style.width = dw + 'px'; el.style.height = dh + 'px'; });
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  o.width = dw * dpr; o.height = dh * dpr;
+  sc.vista = { k, dpr };
+}
+function scDica(txt, tipo) { const d = $sc('scDica'); d.textContent = txt; d.className = 'sc-dica' + (tipo ? ' ' + tipo : ''); }
+function scAnel(f) { const c = document.querySelector('#scDisparo .sc-anel circle'); if (c) c.style.strokeDashoffset = String(226.2 * (1 - (f || 0))); $sc('scDisparo').classList.toggle('contar', f > 0 && f < 1); }
+const scDetCanvas = document.createElement('canvas');
+function scLoop() {
+  if (!sc || !sc.stream) return;
+  sc.raf = requestAnimationFrame(scLoop);
+  const agora = performance.now(), v = $sc('scVideo');
+  if (agora - sc.ultimaDet < Math.max(110, sc.tDet * 1.6) || v.readyState < 2 || !v.videoWidth || sc.ocupado) return;
+  sc.ultimaDet = agora;
+  const vw = v.videoWidth, vh = v.videoHeight, s = SC_DET / Math.max(vw, vh), w = Math.round(vw * s), h = Math.round(vh * s);
+  scDetCanvas.width = w; scDetCanvas.height = h;
+  const cx = scDetCanvas.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(v, 0, 0, w, h);
+  const t0 = performance.now();
+  const r = scDetetarFolha(cx.getImageData(0, 0, w, h));
+  sc.tDet = sc.tDet * 0.7 + (performance.now() - t0) * 0.3;
+  const diag = Math.hypot(vw, vh);
+  if (r.ok) {
+    const novos = r.cantos.map(c => ({ x: c.x / s, y: c.y / s }));
+    const mov = sc.ultimosCantos ? Math.max(...novos.map((c, i) => Math.hypot(c.x - sc.ultimosCantos[i].x, c.y - sc.ultimosCantos[i].y))) / diag : 1;
+    sc.ultimosCantos = novos;
+    sc.vivos = sc.vivos ? sc.vivos.map((c, i) => ({ x: c.x * 0.45 + novos[i].x * 0.55, y: c.y * 0.45 + novos[i].y * 0.55 })) : novos;
+    sc.perdido = 0;
+    if (mov < 0.018) { if (!sc.estavelDesde) sc.estavelDesde = agora; } else sc.estavelDesde = 0;
+  } else {
+    sc.perdido = (sc.perdido || 0) + 1;
+    if (sc.perdido > 2) { sc.vivos = null; sc.ultimosCantos = null; sc.estavelDesde = 0; }
+  }
+  scDesenharVivos();
+  // captura automática: documento detetado e parado ~1,1 s
+  const prog = sc.vivos && sc.estavelDesde ? Math.min(1, (agora - sc.estavelDesde) / 1100) : 0;
+  if (!sc.vivos) { scDica('Aponte para o documento'); scAnel(0); }
+  else if (sc.auto) {
+    if (agora - sc.ultimaCaptura < 1800) { scDica('Página guardada — mostre a seguinte', 'ok'); scAnel(0); }
+    else { scDica(prog > 0 ? 'Não mexa…' : 'Documento detetado', prog > 0 ? 'quase' : 'ok'); scAnel(prog); if (prog >= 1) scCapturarVideo(); }
+  } else { scDica('Documento detetado — toque para fotografar', 'ok'); scAnel(0); }
+}
+function scDesenharVivos() {
+  const o = $sc('scOverlay'), g = o.getContext('2d');
+  g.clearRect(0, 0, o.width, o.height);
+  if (!sc.vivos || !sc.vista) return;
+  const f = sc.vista.k * sc.vista.dpr, P = sc.vivos.map(c => ({ x: c.x * f, y: c.y * f }));
+  g.beginPath(); P.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
+  g.fillStyle = 'rgba(255,213,74,0.16)'; g.fill();
+  g.lineWidth = 3 * sc.vista.dpr; g.strokeStyle = '#ffd54a'; g.lineJoin = 'round'; g.stroke();
+  P.forEach(p => { g.beginPath(); g.arc(p.x, p.y, 6 * sc.vista.dpr, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); });
+}
+async function scCapturarVideo() {
+  if (!sc || sc.ocupado) return;
+  const v = $sc('scVideo');
+  if (!v.videoWidth) { $sc('scInFoto').click(); return; }
+  sc.ocupado = true; sc.ultimaCaptura = performance.now(); sc.estavelDesde = 0; scAnel(0);
+  const fx = $sc('scFlashFx'); fx.classList.remove('on'); void fx.offsetWidth; fx.classList.add('on');
+  try {
+    const vw = v.videoWidth, vh = v.videoHeight, f = Math.min(1, SC_MAX_ORIG / Math.max(vw, vh));
+    const c = document.createElement('canvas'); c.width = Math.round(vw * f); c.height = Math.round(vh * f);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    const dica = sc.vivos ? sc.vivos.map(q => ({ x: q.x * f, y: q.y * f })) : null;
+    await scAdicionarPagina(c, dica);
+  } catch (e) { toast('Não foi possível guardar a foto.', true); }
+  finally { if (sc) sc.ocupado = false; }
+}
+// Acrescenta uma página a partir de um canvas (foto já reduzida), com deteção da folha
+async function scAdicionarPagina(canvas, cantosDica) {
+  const w = canvas.width, h = canvas.height, s = Math.min(1, 360 / Math.max(w, h));
+  const pq = document.createElement('canvas'); pq.width = Math.round(w * s); pq.height = Math.round(h * s);
+  const g = pq.getContext('2d', { willReadFrequently: true }); g.drawImage(canvas, 0, 0, pq.width, pq.height);
+  const r = scDetetarFolha(g.getImageData(0, 0, pq.width, pq.height));
+  let cantos = r.cantos.map(c => ({ x: c.x / s, y: c.y / s })), detetada = r.ok;
+  if (!r.ok && cantosDica) { cantos = cantosDica; detetada = true; }
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+  const p = { blob, w, h, cantos, detetada, rot: 0, filtro: sc.filtro, cache: null, mini: null };
+  sc.paginas.push(p);
+  sc.atual = sc.paginas.length - 1;
+  p.mini = await scMiniatura(p, canvas);
+  scAtualizarPilha(true);
+}
+async function scMiniatura(p, canvasOrig) {
+  const c = await scProcessar(p, 220, canvasOrig);
+  return c.toDataURL('image/jpeg', 0.7);
+}
+function scAtualizarPilha(pular) {
+  const n = sc ? sc.paginas.length : 0, pil = $sc('scPilha');
+  $sc('scPilhaN').textContent = n;
+  pil.disabled = !n;
+  const ult = n ? sc.paginas[n - 1] : null;
+  $sc('scPilhaImg').style.backgroundImage = ult && ult.mini ? `url(${ult.mini})` : 'none';
+  if (pular) { pil.classList.remove('pulo'); void pil.offsetWidth; pil.classList.add('pulo'); }
+}
+async function scImportar(files, depoisRever) {
+  files = [...files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name));
+  if (!files.length) return;
+  showOverlay('A preparar ' + (files.length === 1 ? 'a foto' : files.length + ' fotos') + '…');
+  try {
+    for (const f of files) {
+      const img = await scCarregarImagem(f);
+      const k = Math.min(1, SC_MAX_ORIG / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      if (img.close) img.close();
+      await scAdicionarPagina(c, null);
+    }
+  } catch (e) { toast('Não foi possível abrir a imagem.', true); }
+  finally { hideOverlay(); }
+  if (depoisRever && sc && sc.paginas.length) scMostrar('rever');
+}
+async function scCarregarImagem(blob) {
+  if (window.createImageBitmap) { try { return await createImageBitmap(blob, { imageOrientation: 'from-image' }); } catch (e) { /* tenta com <img> */ } }
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image(); img.decoding = 'async'; img.src = url;
+    await img.decode();
+    return img;
+  } finally { setTimeout(() => URL.revokeObjectURL(url), 2000); }
+}
+
+/* ---------- Processar uma página (endireitar + filtro + rodar) ---------- */
+async function scProcessar(p, maxLado, canvasOrig, minLado) {
+  let fonte = canvasOrig;
+  if (!fonte) { const img = await scCarregarImagem(p.blob); fonte = document.createElement('canvas'); fonte.width = p.w; fonte.height = p.h; fonte.getContext('2d').drawImage(img, 0, 0, p.w, p.h); if (img.close) img.close(); }
+  const tam = scTamanho(p.cantos, maxLado, p.w, p.h, minLado);
+  // para pré-visualizações pequenas, reduz primeiro a fonte (mais rápido)
+  const red = Math.min(1, (Math.max(tam.w, tam.h) * 1.6) / Math.max(p.w, p.h));
+  let src, cantos = p.cantos;
+  if (red < 0.999) {
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(p.w * red)); c.height = Math.max(1, Math.round(p.h * red));
+    c.getContext('2d').drawImage(fonte, 0, 0, c.width, c.height);
+    src = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    cantos = p.cantos.map(q => ({ x: q.x * red, y: q.y * red }));
+  } else src = fonte.getContext('2d').getImageData(0, 0, p.w, p.h);
+  const img = scFiltrar(scEndireitar(src, cantos, tam.w, tam.h), p.filtro);
+  const plano = document.createElement('canvas'); plano.width = tam.w; plano.height = tam.h;
+  plano.getContext('2d').putImageData(img, 0, 0);
+  if (!p.rot) return plano;
+  const rod = document.createElement('canvas'), q = p.rot % 2 === 1;
+  rod.width = q ? tam.h : tam.w; rod.height = q ? tam.w : tam.h;
+  const g = rod.getContext('2d');
+  g.translate(rod.width / 2, rod.height / 2); g.rotate(p.rot * Math.PI / 2); g.drawImage(plano, -tam.w / 2, -tam.h / 2);
+  return rod;
+}
+function scChave(p) { return p.cantos.map(c => c.x.toFixed(1) + ',' + c.y.toFixed(1)).join(';') + '|' + p.filtro + '|' + p.rot; }
+
+/* ---------- Rever ---------- */
+let scRevToken = 0;
+async function scRenderRever() {
+  if (!sc || !sc.paginas.length) { if (sc) scMostrar('camara'); return; }
+  sc.atual = Math.max(0, Math.min(sc.atual, sc.paginas.length - 1));
+  const p = sc.paginas[sc.atual], n = sc.paginas.length;
+  $sc('scRevTitulo').textContent = `Página ${sc.atual + 1} de ${n}`;
+  $sc('scRevSub').textContent = p.detetada ? 'Toca em Cortar para acertar os cantos' : 'Não encontrei a folha: acerte os cantos em Cortar';
+  document.querySelectorAll('#scFiltros [data-sc-filtro]').forEach(b => { const on = b.dataset.scFiltro === p.filtro; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+  document.querySelector('[data-sc-ferr="esq"]').disabled = sc.atual === 0;
+  document.querySelector('[data-sc-ferr="dir"]').disabled = sc.atual === n - 1;
+  $sc('scGuardar').textContent = n === 1 ? 'Guardar PDF' : `Guardar PDF (${n} páginas)`;
+  if (!$sc('scNome').value) $sc('scNome').value = scNomePadrao();
+  $sc('scSug').innerHTML = SC_SUGESTOES.map(t => `<button type="button" data-sc-sug="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
+  $sc('scMinis').innerHTML = sc.paginas.map((q, i) => `<button type="button" class="sc-mini${i === sc.atual ? ' on' : ''}${q.detetada ? '' : ' aviso'}" data-sc-mini="${i}" style="background-image:url(${q.mini || ''})" aria-label="Página ${i + 1}"><b>${i + 1}</b></button>`).join('') + '<button type="button" class="sc-mini-mais" data-sc-mais aria-label="Acrescentar página">+</button>';
+  const folha = $sc('scFolha'), proc = $sc('scProc');
+  const chave = scChave(p);
+  if (p.cache && p.cache.chave === chave) { scPorFolha(p.cache.canvas); return; }
+  const meu = ++scRevToken;
+  proc.classList.add('on');
+  await new Promise(r => setTimeout(r, 16));
+  try {
+    const c = await scProcessar(p, SC_MAX_PREV, null, 1200);
+    if (meu !== scRevToken || !sc) return;
+    p.cache = { chave, canvas: c };
+    p.mini = await new Promise(r => { const m = document.createElement('canvas'), k = 220 / Math.max(c.width, c.height); m.width = Math.round(c.width * k); m.height = Math.round(c.height * k); m.getContext('2d').drawImage(c, 0, 0, m.width, m.height); r(m.toDataURL('image/jpeg', 0.7)); });
+    const mini = document.querySelector(`[data-sc-mini="${sc.atual}"]`); if (mini) mini.style.backgroundImage = `url(${p.mini})`;
+    scPorFolha(c);
+  } finally { if (meu === scRevToken) proc.classList.remove('on'); }
+}
+function scPorFolha(c) {
+  const folha = $sc('scFolha');
+  folha.querySelectorAll('canvas').forEach(x => x.remove());
+  folha.appendChild(c);
+  scAtualizarPilha();
+}
+function scNomePadrao() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `Digitalização ${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}h${p(d.getMinutes())}`;
+}
+
+/* ---------- Cortar ---------- */
+async function scAbrirCortar() {
+  const p = sc.paginas[sc.atual];
+  scMostrar('cortar');
+  if (sc.cortarUrl) URL.revokeObjectURL(sc.cortarUrl);
+  sc.cortarUrl = URL.createObjectURL(p.blob);
+  sc.cortar = { cantos: p.cantos.map(c => ({ ...c })), p };
+  const img = $sc('scCortarImg');
+  img.src = sc.cortarUrl;
+  await img.decode().catch(() => {});
+  sc.cortar.bitmap = await scCarregarImagem(p.blob).catch(() => null);
+  scLayoutCortar();
+}
+function scLayoutCortar() {
+  if (!sc || !sc.cortar) return;
+  const { p } = sc.cortar, palco = $sc('scCortarPalco'), img = $sc('scCortarImg'), svg = $sc('scCortarSvg');
+  const margem = 28, pw = palco.clientWidth - margem * 2, ph = palco.clientHeight - margem * 2;
+  const k = Math.min(pw / p.w, ph / p.h), dw = p.w * k, dh = p.h * k, l = (palco.clientWidth - dw) / 2, t = (palco.clientHeight - dh) / 2;
+  [img, svg].forEach(el => { el.style.left = l + 'px'; el.style.top = t + 'px'; el.style.width = dw + 'px'; el.style.height = dh + 'px'; });
+  svg.setAttribute('viewBox', `0 0 ${dw} ${dh}`);
+  sc.cortar.k = k; sc.cortar.l = l; sc.cortar.t = t;
+  scDesenharCortar();
+}
+function scDesenharCortar() {
+  const { cantos, k } = sc.cortar, svg = $sc('scCortarSvg');
+  const P = cantos.map(c => ({ x: c.x * k, y: c.y * k }));
+  svg.innerHTML = `<polygon class="sc-poli" points="${P.map(q => q.x + ',' + q.y).join(' ')}"/>` +
+    P.map((q, i) => `<circle class="sc-canto-toque" data-sc-canto="${i}" cx="${q.x}" cy="${q.y}" r="30"/><circle class="sc-canto" data-sc-canto="${i}" cx="${q.x}" cy="${q.y}" r="13"/>`).join('');
+}
+function scLupa(i, ev) {
+  const lupa = $sc('scLupa'), { cantos, k, l, t, bitmap } = sc.cortar;
+  if (!bitmap) return;
+  const c = cantos[i], px = l + c.x * k, py = t + c.y * k;
+  lupa.hidden = false;
+  const acima = py > 150;
+  lupa.style.left = Math.max(4, Math.min($sc('scCortarPalco').clientWidth - 124, px - 60)) + 'px';
+  lupa.style.top = (acima ? py - 150 : py + 40) + 'px';
+  const g = lupa.getContext('2d'), lado = 120 / (k * 3);
+  g.fillStyle = '#000'; g.fillRect(0, 0, 240, 240);
+  g.drawImage(bitmap, c.x - lado / 2, c.y - lado / 2, lado, lado, 0, 0, 240, 240);
+  g.strokeStyle = '#ffd54a'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(120, 96); g.lineTo(120, 144); g.moveTo(96, 120); g.lineTo(144, 120); g.stroke();
+}
+
+/* ---------- PDF ---------- */
+async function scCriarPdf(nome) {
+  let qualidade = 0.84, maxLado = SC_MAX_FINAL;
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    let doc = null;
+    for (let i = 0; i < sc.paginas.length; i++) {
+      const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A criar o PDF… página ${i + 1} de ${sc.paginas.length}`;
+      await new Promise(r => setTimeout(r, 10));
+      const p = sc.paginas[i];
+      const c = await scProcessar(p, maxLado, null, Math.min(maxLado, 1754));
+      const paisagem = c.width > c.height;
+      const wmm = paisagem ? 297 : 210, hmm = wmm * c.height / c.width;
+      const orient = paisagem ? 'landscape' : 'portrait';
+      if (!doc) doc = new jsPDF({ unit: 'mm', format: [wmm, hmm], orientation: orient, compress: true });
+      else doc.addPage([wmm, hmm], orient);
+      doc.addImage(c.toDataURL('image/jpeg', p.filtro === 'cor' || p.filtro === 'original' ? qualidade : qualidade - 0.06), 'JPEG', 0, 0, wmm, hmm, undefined, 'FAST');
+    }
+    const blob = doc.output('blob');
+    if (blob.size <= 9.6 * 1024 * 1024 || tentativa === 2) return new File([blob], nome.replace(/[\\/:*?"<>|]+/g, '-') + '.pdf', { type: 'application/pdf' });
+    qualidade -= 0.14; maxLado = Math.round(maxLado * 0.8);
+  }
+}
+async function scGuardar() {
+  if (!sc || !sc.paginas.length) return;
+  let nome = $sc('scNome').value.trim().replace(/\.pdf$/i, '') || scNomePadrao();
+  const btn = $sc('scGuardar'); btn.disabled = true;
+  showOverlay('A criar o PDF…');
+  try {
+    const f = await scCriarPdf(nome);
+    const fim = sc.aoTerminar;
+    fecharScanner(true);
+    if (fim) fim(f);
+  } catch (e) { toast('Não foi possível criar o PDF: ' + (e.message || e), true); }
+  finally { hideOverlay(); btn.disabled = false; }
+}
+
+/* ---------- Ligações ---------- */
+let scLigado = false;
+function scLigar() {
+  if (scLigado) return; scLigado = true;
+  $sc('scFechar').addEventListener('click', () => fecharScanner());
+  $sc('scFechar2').addEventListener('click', () => fecharScanner());
+  $sc('scDisparo').addEventListener('click', () => { if (sc && sc.stream) scCapturarVideo(); else $sc('scInFoto').click(); });
+  $sc('scGaleria').addEventListener('click', () => $sc('scInGaleria').click());
+  $sc('scGaleria2').addEventListener('click', () => $sc('scInGaleria').click());
+  $sc('scFotoNativa').addEventListener('click', () => $sc('scInFoto').click());
+  $sc('scInFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length) scImportar(f, true); e.target.value = ''; });
+  $sc('scInGaleria').addEventListener('change', e => { const f = e.target.files; if (f && f.length) scImportar(f, true); e.target.value = ''; });
+  $sc('scPilha').addEventListener('click', () => { if (sc && sc.paginas.length) { sc.atual = sc.paginas.length - 1; scMostrar('rever'); } });
+  $sc('scAuto').addEventListener('click', e => { if (!sc) return; sc.auto = !sc.auto; e.currentTarget.setAttribute('aria-pressed', sc.auto ? 'true' : 'false'); sc.estavelDesde = 0; scAnel(0); });
+  $sc('scFlash').addEventListener('click', async e => {
+    const b = e.currentTarget, track = sc && sc.stream && sc.stream.getVideoTracks()[0]; if (!track) return;
+    const on = !b.classList.contains('on');
+    try { await track.applyConstraints({ advanced: [{ torch: on }] }); b.classList.toggle('on', on); } catch (err) { b.hidden = true; }
+  });
+  $sc('scVoltarCam').addEventListener('click', () => scMostrar('camara'));
+  $sc('scFiltros').addEventListener('click', e => {
+    const b = e.target.closest('[data-sc-filtro]'); if (!b || !sc) return;
+    sc.filtro = b.dataset.scFiltro;
+    sc.paginas.forEach(p => { p.filtro = sc.filtro; }); // o mesmo filtro em todas as páginas
+    scRenderRever();
+    // atualiza as miniaturas das outras páginas em segundo plano
+    sc.paginas.forEach((p, i) => { if (i !== sc.atual) scMiniatura(p).then(m => { p.mini = m; const el = document.querySelector(`[data-sc-mini="${i}"]`); if (el) el.style.backgroundImage = `url(${m})`; }); });
+  });
+  document.querySelector('#scRever .sc-ferr').addEventListener('click', e => {
+    const b = e.target.closest('[data-sc-ferr]'); if (!b || !sc) return;
+    const i = sc.atual, P = sc.paginas;
+    if (b.dataset.scFerr === 'cortar') scAbrirCortar();
+    else if (b.dataset.scFerr === 'rodar') { P[i].rot = (P[i].rot + 1) % 4; scRenderRever(); }
+    else if (b.dataset.scFerr === 'esq' && i > 0) { [P[i - 1], P[i]] = [P[i], P[i - 1]]; sc.atual = i - 1; scRenderRever(); }
+    else if (b.dataset.scFerr === 'dir' && i < P.length - 1) { [P[i + 1], P[i]] = [P[i], P[i + 1]]; sc.atual = i + 1; scRenderRever(); }
+    else if (b.dataset.scFerr === 'apagar') {
+      if (!confirm('Apagar esta página?')) return;
+      P.splice(i, 1); sc.atual = Math.min(i, P.length - 1);
+      scAtualizarPilha();
+      if (!P.length) scMostrar('camara'); else scRenderRever();
+    }
+  });
+  $sc('scMinis').addEventListener('click', e => {
+    if (e.target.closest('[data-sc-mais]')) { scMostrar('camara'); return; }
+    const b = e.target.closest('[data-sc-mini]'); if (!b || !sc) return;
+    sc.atual = +b.dataset.scMini; scRenderRever();
+  });
+  $sc('scSug').addEventListener('click', e => { const b = e.target.closest('[data-sc-sug]'); if (b) $sc('scNome').value = b.dataset.scSug; });
+  $sc('scGuardar').addEventListener('click', scGuardar);
+  // Cortar
+  $sc('scCortarCancelar').addEventListener('click', () => scMostrar('rever'));
+  $sc('scCortarOk').addEventListener('click', () => {
+    const { p, cantos } = sc.cortar;
+    p.cantos = scOrdenarCantos(cantos.map(c => ({ ...c })));
+    p.detetada = true; p.cache = null;
+    scMostrar('rever');
+  });
+  $sc('scDetetar').addEventListener('click', async () => {
+    const { p, bitmap } = sc.cortar; if (!bitmap) return;
+    const s = Math.min(1, 360 / Math.max(p.w, p.h)), c = document.createElement('canvas');
+    c.width = Math.round(p.w * s); c.height = Math.round(p.h * s);
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bitmap, 0, 0, c.width, c.height);
+    const r = scDetetarFolha(g.getImageData(0, 0, c.width, c.height));
+    if (!r.ok) toast('Não encontrei a folha. Arraste os cantos à mão.', true);
+    sc.cortar.cantos = r.cantos.map(q => ({ x: q.x / s, y: q.y / s }));
+    scDesenharCortar();
+  });
+  $sc('scInteira').addEventListener('click', () => {
+    const { p } = sc.cortar;
+    sc.cortar.cantos = [{ x: 0, y: 0 }, { x: p.w, y: 0 }, { x: p.w, y: p.h }, { x: 0, y: p.h }];
+    scDesenharCortar();
+  });
+  const svg = $sc('scCortarSvg');
+  let arrastar = null;
+  svg.addEventListener('pointerdown', e => {
+    const alvo = e.target.closest('[data-sc-canto]'); if (!alvo || !sc || !sc.cortar) return;
+    e.preventDefault();
+    arrastar = { i: +alvo.dataset.scCanto, id: e.pointerId };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ }
+    scLupa(arrastar.i, e);
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!arrastar || e.pointerId !== arrastar.id) return;
+    const { k, p } = sc.cortar, r = svg.getBoundingClientRect();
+    const x = Math.max(0, Math.min(p.w, (e.clientX - r.left) / k)), y = Math.max(0, Math.min(p.h, (e.clientY - r.top) / k));
+    sc.cortar.cantos[arrastar.i] = { x, y };
+    scDesenharCortar(); scLupa(arrastar.i, e);
+  });
+  const soltar = () => { arrastar = null; $sc('scLupa').hidden = true; };
+  svg.addEventListener('pointerup', soltar); svg.addEventListener('pointercancel', soltar);
+  window.addEventListener('resize', () => { if (!sc) return; if (sc.ecra === 'camara' && sc.stream) scLayoutVideo(); if (sc.ecra === 'cortar') scLayoutCortar(); });
+  document.addEventListener('visibilitychange', () => { if (!sc || sc.ecra !== 'camara') return; if (document.hidden) scPararCamera(); else scIniciarCamera(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !sc) return;
+    e.stopImmediatePropagation(); // não fecha a janela que está por baixo (ex.: anexar)
+    if (sc.ecra === 'cortar') scMostrar('rever'); else fecharScanner();
+  }, true);
+}
+
 </script>
 </body>
 </html>
