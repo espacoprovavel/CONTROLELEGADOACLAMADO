@@ -1049,6 +1049,7 @@ footer .ver { color: #9ca3af; }
 .acc-contab input { accent-color: var(--accent); }
 /* Leitor de PDF (telemóvel/tablet): páginas inteiras à largura do ecrã */
 .vw-zoom { display: flex; align-items: center; gap: 4px; }
+.vw-btn[hidden] { display: none; }
 .vw-zoom[hidden] { display: none; }
 .vw-pag { font-size: 12.5px; color: var(--ink-soft); min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
 .vw-body.vw-pdf { display: block; padding: 8px; background: #e9ebef; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
@@ -1528,6 +1529,7 @@ footer .ver { color: #9ca3af; }
           <span class="vw-pag" id="viewerPag">1 / 1</span>
           <button type="button" class="vw-btn" id="viewerMaisZoom" aria-label="Aumentar" title="Aumentar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         </div>
+        <button type="button" class="vw-btn" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
         <button type="button" class="vw-btn" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
         <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
@@ -1836,6 +1838,25 @@ footer .ver { color: #9ca3af; }
     <div class="modal-foot">
       <button class="btn btn-ghost" id="clCancelar">Cancelar</button>
       <button class="btn btn-primary" id="clEntrar">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: ficheiro pronto para enviar (quando a preparação demorou e o telemóvel pede um novo toque) -->
+<div class="modal-backdrop" id="partilhaModal">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>Pronto para enviar</h2>
+      <button class="modal-close" id="pdFechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="cl-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></div>
+      <p style="font-size:14px;margin-bottom:6px;"><strong id="pdNomes"></strong></p>
+      <p style="font-size:13px;color:var(--ink-soft);">Toca em <strong>Enviar</strong> e escolhe WhatsApp, email ou Guardar em Ficheiros.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="pdCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="pdEnviar">Enviar</button>
     </div>
   </div>
 </div>
@@ -3134,6 +3155,15 @@ function ligarLeitorPdf() {
   document.getElementById('viewerMenos').addEventListener('click', () => leitorPasso(-1));
   document.getElementById('viewerMaisZoom').addEventListener('click', () => leitorPasso(1));
   document.getElementById('viewerDown').addEventListener('click', () => { if (vwDoc) downloadDocument(vwDoc.url, vwDoc.nome); });
+  document.getElementById('viewerEnviar').addEventListener('click', () => {
+    if (!vwDoc) return;
+    // com o ficheiro já aberto, envia logo (sem esperar pela rede)
+    if (vwDoc.blob) partilharFicheiros([ficheiroDe(vwDoc.blob, vwDoc.nome)]).then(ok => { if (!ok) downloadDocument(vwDoc.url, vwDoc.nome); });
+    else enviarDocumento(vwDoc.url, vwDoc.nome);
+  });
+  document.getElementById('pdEnviar').addEventListener('click', enviarPartilhaPronta);
+  document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
+  document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   // toque duplo: aproxima / volta à página inteira
   body.addEventListener('dblclick', ev => { if (leitor && ev.target.closest('.pdfv-pag')) leitorZoom(leitor.zoom > 1 ? 1 : 2); });
   // dois dedos: zoom
@@ -3161,7 +3191,11 @@ function viewDocument(url, format, filename) {
   const body = document.getElementById('viewerBody');
   if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
   fecharLeitor();
-  vwDoc = { url, nome: filename };
+  vwDoc = { url, nome: filename, blob: null };
+  const podeEnviar = podePartilharFicheiros();
+  document.getElementById('viewerEnviar').hidden = !podeEnviar;
+  document.getElementById('viewerDown').hidden = partilhaNoTelemovel(); // no telemóvel, "Enviar" já tem "Guardar em Ficheiros"
+  if (isImageFormat(format) && podeEnviar) obterBlob(url).then(b => { if (vwDoc && vwDoc.url === url) vwDoc.blob = b; }).catch(() => {});
   if (isImageFormat(format)) {
     body.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(filename)}">`;
   } else {
@@ -3169,6 +3203,7 @@ function viewDocument(url, format, filename) {
     body.innerHTML = '<div class="doc-empty">A abrir documento…</div>';
     fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
       .then(async blob => {
+        if (vwDoc && vwDoc.url === url) vwDoc.blob = blob;
         // telemóvel/tablet: leitor próprio (páginas inteiras); se falhar, usa o do navegador
         if (usarLeitorPdf()) { try { await mostrarPdf(blob, body); return; } catch (e) { console.warn('Leitor de PDF:', e); fecharLeitor(); } }
         viewerObjectUrl = URL.createObjectURL(blob); body.innerHTML = `<iframe src="${viewerObjectUrl}" title="${escapeHtml(filename)}"></iframe>`;
@@ -3255,6 +3290,71 @@ async function downloadAllDocsZip(funcId, funcNome) {
    saveAs (ZIP, CSV, JSON, documentos…) ou por doc.save do jsPDF (PDF). Quando a
    ação já perguntou antes de começar (ex.: ZIP das Pastas), põe-se
    dlJaConfirmado = true para não perguntar duas vezes. */
+/* ---------- Enviar ficheiros (WhatsApp, email, Guardar em Ficheiros…) ----------
+   Usa a janela de partilha do próprio telemóvel/computador com o FICHEIRO em si
+   (PDF, JPG, Excel, ZIP) — não envia nenhum link da app. */
+const MIME_POR_EXT = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', zip: 'application/zip', json: 'application/json' };
+function ficheiroDe(blob, nome) {
+  nome = String(nome || 'documento').replace(/[\\/:*?"<>|]+/g, '-');
+  const ext = (nome.split('.').pop() || '').toLowerCase();
+  return new File([blob], nome, { type: MIME_POR_EXT[ext] || blob.type || 'application/octet-stream' });
+}
+function podePartilharFicheiros() {
+  try { return !!(navigator.share && navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); }
+  catch (e) { return false; }
+}
+// No telemóvel/tablet, "descarregar" abre a janela de partilha (tem "Guardar em Ficheiros", WhatsApp, email…)
+function partilhaNoTelemovel() { return podePartilharFicheiros() && usarLeitorPdf(); }
+let partilhaPronta = null;
+// Devolve false se o aparelho não consegue partilhar estes ficheiros (para usar o download normal)
+async function partilharFicheiros(files) {
+  files = (files || []).filter(Boolean);
+  if (!files.length || !podePartilharFicheiros()) return false;
+  try { if (!navigator.canShare({ files })) return false; } catch (e) { return false; }
+  try { await navigator.share({ files }); }
+  catch (err) {
+    if (err && err.name === 'AbortError') return true; // a pessoa fechou a janela de partilha
+    if (err && err.name === 'NotAllowedError') { mostrarPartilhaPronta(files); return true; } // demorou a preparar: pede um toque
+    toast('Não foi possível enviar: ' + ((err && err.message) || err), true);
+  }
+  return true;
+}
+function mostrarPartilhaPronta(files) {
+  partilhaPronta = files;
+  document.getElementById('pdNomes').textContent = files.length === 1 ? files[0].name : `${files.length} ficheiros`;
+  openModal('partilhaModal');
+}
+function enviarPartilhaPronta() {
+  const files = partilhaPronta; partilhaPronta = null;
+  closeModal('partilhaModal');
+  if (files) navigator.share({ files }).catch(err => { if (!err || err.name !== 'AbortError') toast('Não foi possível enviar.', true); });
+}
+async function obterBlob(url) { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }
+// Envia um documento (vai buscar o ficheiro e abre a janela de partilha)
+async function enviarDocumento(url, nome) {
+  try {
+    const f = ficheiroDe(await obterBlob(url), nome);
+    if (!(await partilharFicheiros([f]))) { dlJaConfirmado = true; saveAs(f, f.name); }
+  } catch (e) {
+    toast(navigator.onLine === false ? 'Sem Internet: este documento ainda não está guardado neste aparelho.' : 'Não foi possível obter o ficheiro.', true);
+  }
+}
+// Envia vários documentos de uma vez ({ url, nome }); se o aparelho não aceitar vários, envia um ZIP
+async function enviarVarios(lista, nomeZip) {
+  if (!lista.length) return;
+  showOverlay('A preparar ficheiros…');
+  let files = [];
+  try { files = await Promise.all(lista.map(async d => ficheiroDe(await obterBlob(d.url), d.nome))); }
+  catch (e) { hideOverlay(); toast('Não foi possível obter todos os ficheiros.', true); return; }
+  hideOverlay();
+  let aceita = false; try { aceita = podePartilharFicheiros() && navigator.canShare({ files }); } catch (e) { aceita = false; }
+  if (aceita) { await partilharFicheiros(files); return; }
+  const zip = new JSZip(); const usados = {};
+  files.forEach(f => { let n = f.name; if (usados[n]) n = n.replace(/(\.[^.]+)?$/, `_${++usados[n]}$1`); else usados[n] = 1; zip.file(n, f); });
+  const z = ficheiroDe(await zip.generateAsync({ type: 'blob' }), (nomeZip || 'ficheiros') + '.zip');
+  if (!(await partilharFicheiros([z]))) { dlJaConfirmado = true; saveAs(z, z.name); }
+}
+
 let dlJaConfirmado = false;
 function confirmarDownload(nome) {
   if (dlJaConfirmado) { dlJaConfirmado = false; return true; }
@@ -3263,6 +3363,12 @@ function confirmarDownload(nome) {
 if (typeof window.saveAs === 'function') {
   const origSaveAs = window.saveAs;
   window.saveAs = function (blob, nome) {
+    // telemóvel: abre a janela de partilha com o ficheiro (escolher na própria janela é a confirmação)
+    if (partilhaNoTelemovel()) {
+      dlJaConfirmado = false;
+      partilharFicheiros([ficheiroDe(blob, nome)]).then(ok => { if (!ok) origSaveAs(blob, nome); });
+      return;
+    }
     if (!confirmarDownload(nome)) return;
     return origSaveAs.apply(this, arguments);
   };
@@ -3273,6 +3379,12 @@ const jsPDF = (function (Orig) {
     const doc = new Orig(...arguments);
     const origSave = doc.save;
     doc.save = function (nome) {
+      if (partilhaNoTelemovel()) {
+        dlJaConfirmado = false;
+        const b = doc.output('blob');
+        partilharFicheiros([ficheiroDe(b, nome)]).then(ok => { if (!ok) origSave.call(doc, nome); });
+        return doc;
+      }
       if (!confirmarDownload(nome)) return doc;
       return origSave.apply(doc, arguments);
     };
@@ -5480,6 +5592,7 @@ function renderPastas() {
     const barra = nSel
       ? `<div class="px-bulk"><strong>${nSel} selecionado${nSel === 1 ? '' : 's'}</strong>`
         + (isEditor() ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="mover">Mover para…</button>` : '')
+        + (podePartilharFicheiros() ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="enviar">Enviar</button>` : '')
         + `<button type="button" class="btn btn-ghost btn-sm" data-px-bulk="zip">Descarregar</button>`
         + (isAdmin() ? `<button type="button" class="btn btn-danger btn-sm" data-px-bulk="del">Eliminar</button>` : '')
         + `<button type="button" class="btn btn-ghost btn-sm" data-px-bulk="limpar">Limpar seleção</button></div>`
@@ -5506,7 +5619,7 @@ function renderPastas() {
       actions += pxBtn('detalhe', 'Ficha completa');
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
       if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
-      actions += pxBtn('zip-func', 'Download pasta');
+      actions += pxBtn('zip-func', partilhaNoTelemovel() ? 'Enviar pasta' : 'Download pasta');
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
       const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
@@ -5620,6 +5733,7 @@ function pxLigarEventos(root) {
         const docs = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
         abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: `${docs.length} selecionados` },
           isEditor() ? { label: 'Mover para…', fn: () => pxAbrirMover(emp, docs) } : null,
+          podePartilharFicheiros() ? { label: 'Enviar', fn: () => enviarVarios(docs.map(x => ({ url: x.url, nome: docFullName(x) })), slug(emp.nome)) } : null,
           { label: 'Descarregar (ZIP)', fn: () => pxDescarregarVarios(emp, docs) },
           isAdmin() ? '-' : null,
           isAdmin() ? { label: 'Eliminar', fn: () => pxEliminarVarios(emp, docs), perigo: true } : null]);
@@ -5629,9 +5743,10 @@ function pxLigarEventos(root) {
       const carregar = op => () => { const b = root.querySelector(`[data-px-doc="${op}"][data-px-did="${CSS.escape(id)}"]`); if (b) b.click(); };
       abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: d ? docFullName(d) : 'Ficheiro' },
         ehTelemovel() ? null : { label: 'Ver', fn: carregar('view') }, // no telemóvel há o botão "Ver" na linha
+        partilhaNoTelemovel() ? { label: 'Enviar ou guardar', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : { label: 'Descarregar', fn: carregar('down') },
+        !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
-        { label: 'Descarregar', fn: carregar('down') },
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
@@ -5695,6 +5810,7 @@ function pxOnClick(ev) {
     else if (!empB || !docsSel.length) return;
     else if (t.dataset.pxBulk === 'mover') pxAbrirMover(empB, docsSel);
     else if (t.dataset.pxBulk === 'zip') pxDescarregarVarios(empB, docsSel);
+    else if (t.dataset.pxBulk === 'enviar') enviarVarios(docsSel.map(x => ({ url: x.url, nome: docFullName(x) })), slug(empB.nome));
     else if (t.dataset.pxBulk === 'del') pxEliminarVarios(empB, docsSel);
     return;
   }
@@ -8952,7 +9068,7 @@ function renderEmpresaDocs() {
 
   let actions = '';
   if (ed) actions += pxBtn('ed-nova-pasta', '+ Nova pasta', 'btn-primary') + pxBtn('ed-nova-ficha', '+ Nova ficha') + pxBtn('ed-upload', 'Anexar ficheiros');
-  actions += pxBtn('ed-zip', edPasta ? 'Download pasta' : 'Download tudo');
+  actions += pxBtn('ed-zip', partilhaNoTelemovel() ? (edPasta ? 'Enviar pasta' : 'Enviar tudo') : (edPasta ? 'Download pasta' : 'Download tudo'));
   actions += pxBtn('ed-offline', 'Guardar offline');
   if (edPasta && ed) actions += pxBtn('ed-ren-pasta', 'Renomear pasta') + pxBtn('ed-mov-pasta', 'Mover pasta');
   if (edPasta && adm) actions += pxBtn('ed-del-pasta', 'Eliminar pasta', 'btn-danger');
@@ -9002,6 +9118,7 @@ function edBarraSelecao() {
   if (!n) return isEditor() && edIdsVista.length ? '<div class="px-hint">Clica para selecionar · arrasta com o rato para uma pasta · botão direito para mais opções.</div>' : '';
   return `<div class="px-bulk"><strong>${n} selecionado${n === 1 ? '' : 's'}</strong>`
     + (isEditor() ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="mover">Mover para…</button>' : '')
+    + (podePartilharFicheiros() ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="enviar">Enviar</button>' : '')
     + '<button type="button" class="btn btn-ghost btn-sm" data-ed-bulk="zip">Descarregar</button>'
     + (isAdmin() ? '<button type="button" class="btn btn-danger btn-sm" data-ed-bulk="del">Eliminar</button>' : '')
     + '<button type="button" class="btn btn-ghost btn-sm" data-ed-bulk="limpar">Limpar seleção</button></div>';
@@ -9023,6 +9140,7 @@ function edLigarEventos(root) {
       if (t.dataset.edBulk === 'limpar') { edSel.clear(); renderEmpresaDocs(); }
       else if (t.dataset.edBulk === 'mover') edAbrirMover(ids);
       else if (t.dataset.edBulk === 'zip') edDescarregar(ids);
+      else if (t.dataset.edBulk === 'enviar') edEnviar(ids);
       else if (t.dataset.edBulk === 'del') edEliminar(ids);
       return;
     }
@@ -9133,10 +9251,14 @@ function edMenuItem(x) {
   const tel = ehTelemovel();
   if (x.tipo === 'pasta') itens.push({ label: 'Abrir', fn: op('abrir') });
   else if (!tel) itens.push(x.tipo === 'ficha' ? { label: 'Abrir / editar ficha', fn: op('abrir') } : { label: 'Ver', fn: op('ver') });
+  // enviar / descarregar primeiro (o mais usado)
+  if (x.tipo === 'ficha') itens.push(partilhaNoTelemovel() ? { label: 'Enviar ou guardar (PDF)', fn: () => edEnviar([x.id]) } : { label: 'Descarregar PDF', fn: op('pdf') }, !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => edEnviar([x.id]) } : null);
+  else if (x.tipo === 'ficheiro') {
+    if (partilhaNoTelemovel()) itens.push({ label: 'Enviar ou guardar', fn: () => enviarDocumento(x.url, docFullName(x)) });
+    else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
+  }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
-  if (x.tipo === 'pasta') itens.push({ label: 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
-  else if (x.tipo === 'ficha') itens.push({ label: 'Descarregar PDF', fn: op('pdf') });
-  else itens.push({ label: 'Descarregar', fn: op('down') });
+  if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
   return itens;
@@ -9144,6 +9266,7 @@ function edMenuItem(x) {
 function edMenuVarios(ids) {
   return [{ titulo: `${ids.length} selecionados` },
     isEditor() ? { label: 'Mover para…', fn: () => edAbrirMover(ids) } : null,
+    podePartilharFicheiros() ? { label: 'Enviar', fn: () => edEnviar(ids) } : null,
     { label: 'Descarregar (ZIP)', fn: () => edDescarregar(ids) },
     isAdmin() ? '-' : null,
     isAdmin() ? { label: 'Eliminar', fn: () => edEliminar(ids), perigo: true } : null];
@@ -9471,6 +9594,21 @@ async function edDescarregar(ids, nomeZip) {
     if (falhas) toast(`${falhas} ficheiro(s) não foram obtidos.`, true);
   } catch (err) { toast('Erro ao gerar ZIP: ' + friendlyError(err), true); }
   finally { hideOverlay(); }
+}
+// Enviar vários itens da Empresa: ficheiros como estão, fichas em PDF; com pastas, vai em ZIP
+async function edEnviar(ids) {
+  const itens = ids.map(edItem).filter(Boolean);
+  if (!itens.length) return;
+  if (itens.some(x => x.tipo === 'pasta')) { edDescarregar(ids); return; } // no telemóvel o ZIP abre a janela de partilha
+  showOverlay('A preparar ficheiros…');
+  let files;
+  try {
+    files = await Promise.all(itens.map(async x => x.tipo === 'ficha'
+      ? ficheiroDe(edDesenharFichaPdf(x, edPaiDe(x)).output('blob'), `Ficha_${slug(x.nome || 'ficha')}.pdf`)
+      : ficheiroDe(await obterBlob(x.url), docFullName(x))));
+  } catch (e) { hideOverlay(); toast('Não foi possível obter todos os ficheiros.', true); return; }
+  hideOverlay();
+  if (!(await partilharFicheiros(files))) edDescarregar(ids);
 }
 async function edGuardarOffline(pastaId) {
   const lista = (pastaId ? edDescendentes(pastaId) : (edItens || [])).filter(x => x.tipo === 'ficheiro' && x.url);
