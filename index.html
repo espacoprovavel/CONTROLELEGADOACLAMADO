@@ -1165,6 +1165,37 @@ footer .ver { color: #9ca3af; }
 .px-tile.px-tile-nova:hover { border-color: var(--accent); background: #f8faff; }
 .px-plus { width: 50px; height: 50px; border-radius: 15px; background: #eef4ff; color: var(--accent); display: flex; align-items: center; justify-content: center; }
 .px-tile-nova .px-name { color: var(--accent) !important; }
+/* ---------- Editor de documentos ---------- */
+.pe-modal { z-index: 6000; }
+#peFerr button[hidden] { display: none; }
+.pe-minis .sc-mini { width: 50px; height: 66px; background-color: #fff; }
+.pe-palco canvas { position: absolute; background: #fff; }
+.pe-ret { position: absolute; border: 2px solid #ffd54a; box-shadow: 0 0 0 9999px rgba(5,7,10,0.62); cursor: move; touch-action: none; }
+.pe-grelha { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33.2%, rgba(255,255,255,0.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,0.35) 66.6%, transparent 66.8%), linear-gradient(to bottom, transparent 33.2%, rgba(255,255,255,0.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,0.35) 66.6%, transparent 66.8%); }
+.pe-h { position: absolute; transform: translate(-50%, -50%); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); touch-action: none; }
+.pe-h::before { content: ''; position: absolute; inset: -14px; } /* área de toque maior */
+.pe-c { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #ffd54a; }
+.pe-bh { width: 34px; height: 8px; border-radius: 4px; cursor: ns-resize; }
+.pe-bv { width: 8px; height: 34px; border-radius: 4px; cursor: ew-resize; }
+.pe-h[data-h="nw"], .pe-h[data-h="se"] { cursor: nwse-resize; }
+.pe-h[data-h="ne"], .pe-h[data-h="sw"] { cursor: nesw-resize; }
+.pe-corte-op { padding: 12px 16px max(18px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pe-corte-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.pe-todas { display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.85); cursor: pointer; }
+.pe-todas input { width: 18px; height: 18px; accent-color: #ffd54a; }
+#peConcluir.pe-pronto { background: #ffd54a; color: #1a1400; border-radius: 999px; padding: 8px 16px; min-width: 0; }
+.pg-opcao { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; margin-bottom: 10px; transition: border-color .15s, background .15s; }
+.pg-opcao.on { border-color: var(--accent); background: #f5f8ff; }
+.pg-opcao input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+.pg-opcao strong { display: block; font-size: 15px; color: var(--ink); }
+.pg-opcao em { display: block; font-style: normal; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+.pg-nome { margin: -2px 0 12px 30px; }
+.pg-nome[hidden] { display: none; }
+.pj-ajuda { font-size: 13px; color: var(--ink-soft); margin-bottom: 12px; }
+.pj-lista { display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; }
+.pj-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; text-align: left; font-size: 14px; color: var(--ink); }
+.pj-item:hover { border-color: var(--accent); background: #f8faff; }
+.pj-vazio { font-size: 13.5px; color: var(--ink-soft); text-align: center; padding: 10px; }
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -1638,6 +1669,7 @@ footer .ver { color: #9ca3af; }
           <span class="vw-pag" id="viewerPag">1 / 1</span>
           <button type="button" class="vw-btn" id="viewerMaisZoom" aria-label="Aumentar" title="Aumentar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         </div>
+        <button type="button" class="vw-btn" id="viewerEditar" aria-label="Editar" title="Editar (cortar, rodar…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
         <button type="button" class="vw-btn" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
         <button type="button" class="vw-btn" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
@@ -1902,6 +1934,76 @@ footer .ver { color: #9ca3af; }
       <button type="button" class="sc-btn sc-btn-vidro" id="scInteira">Página inteira</button>
     </div>
   </section>
+</div>
+
+<!-- Editor de documentos (PDF e fotos) -->
+<div class="sc pe" id="pe" aria-hidden="true">
+  <section class="sc-ecra" id="peRever">
+    <div class="sc-topo">
+      <button type="button" class="sc-ic" id="peFechar" aria-label="Fechar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="sc-titulo"><strong id="peTitulo">Editar</strong><span id="peSub"></span></div>
+      <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="peConcluir">Concluir</button>
+    </div>
+    <div class="sc-folha" id="peFolha"><div class="sc-proc" id="peProc"><span></span></div></div>
+    <div class="sc-ferr" id="peFerr">
+      <button type="button" data-pe="cortar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span>Cortar</span></button>
+      <button type="button" data-pe="rodar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Rodar</span></button>
+      <button type="button" data-pe="esq"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Antes</span></button>
+      <button type="button" data-pe="dir"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span>Depois</span></button>
+      <button type="button" data-pe="juntar" id="peJuntar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/><path d="M9.5 7v6M6.5 10h6"/></svg><span>Juntar PDF</span></button>
+      <button type="button" data-pe="apagar" class="sc-perigo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg><span>Apagar</span></button>
+    </div>
+    <div class="sc-miniaturas pe-minis" id="peMinis"></div>
+  </section>
+  <section class="sc-ecra" id="peCorte" hidden>
+    <div class="sc-topo">
+      <button type="button" class="sc-txtbtn" id="peCorteCancelar">Cancelar</button>
+      <div class="sc-titulo"><strong>Cortar</strong><span>Arrasta os cantos, as bordas ou o meio</span></div>
+      <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="peCorteOk">Aplicar</button>
+    </div>
+    <div class="sc-palco pe-palco" id="pePalco">
+      <canvas id="peCorteCanvas"></canvas>
+      <div class="pe-ret" id="peRet">
+        <span class="pe-grelha"></span>
+        <span class="pe-h pe-c" data-h="nw" style="left:0;top:0"></span><span class="pe-h pe-c" data-h="ne" style="left:100%;top:0"></span>
+        <span class="pe-h pe-c" data-h="se" style="left:100%;top:100%"></span><span class="pe-h pe-c" data-h="sw" style="left:0;top:100%"></span>
+        <span class="pe-h pe-b pe-bh" data-h="n" style="left:50%;top:0"></span><span class="pe-h pe-b pe-bh" data-h="s" style="left:50%;top:100%"></span>
+        <span class="pe-h pe-b pe-bv" data-h="w" style="left:0;top:50%"></span><span class="pe-h pe-b pe-bv" data-h="e" style="left:100%;top:50%"></span>
+      </div>
+    </div>
+    <div class="pe-corte-op">
+      <div class="pe-corte-btns"><button type="button" class="sc-btn sc-btn-vidro" id="peAuto">Tirar margens</button><button type="button" class="sc-btn sc-btn-vidro" id="peInteira">Página inteira</button></div>
+      <label class="pe-todas"><input type="checkbox" id="peTodas"> Aplicar o mesmo corte a todas as páginas</label>
+    </div>
+  </section>
+</div>
+<!-- Guardar as alterações do editor -->
+<div class="modal-backdrop pe-modal" id="peGuardarModal">
+  <div class="modal narrow">
+    <div class="modal-head"><h2>Guardar alterações</h2><button class="modal-close" id="pgFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <label class="pg-opcao on"><input type="radio" name="pgModo" value="copia" checked><span><strong>Guardar como cópia</strong><em>O original fica igual. A versão editada aparece ao lado.</em></span></label>
+      <div class="cfg-field pg-nome" id="pgNomeCampo"><label for="pgNome">Nome da cópia</label><input type="text" id="pgNome" maxlength="110"></div>
+      <label class="pg-opcao"><input type="radio" name="pgModo" value="substituir"><span><strong>Substituir o original</strong><em>O documento passa a ser esta versão editada.</em></span></label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="pgNaoGuardar" style="margin-right:auto;">Não guardar</button>
+      <button class="btn btn-ghost" id="pgVoltar">Continuar a editar</button>
+      <button class="btn btn-primary" id="pgGuardar">Guardar cópia</button>
+    </div>
+  </div>
+</div>
+<!-- Juntar outro PDF -->
+<div class="modal-backdrop pe-modal" id="peJuntarModal">
+  <div class="modal narrow">
+    <div class="modal-head"><h2>Juntar outro PDF</h2><button class="modal-close" id="pjFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <p class="pj-ajuda">As páginas são acrescentadas no fim. Depois pode mudar a ordem.</p>
+      <div class="pj-lista" id="pjLista"></div>
+      <button type="button" class="btn btn-ghost" id="pjAparelho" style="margin-top:12px;width:100%;justify-content:center;">Escolher do telemóvel / computador</button>
+      <input type="file" id="pjInput" accept="application/pdf,.pdf" hidden>
+    </div>
+  </div>
 </div>
 
 <!-- Janela de envio de ficheiros (substitui a do Cloudinary) -->
@@ -3281,6 +3383,7 @@ const PDF_ZOOMS = [1, 1.5, 2, 3, 4];
 let pdfjsPromessa = null;
 let leitor = null; // { pdf, zoom, paginas: [{ wrap, n, page, escala, feito }], obs }
 let vwDoc = null;  // documento aberto (para o botão Descarregar)
+function podeEditarDocFmt(format) { const f = String(format || '').toLowerCase(); return f === 'pdf' || ['jpg', 'jpeg', 'png', 'webp'].includes(f); }
 function usarLeitorPdf() {
   return !!(window.matchMedia && (matchMedia('(max-width: 600px)').matches || matchMedia('(pointer: coarse)').matches));
 }
@@ -3411,6 +3514,11 @@ function ligarLeitorPdf() {
     else enviarDocumento(vwDoc.url, vwDoc.nome);
   });
   document.getElementById('pdEnviar').addEventListener('click', enviarPartilhaPronta);
+  document.getElementById('viewerEditar').addEventListener('click', () => {
+    const ed = vwDoc && vwDoc.editar; if (!ed) return;
+    fecharLeitor(); closeModal('viewerModal'); document.getElementById('viewerBody').innerHTML = '';
+    ed();
+  });
   document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   // toque duplo: aproxima / volta à página inteira
@@ -3435,12 +3543,13 @@ function ligarLeitorPdf() {
   window.addEventListener('resize', () => { if (!leitor) return; clearTimeout(tRes); tRes = setTimeout(leitorLayout, 200); });
 }
 
-function viewDocument(url, format, filename) {
+function viewDocument(url, format, filename, opcoes) {
   document.getElementById('viewerTitle').textContent = filename || 'Documento';
   const body = document.getElementById('viewerBody');
   if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
   fecharLeitor();
-  vwDoc = { url, nome: filename, blob: null };
+  vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar };
+  document.getElementById('viewerEditar').hidden = !(vwDoc.editar && isEditor() && podeEditarDocFmt(format));
   const podeEnviar = podePartilharFicheiros();
   document.getElementById('viewerEnviar').hidden = !podeEnviar;
   document.getElementById('viewerDown').hidden = partilhaNoTelemovel(); // no telemóvel, "Enviar" já tem "Guardar em Ficheiros"
@@ -5412,6 +5521,23 @@ async function migrarCisSeppe() {
 /* ---------- Subpastas e ficheiros dentro da pasta do colaborador ----------
    Subpastas guardadas em funcionarios/{id}.subpastas (lista de nomes);
    cada documento tem o campo "pasta" (nome da subpasta) ou nenhum (pasta principal). */
+// Abre o editor para um documento da pasta de um colaborador
+function abrirEditorPx(emp, d) {
+  const subs = pxSubpastas(emp), pasta = d.pasta && subs.includes(d.pasta) ? d.pasta : null;
+  abrirEditorDoc({
+    nome: docFullName(d), url: d.url, format: d.format,
+    outrosPdfs: (pxDocs || []).filter(x => x.id !== d.id && String(x.format || '').toLowerCase() === 'pdf').map(x => ({ nome: docFullName(x), url: x.url })),
+    guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
+    substituir: async file => {
+      const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
+      await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({
+        url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
+        editado_em: firebase.firestore.FieldValue.serverTimestamp(), editado_por: currentUser ? currentUser.email : ''
+      });
+      logAudit('document_edit', emp.id, `${emp.nome}: "${docFullName(d)}" editado (substituído)`);
+    }
+  });
+}
 function pxSubpastas(e) { return Array.isArray(e && e.subpastas) ? e.subpastas.filter(Boolean) : []; }
 function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
 
@@ -5998,6 +6124,7 @@ function pxLigarEventos(root) {
         !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
+        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Editar (cortar, rodar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
@@ -6082,7 +6209,7 @@ function pxOnClick(ev) {
   if (t.dataset.pxDoc) {
     const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
-    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d));
+    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: () => abrirEditorPx(emp, d) } : null);
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
     else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, [d]);
@@ -9490,7 +9617,7 @@ function edOperacao(op, x) {
   if (op === 'abrir') { if (x.tipo === 'pasta') edGo(x.id); else if (x.tipo === 'ficha') edAbrirFicha(x); else edOperacao('ver', x); }
   else if (op === 'pdf') edFichaPdfDescarregar(x);
   else if (op === 'ver') {
-    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x));
+    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: () => abrirEditorEd(x) });
     else downloadDocument(x.url, docFullName(x)); // Excel/CSV: não há pré-visualização → descarrega
   }
   else if (op === 'down') { if (x.tipo === 'ficheiro') downloadDocument(x.url, docFullName(x)); else edDescarregar([x.id]); }
@@ -9512,6 +9639,7 @@ function edMenuItem(x) {
     else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
+  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(x.format)) itens.push({ label: 'Editar (cortar, rodar…)', fn: () => abrirEditorEd(x) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -9864,6 +9992,23 @@ async function edEnviar(ids) {
   } catch (e) { hideOverlay(); toast('Não foi possível obter todos os ficheiros.', true); return; }
   hideOverlay();
   if (!(await partilharFicheiros(files))) edDescarregar(ids);
+}
+// Abre o editor para um ficheiro da Empresa
+function abrirEditorEd(x) {
+  const pai = edPaiDe(x);
+  abrirEditorDoc({
+    nome: docFullName(x), url: x.url, format: x.format,
+    outrosPdfs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && String(y.format || '').toLowerCase() === 'pdf').map(y => ({ nome: docFullName(y), url: y.url })),
+    guardarCopia: file => edUpload(pai, [file]),
+    substituir: async file => {
+      const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
+      await db.collection(ED_COL).doc(x.id).update({
+        url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
+        updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by_email: currentUser ? currentUser.email : ''
+      });
+      logAudit('empresa_docs', x.id, `ficheiro editado (substituído): ${docFullName(x)}`);
+    }
+  });
 }
 async function edGuardarOffline(pastaId) {
   const lista = (pastaId ? edDescendentes(pastaId) : (edItens || [])).filter(x => x.tipo === 'ficheiro' && x.url);
@@ -10924,6 +11069,381 @@ function scLigar() {
     if (e.key !== 'Escape' || !sc) return;
     e.stopImmediatePropagation(); // não fecha a janela que está por baixo (ex.: anexar)
     if (sc.ecra === 'cortar') scMostrar('rever'); else fecharScanner();
+  }, true);
+}
+
+/* ============================================================
+   EDITOR DE DOCUMENTOS (PDF e fotos): cortar, rodar, apagar, ordenar, juntar
+   - PDF: o corte é feito como no Adobe Acrobat (caixa da página), sem perder
+     qualidade nem o texto; só se o PDF não deixar, as páginas viram imagem.
+   - No fim: Guardar como cópia, Substituir o original ou Não guardar.
+   abrirEditorDoc({ nome, url, format, outrosPdfs: [{nome,url}], guardarCopia(file), substituir(file) })
+   ============================================================ */
+const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+let pdfLibPromessa = null, pe = null, peLigado = false;
+const $pe = id => document.getElementById(id);
+function podeEditarDoc(format) { const f = String(format || '').toLowerCase(); return f === 'pdf' || ['jpg', 'jpeg', 'png', 'webp'].includes(f); }
+function carregarPdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  if (!pdfLibPromessa) pdfLibPromessa = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = PDFLIB_URL;
+    s.onload = () => window.PDFLib ? res(window.PDFLib) : rej(new Error('pdf-lib'));
+    s.onerror = () => { pdfLibPromessa = null; rej(new Error('pdf-lib')); };
+    document.head.appendChild(s);
+  });
+  return pdfLibPromessa;
+}
+// Rotação de 90° em 90° (sentido dos ponteiros), em coordenadas normalizadas 0..1
+function peParaVista(x, y, r) { return r === 1 ? { x: 1 - y, y: x } : r === 2 ? { x: 1 - x, y: 1 - y } : r === 3 ? { x: y, y: 1 - x } : { x, y }; }
+function peParaBase(u, v, r) { return r === 1 ? { x: v, y: 1 - u } : r === 2 ? { x: 1 - u, y: 1 - v } : r === 3 ? { x: 1 - v, y: u } : { x: u, y: v }; }
+function peRetangulo(c, conv, r) { // converte um retângulo {x0,y0,x1,y1}
+  const a = conv(c.x0, c.y0, r), b = conv(c.x1, c.y1, r);
+  return { x0: Math.min(a.x, b.x), y0: Math.min(a.y, b.y), x1: Math.max(a.x, b.x), y1: Math.max(a.y, b.y) };
+}
+
+async function abrirEditorDoc(o) {
+  if (typeof isEditor === 'function' && !isEditor()) { toast('Sem permissões para editar.', true); return; }
+  peLigar();
+  showOverlay('A abrir o documento…');
+  try {
+    const r = await fetch(o.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const buf = await r.arrayBuffer();
+    const ehPdf = String(o.format || '').toLowerCase() === 'pdf';
+    pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false, mime: 'image/jpeg' };
+    if (ehPdf) await peJuntarFonte(buf);
+    else {
+      const f = String(o.format || '').toLowerCase();
+      pe.mime = f === 'png' ? 'image/png' : f === 'webp' ? 'image/webp' : 'image/jpeg';
+      const bmp = await scCarregarImagem(new Blob([buf], { type: pe.mime }));
+      pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, cache: {} });
+      pe.paginas.push({ s: 0, i: 0, r: 0, crop: null });
+    }
+  } catch (err) {
+    hideOverlay(); pe = null;
+    toast(navigator.onLine === false ? 'Sem Internet: não foi possível abrir o documento.' : 'Não foi possível abrir o documento para editar.', true);
+    return;
+  }
+  hideOverlay();
+  $pe('peJuntar').hidden = !pe.ehPdf;
+  const raiz = $pe('pe'); raiz.classList.add('open'); raiz.setAttribute('aria-hidden', 'false');
+  document.documentElement.style.overflow = 'hidden';
+  peMostrar('rever');
+}
+async function peJuntarFonte(buf) {
+  const lib = await carregarPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
+  const s = pe.fontes.length;
+  pe.fontes.push({ tipo: 'pdf', bytes: buf, doc, cache: {} });
+  for (let i = 0; i < doc.numPages; i++) pe.paginas.push({ s, i, r: 0, crop: null });
+}
+function fecharEditorDoc(forcar) {
+  if (!pe) return;
+  if (!forcar && pe.alterado && !confirm('Sair sem guardar as alterações?')) return;
+  pe.fontes.forEach(f => { try { if (f.doc) f.doc.destroy(); if (f.bmp && f.bmp.close) f.bmp.close(); } catch (e) { /* já fechado */ } });
+  pe = null;
+  const raiz = $pe('pe'); raiz.classList.remove('open'); raiz.setAttribute('aria-hidden', 'true');
+  document.documentElement.style.overflow = '';
+}
+function peMostrar(ecra) {
+  $pe('peRever').hidden = ecra !== 'rever';
+  $pe('peCorte').hidden = ecra !== 'corte';
+  pe.ecra = ecra;
+  if (ecra === 'rever') peRender();
+}
+
+/* ---------- Desenhar páginas ---------- */
+// Página "base" (sem a rotação feita aqui), com largura ≈ "larg" px
+async function peBase(p, larg) {
+  const f = pe.fontes[p.s], chave = p.i + '@' + larg;
+  if (f.cache[chave]) return f.cache[chave];
+  const c = document.createElement('canvas');
+  if (f.tipo === 'img') {
+    const k = Math.min(1, larg / f.w); c.width = Math.max(1, Math.round(f.w * k)); c.height = Math.max(1, Math.round(f.h * k));
+    c.getContext('2d').drawImage(f.bmp, 0, 0, c.width, c.height);
+  } else {
+    const pg = await f.doc.getPage(p.i + 1), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: larg / v1.width });
+    c.width = Math.max(1, Math.round(vp.width)); c.height = Math.max(1, Math.round(vp.height));
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await pg.render({ canvasContext: g, viewport: vp }).promise;
+  }
+  f.cache[chave] = c;
+  return c;
+}
+// Aplica corte e rotação a uma página base
+function peCompor(base, p, comCorte) {
+  const c = comCorte && p.crop ? p.crop : { x0: 0, y0: 0, x1: 1, y1: 1 };
+  const sx = c.x0 * base.width, sy = c.y0 * base.height, sw = Math.max(1, (c.x1 - c.x0) * base.width), sh = Math.max(1, (c.y1 - c.y0) * base.height);
+  const out = document.createElement('canvas'), q = p.r % 2 === 1;
+  out.width = Math.round(q ? sh : sw); out.height = Math.round(q ? sw : sh);
+  const g = out.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
+  g.translate(out.width / 2, out.height / 2); g.rotate(p.r * Math.PI / 2);
+  g.drawImage(base, sx, sy, sw, sh, -sw / 2, -sh / 2, sw, sh);
+  return out;
+}
+let peToken = 0;
+async function peRender() {
+  if (!pe) return;
+  const n = pe.paginas.length;
+  pe.atual = Math.max(0, Math.min(pe.atual, n - 1));
+  const p = pe.paginas[pe.atual];
+  $pe('peTitulo').textContent = pe.o.nome || 'Documento';
+  $pe('peSub').textContent = n > 1 ? `Página ${pe.atual + 1} de ${n}` : (pe.ehPdf ? '1 página' : 'Imagem');
+  document.querySelector('[data-pe="esq"]').disabled = pe.atual === 0;
+  document.querySelector('[data-pe="dir"]').disabled = pe.atual === n - 1;
+  document.querySelector('[data-pe="apagar"]').disabled = n === 1;
+  $pe('peConcluir').classList.toggle('pe-pronto', pe.alterado);
+  // miniaturas
+  const minis = $pe('peMinis');
+  if (minis.childElementCount !== n) minis.innerHTML = pe.paginas.map((x, i) => `<button type="button" class="sc-mini" data-pe-mini="${i}" aria-label="Página ${i + 1}"><b>${i + 1}</b></button>`).join('');
+  minis.querySelectorAll('[data-pe-mini]').forEach((b, i) => b.classList.toggle('on', i === pe.atual));
+  const meu = ++peToken;
+  $pe('peProc').classList.add('on');
+  try {
+    const folha = $pe('peFolha');
+    const larg = Math.min(1600, Math.round(Math.max(folha.clientWidth, 300) * Math.min(window.devicePixelRatio || 1, 2)));
+    const c = peCompor(await peBase(p, larg), p, true);
+    if (meu !== peToken || !pe) return;
+    folha.querySelectorAll('canvas').forEach(x => x.remove());
+    folha.appendChild(c);
+  } finally { if (meu === peToken) $pe('peProc').classList.remove('on'); }
+  // miniaturas (em segundo plano)
+  for (let i = 0; i < pe.paginas.length; i++) {
+    if (meu !== peToken || !pe) return;
+    const q = pe.paginas[i], b = minis.querySelector(`[data-pe-mini="${i}"]`); if (!b) continue;
+    const chave = q.s + ':' + q.i + ':' + q.r + ':' + JSON.stringify(q.crop);
+    if (b.dataset.chave === chave) continue;
+    const m = peCompor(await peBase(q, 160), q, true);
+    b.style.backgroundImage = `url(${m.toDataURL('image/jpeg', 0.7)})`; b.dataset.chave = chave;
+  }
+}
+
+/* ---------- Cortar ---------- */
+async function peAbrirCorte() {
+  const p = pe.paginas[pe.atual];
+  peMostrar('corte');
+  $pe('peTodas').checked = false;
+  const palco = $pe('pePalco');
+  const larg = Math.min(1600, Math.round(Math.max(palco.clientWidth, 300) * Math.min(window.devicePixelRatio || 1, 2)));
+  const cheia = peCompor(await peBase(p, larg), p, false);
+  const cv = $pe('peCorteCanvas');
+  cv.width = cheia.width; cv.height = cheia.height;
+  cv.getContext('2d').drawImage(cheia, 0, 0);
+  pe.corte = { ret: p.crop ? peRetangulo(p.crop, peParaVista, p.r) : { x0: 0, y0: 0, x1: 1, y1: 1 } };
+  peLayoutCorte();
+}
+function peLayoutCorte() {
+  if (!pe || !pe.corte) return;
+  const palco = $pe('pePalco'), cv = $pe('peCorteCanvas'), m = 26;
+  const k = Math.min((palco.clientWidth - m * 2) / cv.width, (palco.clientHeight - m * 2) / cv.height);
+  const w = cv.width * k, h = cv.height * k, l = (palco.clientWidth - w) / 2, t = (palco.clientHeight - h) / 2;
+  Object.assign(cv.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: h + 'px' });
+  pe.corte.caixa = { l, t, w, h };
+  peDesenharRet();
+}
+function peDesenharRet() {
+  const { ret, caixa } = pe.corte, el = $pe('peRet');
+  Object.assign(el.style, { left: (caixa.l + ret.x0 * caixa.w) + 'px', top: (caixa.t + ret.y0 * caixa.h) + 'px', width: ((ret.x1 - ret.x0) * caixa.w) + 'px', height: ((ret.y1 - ret.y0) * caixa.h) + 'px' });
+}
+// Tira as margens brancas (deteta o conteúdo da página)
+async function peTirarMargens() {
+  const p = pe.paginas[pe.atual];
+  const c = peCompor(await peBase(p, 500), p, false), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data;
+  const W = c.width, H = c.height, bx = Math.round(W * 0.01), by = Math.round(H * 0.01);
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = by; y < H - by; y++) for (let x = bx; x < W - bx; x++) {
+    const i = (y * W + x) * 4;
+    if (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114 < 225) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) { toast('Esta página parece estar em branco.', true); return; }
+  const pad = 0.02;
+  pe.corte.ret = { x0: Math.max(0, x0 / W - pad), y0: Math.max(0, y0 / H - pad), x1: Math.min(1, (x1 + 1) / W + pad), y1: Math.min(1, (y1 + 1) / H + pad) };
+  peDesenharRet();
+}
+function peAplicarCorte() {
+  const { ret } = pe.corte;
+  const inteira = ret.x0 < 0.002 && ret.y0 < 0.002 && ret.x1 > 0.998 && ret.y1 > 0.998;
+  const aplicar = q => { q.crop = inteira ? null : peRetangulo(ret, peParaBase, q.r); };
+  if ($pe('peTodas').checked) {
+    const atual = pe.paginas[pe.atual];
+    pe.paginas.forEach(q => { if (q.r === atual.r) aplicar(q); else q.crop = inteira ? null : peRetangulo(ret, peParaBase, atual.r); });
+  } else aplicar(pe.paginas[pe.atual]);
+  pe.alterado = true;
+  pe.corte = null;
+  peMostrar('rever');
+}
+
+/* ---------- Guardar ---------- */
+async function peGerarPdf() {
+  const { PDFDocument, degrees } = await carregarPdfLib();
+  const docs = await Promise.all(pe.fontes.map(f => PDFDocument.load(f.bytes, { ignoreEncryption: true })));
+  const out = await PDFDocument.create();
+  for (const p of pe.paginas) {
+    const [pg] = await out.copyPages(docs[p.s], [p.i]);
+    const r0 = (((pg.getRotation().angle || 0) % 360) + 360) % 360;
+    if (p.crop) {
+      const cb = pg.getCropBox();
+      // a página "base" é a página do PDF já com a rotação própria dele (r0)
+      const u = peRetangulo(p.crop, peParaBase, Math.round(r0 / 90) % 4);
+      const X = cb.x + u.x0 * cb.width, W = (u.x1 - u.x0) * cb.width, Y = cb.y + (1 - u.y1) * cb.height, H = (u.y1 - u.y0) * cb.height;
+      pg.setMediaBox(X, Y, W, H); pg.setCropBox(X, Y, W, H);
+      try { pg.setTrimBox(X, Y, W, H); pg.setBleedBox(X, Y, W, H); pg.setArtBox(X, Y, W, H); } catch (e) { /* opcional */ }
+    }
+    if (p.r) pg.setRotation(degrees((r0 + p.r * 90) % 360));
+    out.addPage(pg);
+  }
+  return out.save();
+}
+// Último recurso (PDF protegido): cada página passa a imagem
+async function peGerarPdfImagens() {
+  let doc = null;
+  for (const p of pe.paginas) {
+    const c = peCompor(await peBase(p, 1700), p, true);
+    const pais = c.width > c.height, wmm = pais ? 297 : 210, hmm = wmm * c.height / c.width, ori = pais ? 'landscape' : 'portrait';
+    if (!doc) doc = new jsPDF({ unit: 'mm', format: [wmm, hmm], orientation: ori, compress: true }); else doc.addPage([wmm, hmm], ori);
+    doc.addImage(c.toDataURL('image/jpeg', 0.88), 'JPEG', 0, 0, wmm, hmm, undefined, 'FAST');
+  }
+  return doc.output('arraybuffer');
+}
+async function peGerarFicheiro(nome) {
+  nome = String(nome || 'documento').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'documento';
+  if (pe.ehPdf) {
+    let bytes;
+    try { bytes = await peGerarPdf(); }
+    catch (e) { console.warn('pdf-lib:', e); bytes = await peGerarPdfImagens(); }
+    return new File([bytes], nome + '.pdf', { type: 'application/pdf' });
+  }
+  const f = pe.fontes[0], p = pe.paginas[0];
+  const base = await peBase(p, Math.max(f.w, f.h)); // resolução total
+  const c = peCompor(base, p, true);
+  const ext = pe.mime === 'image/png' ? 'png' : pe.mime === 'image/webp' ? 'webp' : 'jpg';
+  const blob = await new Promise(r => c.toBlob(r, pe.mime, 0.93));
+  return new File([blob], nome + '.' + ext, { type: pe.mime });
+}
+function peAbrirGuardar() {
+  if (!pe.alterado) { toast('Ainda não fez alterações.'); return; }
+  const base = String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  $pe('pgNome').value = base + ' (editado)';
+  document.querySelector('input[name="pgModo"][value="copia"]').checked = true;
+  peModoGuardar();
+  openModal('peGuardarModal');
+}
+function peModoGuardar() {
+  const copia = document.querySelector('input[name="pgModo"]:checked').value === 'copia';
+  $pe('pgNomeCampo').hidden = !copia;
+  document.querySelectorAll('.pg-opcao').forEach(o => o.classList.toggle('on', o.querySelector('input').checked));
+  $pe('pgGuardar').textContent = copia ? 'Guardar cópia' : 'Substituir';
+  $pe('pgGuardar').classList.toggle('btn-danger', !copia);
+  $pe('pgGuardar').classList.toggle('btn-primary', copia);
+}
+async function peGuardar() {
+  const copia = document.querySelector('input[name="pgModo"]:checked').value === 'copia';
+  if (!copia && !confirm(`Substituir o documento original "${pe.o.nome}"?\n\nO original deixa de estar disponível na app.`)) return;
+  const nome = copia ? ($pe('pgNome').value.trim() || pe.o.nome + ' (editado)') : String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  closeModal('peGuardarModal');
+  showOverlay('A preparar o documento…');
+  let file;
+  try { file = await peGerarFicheiro(nome); }
+  catch (e) { hideOverlay(); toast('Não foi possível criar o documento: ' + (e.message || e), true); return; }
+  if (file.size > 10 * 1024 * 1024) { hideOverlay(); toast('O documento ficou com mais de 10 MB. Tire algumas páginas ou corte mais.', true); return; }
+  const o = pe.o;
+  try {
+    if (copia) { hideOverlay(); fecharEditorDoc(true); o.guardarCopia(file); }
+    else {
+      const el = document.getElementById('overlayMsg'); if (el) el.textContent = 'A substituir o original…';
+      await o.substituir(file);
+      hideOverlay(); fecharEditorDoc(true);
+      toast('Documento substituído pela versão editada.');
+    }
+  } catch (e) { hideOverlay(); toast('Não foi possível guardar: ' + friendlyError(e), true); }
+}
+
+/* ---------- Juntar outro PDF ---------- */
+function peAbrirJuntar() {
+  const lista = (pe.o.outrosPdfs || []);
+  $pe('pjLista').innerHTML = lista.length
+    ? lista.map((d, i) => `<button type="button" class="pj-item" data-pj="${i}"><span class="ftype ftype-pdf">PDF</span><span>${escapeHtml(d.nome)}</span></button>`).join('')
+    : '<p class="pj-vazio">Não há outros PDF nesta pasta.</p>';
+  openModal('peJuntarModal');
+}
+async function peJuntarDe(obterBytes, nome) {
+  closeModal('peJuntarModal');
+  showOverlay('A juntar "' + nome + '"…');
+  try {
+    const n0 = pe.paginas.length;
+    await peJuntarFonte(await obterBytes());
+    pe.alterado = true; pe.atual = n0;
+    hideOverlay();
+    toast(`Juntadas ${pe.paginas.length - n0} página(s) de "${nome}".`);
+    peRender();
+  } catch (e) { hideOverlay(); toast('Não foi possível juntar esse PDF.', true); }
+}
+
+/* ---------- Ligações ---------- */
+function peLigar() {
+  if (peLigado) return; peLigado = true;
+  $pe('peFechar').addEventListener('click', () => fecharEditorDoc());
+  $pe('peConcluir').addEventListener('click', () => peAbrirGuardar());
+  document.getElementById('peFerr').addEventListener('click', e => {
+    const b = e.target.closest('[data-pe]'); if (!b || !pe) return;
+    const i = pe.atual, P = pe.paginas, a = b.dataset.pe;
+    if (a === 'cortar') peAbrirCorte();
+    else if (a === 'rodar') { P[i].r = (P[i].r + 1) % 4; pe.alterado = true; peRender(); }
+    else if (a === 'esq' && i > 0) { [P[i - 1], P[i]] = [P[i], P[i - 1]]; pe.atual = i - 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
+    else if (a === 'dir' && i < P.length - 1) { [P[i + 1], P[i]] = [P[i], P[i + 1]]; pe.atual = i + 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
+    else if (a === 'apagar' && P.length > 1) { if (!confirm(`Apagar a página ${i + 1}?`)) return; P.splice(i, 1); pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
+    else if (a === 'juntar') peAbrirJuntar();
+  });
+  $pe('peMinis').addEventListener('click', e => { const b = e.target.closest('[data-pe-mini]'); if (b && pe) { pe.atual = +b.dataset.peMini; peRender(); } });
+  $pe('peCorteCancelar').addEventListener('click', () => { pe.corte = null; peMostrar('rever'); });
+  $pe('peCorteOk').addEventListener('click', peAplicarCorte);
+  $pe('peAuto').addEventListener('click', peTirarMargens);
+  $pe('peInteira').addEventListener('click', () => { pe.corte.ret = { x0: 0, y0: 0, x1: 1, y1: 1 }; peDesenharRet(); });
+  // arrastar o retângulo (cantos, bordas ou o meio)
+  const ret = $pe('peRet'); let arr = null;
+  ret.addEventListener('pointerdown', e => {
+    if (!pe || !pe.corte) return;
+    e.preventDefault();
+    const h = e.target.closest('[data-h]'); arr = { h: h ? h.dataset.h : 'mover', x: e.clientX, y: e.clientY, r0: { ...pe.corte.ret }, id: e.pointerId };
+    try { ret.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ }
+  });
+  ret.addEventListener('pointermove', e => {
+    if (!arr || e.pointerId !== arr.id) return;
+    const { caixa } = pe.corte, dx = (e.clientX - arr.x) / caixa.w, dy = (e.clientY - arr.y) / caixa.h, r = { ...arr.r0 }, MIN = 0.05;
+    if (arr.h === 'mover') {
+      const w = r.x1 - r.x0, hh = r.y1 - r.y0;
+      r.x0 = Math.max(0, Math.min(1 - w, r.x0 + dx)); r.x1 = r.x0 + w;
+      r.y0 = Math.max(0, Math.min(1 - hh, r.y0 + dy)); r.y1 = r.y0 + hh;
+    } else {
+      if (arr.h.includes('w')) r.x0 = Math.max(0, Math.min(r.x1 - MIN, r.x0 + dx));
+      if (arr.h.includes('e')) r.x1 = Math.min(1, Math.max(r.x0 + MIN, r.x1 + dx));
+      if (arr.h.includes('n')) r.y0 = Math.max(0, Math.min(r.y1 - MIN, r.y0 + dy));
+      if (arr.h.includes('s')) r.y1 = Math.min(1, Math.max(r.y0 + MIN, r.y1 + dy));
+    }
+    pe.corte.ret = r; peDesenharRet();
+  });
+  const soltar = () => { arr = null; };
+  ret.addEventListener('pointerup', soltar); ret.addEventListener('pointercancel', soltar);
+  // guardar
+  document.querySelectorAll('input[name="pgModo"]').forEach(i => i.addEventListener('change', peModoGuardar));
+  $pe('pgGuardar').addEventListener('click', peGuardar);
+  $pe('pgNaoGuardar').addEventListener('click', () => { closeModal('peGuardarModal'); fecharEditorDoc(true); toast('Alterações descartadas. O documento ficou como estava.'); });
+  $pe('pgVoltar').addEventListener('click', () => closeModal('peGuardarModal'));
+  $pe('pgFechar').addEventListener('click', () => closeModal('peGuardarModal'));
+  // juntar
+  $pe('pjLista').addEventListener('click', e => {
+    const b = e.target.closest('[data-pj]'); if (!b) return;
+    const d = pe.o.outrosPdfs[+b.dataset.pj];
+    peJuntarDe(async () => { const r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome);
+  });
+  $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
+  $pe('pjInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) peJuntarDe(() => f.arrayBuffer(), f.name); });
+  $pe('pjFechar').addEventListener('click', () => closeModal('peJuntarModal'));
+  window.addEventListener('resize', () => { if (pe && pe.ecra === 'corte') peLayoutCorte(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !pe || document.querySelector('#peGuardarModal.open, #peJuntarModal.open')) return;
+    e.stopImmediatePropagation();
+    if (pe.ecra === 'corte') { pe.corte = null; peMostrar('rever'); } else fecharEditorDoc();
   }, true);
 }
 
