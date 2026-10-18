@@ -5458,6 +5458,87 @@ function pxNaPasta(pais, empresa) {
   return employees.filter(e => empresa ? (pxPais(e) === pais && pxEmpresa(e) === empresa) : pxPais(e) === pais);
 }
 
+/* ---------- Incluir colaboradores por link seguro ----------
+   Link: /#importar=<ficheiro>.<chave>. O ficheiro importacoes/<ficheiro>.json
+   vem cifrado (AES-GCM); a chave só existe no link (o "#" nunca vai ao
+   servidor). Traz a ficha e os documentos já guardados no Cloudinary.
+   Só o master aplica; fica marcado em config/migracoes para não repetir. */
+let ilEmCurso = false;
+function ilB64(s) {
+  const b = atob(String(s).replace(/-/g, '+').replace(/_/g, '/'));
+  const u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return u;
+}
+function ilLimparLink() {
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+}
+async function importarPorLink() {
+  const m = /^#importar=([\w-]+)\.([\w-]+)$/.exec(location.hash || '');
+  if (!m || ilEmCurso || !currentUser || !employees.length) return;
+  if (!isMaster()) { toast('Só um utilizador Master pode incluir colaboradores por link.', true); ilLimparLink(); return; }
+  ilEmCurso = true;
+  try {
+    const r = await fetch(`importacoes/${m[1]}.json`, { cache: 'no-store' });
+    if (!r.ok) throw new Error('ficheiro não encontrado');
+    const cif = await r.json();
+    const chave = await crypto.subtle.importKey('raw', ilB64(m[2]), 'AES-GCM', false, ['decrypt']);
+    const claro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ilB64(cif.iv) }, chave, ilB64(cif.ct));
+    const pacote = JSON.parse(new TextDecoder().decode(claro));
+    const marca = 'importacao_' + String(pacote.id || m[1]).replace(/\W/g, '_');
+    const flag = await db.collection('config').doc('migracoes').get();
+    if (flag.exists && flag.data() && flag.data()[marca]) { toast('Este link já foi usado: o colaborador já está na app.'); ilLimparLink(); return; }
+
+    const lista = pacote.colaboradores || [];
+    const nomes = lista.map(c => `• ${c.dados.nome} — ${c.dados.cli_pais || ''} › ${c.dados.cliente || ''} (${(c.documentos || []).length} documento(s))`).join('\n');
+    if (!confirm(`Incluir na app?\n\n${nomes}\n\nContinuar?`)) { ilLimparLink(); return; }
+    showOverlay('A incluir…');
+    const normNif = v => String(v == null ? '' : v).replace(/\D/g, '');
+    // Usa a grafia já existente na app (ex.: "Queridos", "Portugal") para cair na mesma pasta
+    const grafia = (campo, v) => { const ex = employees.find(e => e[campo] && pxNorm(String(e[campo]).trim()) === pxNorm(String(v).trim())); return ex ? ex[campo] : v; };
+    let primeiro = null;
+    for (const c of lista) {
+      const dados = Object.assign({}, c.dados);
+      if (dados.cliente) dados.cliente = grafia('cliente', dados.cliente);
+      if (dados.cli_pais) dados.cli_pais = grafia('cli_pais', dados.cli_pais);
+      const nif = normNif(dados.nif);
+      const ex = nif ? employees.find(e => normNif(e.nif) === nif) : null;
+      const id = ex ? ex.id : (c.id || uid());
+      await db.collection('funcionarios').doc(id).set(dados, { merge: true });
+      const ref = db.collection('funcionarios').doc(id).collection('documentos');
+      const ja = new Set((await ref.get()).docs.map(d => d.data().public_id));
+      let novos = 0;
+      for (const d of (c.documentos || [])) {
+        if (ja.has(d.public_id)) continue;
+        await ref.add(Object.assign({}, d, {
+          uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
+          uploaded_by_uid: currentUser.uid,
+          uploaded_by_email: currentUser.email
+        }));
+        novos++;
+      }
+      if (novos) await db.collection('funcionarios').doc(id).update({ doc_count: firebase.firestore.FieldValue.increment(novos) });
+      await logAudit(ex ? 'update' : 'create', id, dados.nome);
+      if (!primeiro) primeiro = { id, pais: dados.cli_pais, empresa: dados.cliente, nome: dados.nome };
+    }
+    await db.collection('config').doc('migracoes').set({
+      [marca]: { feito_em: firebase.firestore.FieldValue.serverTimestamp(), por: currentUser.email, colaboradores: lista.length }
+    }, { merge: true });
+    ilLimparLink();
+    toast(lista.length === 1 ? `${primeiro.nome} incluído, com os documentos.` : `${lista.length} colaboradores incluídos.`);
+    // espera que a ficha nova chegue à lista antes de abrir a pasta dela
+    for (let i = 0; primeiro && i < 25 && !employees.some(e => e.id === primeiro.id); i++) await new Promise(r => setTimeout(r, 200));
+    if (primeiro) { switchArea('pastas'); pxGo({ scope: 'ativos', pais: primeiro.pais, empresa: primeiro.empresa, funcId: primeiro.id }); }
+  } catch (err) {
+    console.warn('Incluir por link:', err);
+    ilLimparLink(); // não repetir a cada atualização; o link pode ser aberto de novo
+    toast('Não foi possível usar este link: ' + (err && err.name === 'OperationError' ? 'o link está incompleto.' : friendlyError(err)), true);
+  } finally {
+    hideOverlay();
+    ilEmCurso = false;
+  }
+}
+
 /* ---------- Unificação: Vleeshandel / Cis & Seppe / Cis Van Den Broeken ----------
    São a mesma empresa. Passa tudo para um só nome, uma única vez (marca em
    config/migracoes), quando alguém com acesso abre a app: fichas dos
@@ -5868,6 +5949,7 @@ function pxGo(p) {
 }
 function pxOnEmployeesChanged() {
   migrarCisSeppe(); // só faz algo uma vez (ver config/migracoes)
+  importarPorLink();
   const area = document.getElementById('areaPastas');
   if (!area || area.style.display === 'none') return;
   renderPastas();
