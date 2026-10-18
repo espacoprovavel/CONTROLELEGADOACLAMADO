@@ -1196,6 +1196,14 @@ footer .ver { color: #9ca3af; }
 .pj-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; text-align: left; font-size: 14px; color: var(--ink); }
 .pj-item:hover { border-color: var(--accent); background: #f8faff; }
 .pj-vazio { font-size: 13.5px; color: var(--ink-soft); text-align: center; padding: 10px; }
+.pj-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.pj-botoes .btn { justify-content: center; white-space: normal; text-align: center; }
+@media (max-width: 600px) { .pj-botoes { grid-template-columns: 1fr; } }
+#peFerr { overflow-x: auto; scrollbar-width: none; justify-content: space-between; gap: 2px; }
+#peFerr::-webkit-scrollbar { display: none; }
+#peFerr button { flex-shrink: 0; }
+/* o digitalizador aberto a partir do editor fica por cima dele */
+#scan { z-index: 5100; }
 /* Botão ⋮ (só aparece no telemóvel) */
 .px-kebab { display: none; flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; border-radius: 50%; color: #5f6368; cursor: pointer; align-items: center; justify-content: center; }
 .px-kebab:active { background: #eef1f5; }
@@ -1669,6 +1677,7 @@ footer .ver { color: #9ca3af; }
           <span class="vw-pag" id="viewerPag">1 / 1</span>
           <button type="button" class="vw-btn" id="viewerMaisZoom" aria-label="Aumentar" title="Aumentar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         </div>
+        <button type="button" class="vw-btn" id="viewerRodar" aria-label="Rodar" title="Rodar 90°" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
         <button type="button" class="vw-btn" id="viewerEditar" aria-label="Editar" title="Editar (cortar, rodar…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
         <button type="button" class="vw-btn" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
         <button type="button" class="vw-btn" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
@@ -1948,9 +1957,10 @@ footer .ver { color: #9ca3af; }
     <div class="sc-ferr" id="peFerr">
       <button type="button" data-pe="cortar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span>Cortar</span></button>
       <button type="button" data-pe="rodar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Rodar</span></button>
+      <button type="button" data-pe="rodartudo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="9" height="11" rx="1.5"/><path d="M8 5h9a2 2 0 0 1 2 2v9"/><path d="M15 2l2 3-3 2"/></svg><span>Rodar tudo</span></button>
       <button type="button" data-pe="esq"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Antes</span></button>
       <button type="button" data-pe="dir"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span>Depois</span></button>
-      <button type="button" data-pe="juntar" id="peJuntar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/><path d="M9.5 7v6M6.5 10h6"/></svg><span>Juntar PDF</span></button>
+      <button type="button" data-pe="juntar" id="peJuntar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg><span>Anexar</span></button>
       <button type="button" data-pe="apagar" class="sc-perigo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg><span>Apagar</span></button>
     </div>
     <div class="sc-miniaturas pe-minis" id="peMinis"></div>
@@ -1996,12 +2006,15 @@ footer .ver { color: #9ca3af; }
 <!-- Juntar outro PDF -->
 <div class="modal-backdrop pe-modal" id="peJuntarModal">
   <div class="modal narrow">
-    <div class="modal-head"><h2>Juntar outro PDF</h2><button class="modal-close" id="pjFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-head"><h2>Anexar documentos</h2><button class="modal-close" id="pjFechar" aria-label="Fechar">×</button></div>
     <div class="modal-body">
-      <p class="pj-ajuda">As páginas são acrescentadas no fim. Depois pode mudar a ordem.</p>
+      <p class="pj-ajuda">PDF e fotos entram como páginas no fim do documento (fica tudo num só PDF). Depois pode mudar a ordem, rodar ou cortar.</p>
       <div class="pj-lista" id="pjLista"></div>
-      <button type="button" class="btn btn-ghost" id="pjAparelho" style="margin-top:12px;width:100%;justify-content:center;">Escolher do telemóvel / computador</button>
-      <input type="file" id="pjInput" accept="application/pdf,.pdf" hidden>
+      <div class="pj-botoes">
+        <button type="button" class="btn btn-ghost" id="pjAparelho">Escolher do telemóvel / computador</button>
+        <button type="button" class="btn btn-ghost" id="pjDigitalizar">Digitalizar com a câmara</button>
+      </div>
+      <input type="file" id="pjInput" accept="application/pdf,.pdf,image/*" multiple hidden>
     </div>
   </div>
 </div>
@@ -3514,11 +3527,13 @@ function ligarLeitorPdf() {
     else enviarDocumento(vwDoc.url, vwDoc.nome);
   });
   document.getElementById('pdEnviar').addEventListener('click', enviarPartilhaPronta);
-  document.getElementById('viewerEditar').addEventListener('click', () => {
+  const abrirNoEditor = opcoes => {
     const ed = vwDoc && vwDoc.editar; if (!ed) return;
     fecharLeitor(); closeModal('viewerModal'); document.getElementById('viewerBody').innerHTML = '';
-    ed();
-  });
+    ed(opcoes);
+  };
+  document.getElementById('viewerEditar').addEventListener('click', () => abrirNoEditor());
+  document.getElementById('viewerRodar').addEventListener('click', () => abrirNoEditor({ rodar: true }));
   document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   // toque duplo: aproxima / volta à página inteira
@@ -3550,6 +3565,7 @@ function viewDocument(url, format, filename, opcoes) {
   fecharLeitor();
   vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar };
   document.getElementById('viewerEditar').hidden = !(vwDoc.editar && isEditor() && podeEditarDocFmt(format));
+  document.getElementById('viewerRodar').hidden = document.getElementById('viewerEditar').hidden;
   const podeEnviar = podePartilharFicheiros();
   document.getElementById('viewerEnviar').hidden = !podeEnviar;
   document.getElementById('viewerDown').hidden = partilhaNoTelemovel(); // no telemóvel, "Enviar" já tem "Guardar em Ficheiros"
@@ -5522,11 +5538,12 @@ async function migrarCisSeppe() {
    Subpastas guardadas em funcionarios/{id}.subpastas (lista de nomes);
    cada documento tem o campo "pasta" (nome da subpasta) ou nenhum (pasta principal). */
 // Abre o editor para um documento da pasta de um colaborador
-function abrirEditorPx(emp, d) {
+function abrirEditorPx(emp, d, opcoes) {
   const subs = pxSubpastas(emp), pasta = d.pasta && subs.includes(d.pasta) ? d.pasta : null;
   abrirEditorDoc({
     nome: docFullName(d), url: d.url, format: d.format,
-    outrosPdfs: (pxDocs || []).filter(x => x.id !== d.id && String(x.format || '').toLowerCase() === 'pdf').map(x => ({ nome: docFullName(x), url: x.url })),
+    outrosDocs: (pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(x.format)).map(x => ({ nome: docFullName(x), url: x.url, format: x.format })),
+    rodar: !!(opcoes && opcoes.rodar),
     guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
     substituir: async file => {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
@@ -6124,7 +6141,8 @@ function pxLigarEventos(root) {
         !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
-        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Editar (cortar, rodar…)', fn: () => abrirEditorPx(emp, d) } : null,
+        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
+        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Editar (cortar, anexar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
@@ -6209,7 +6227,7 @@ function pxOnClick(ev) {
   if (t.dataset.pxDoc) {
     const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
-    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: () => abrirEditorPx(emp, d) } : null);
+    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o) } : null);
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
     else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, [d]);
@@ -9617,7 +9635,7 @@ function edOperacao(op, x) {
   if (op === 'abrir') { if (x.tipo === 'pasta') edGo(x.id); else if (x.tipo === 'ficha') edAbrirFicha(x); else edOperacao('ver', x); }
   else if (op === 'pdf') edFichaPdfDescarregar(x);
   else if (op === 'ver') {
-    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: () => abrirEditorEd(x) });
+    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: o => abrirEditorEd(x, o) });
     else downloadDocument(x.url, docFullName(x)); // Excel/CSV: não há pré-visualização → descarrega
   }
   else if (op === 'down') { if (x.tipo === 'ficheiro') downloadDocument(x.url, docFullName(x)); else edDescarregar([x.id]); }
@@ -9639,7 +9657,7 @@ function edMenuItem(x) {
     else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
-  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(x.format)) itens.push({ label: 'Editar (cortar, rodar…)', fn: () => abrirEditorEd(x) });
+  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(x.format)) itens.push({ label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (cortar, anexar…)', fn: () => abrirEditorEd(x) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -9994,11 +10012,12 @@ async function edEnviar(ids) {
   if (!(await partilharFicheiros(files))) edDescarregar(ids);
 }
 // Abre o editor para um ficheiro da Empresa
-function abrirEditorEd(x) {
+function abrirEditorEd(x, opcoes) {
   const pai = edPaiDe(x);
   abrirEditorDoc({
     nome: docFullName(x), url: x.url, format: x.format,
-    outrosPdfs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && String(y.format || '').toLowerCase() === 'pdf').map(y => ({ nome: docFullName(y), url: y.url })),
+    outrosDocs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && podeEditarDocFmt(y.format)).map(y => ({ nome: docFullName(y), url: y.url, format: y.format })),
+    rodar: !!(opcoes && opcoes.rodar),
     guardarCopia: file => edUpload(pai, [file]),
     substituir: async file => {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
@@ -11077,7 +11096,7 @@ function scLigar() {
    - PDF: o corte é feito como no Adobe Acrobat (caixa da página), sem perder
      qualidade nem o texto; só se o PDF não deixar, as páginas viram imagem.
    - No fim: Guardar como cópia, Substituir o original ou Não guardar.
-   abrirEditorDoc({ nome, url, format, outrosPdfs: [{nome,url}], guardarCopia(file), substituir(file) })
+   abrirEditorDoc({ nome, url, format, outrosDocs: [{nome,url,format}], rodar, guardarCopia(file), substituir(file) })
    ============================================================ */
 const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
 let pdfLibPromessa = null, pe = null, peLigado = false;
@@ -11109,26 +11128,32 @@ async function abrirEditorDoc(o) {
     const r = await fetch(o.url); if (!r.ok) throw new Error('HTTP ' + r.status);
     const buf = await r.arrayBuffer();
     const ehPdf = String(o.format || '').toLowerCase() === 'pdf';
-    pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false, mime: 'image/jpeg' };
+    pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false };
     if (ehPdf) await peJuntarFonte(buf);
-    else {
-      const f = String(o.format || '').toLowerCase();
-      pe.mime = f === 'png' ? 'image/png' : f === 'webp' ? 'image/webp' : 'image/jpeg';
-      const bmp = await scCarregarImagem(new Blob([buf], { type: pe.mime }));
-      pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, cache: {} });
-      pe.paginas.push({ s: 0, i: 0, r: 0, crop: null });
-    }
+    else await peJuntarImagem(buf, peMimeDe(o.format));
+    if (o.rodar) { pe.paginas.forEach(p => { p.r = 1; }); pe.alterado = true; } // "Rodar" direto do menu
   } catch (err) {
     hideOverlay(); pe = null;
     toast(navigator.onLine === false ? 'Sem Internet: não foi possível abrir o documento.' : 'Não foi possível abrir o documento para editar.', true);
     return;
   }
   hideOverlay();
-  $pe('peJuntar').hidden = !pe.ehPdf;
   const raiz = $pe('pe'); raiz.classList.add('open'); raiz.setAttribute('aria-hidden', 'false');
   document.documentElement.style.overflow = 'hidden';
   peMostrar('rever');
 }
+function peMimeDe(formatoOuNome) {
+  const f = String(formatoOuNome || '').toLowerCase().split('.').pop();
+  return f === 'png' ? 'image/png' : f === 'webp' ? 'image/webp' : f === 'pdf' ? 'application/pdf' : 'image/jpeg';
+}
+async function peJuntarImagem(buf, mime) {
+  const bmp = await scCarregarImagem(new Blob([buf], { type: mime }));
+  const s = pe.fontes.length;
+  pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, mime, cache: {} });
+  pe.paginas.push({ s, i: 0, r: 0, crop: null });
+}
+// Saída em PDF sempre que o resultado tiver mais de uma página ou incluir um PDF
+function peSaidaPdf() { return pe.ehPdf || pe.paginas.length > 1 || pe.paginas.some(p => pe.fontes[p.s].tipo === 'pdf'); }
 async function peJuntarFonte(buf) {
   const lib = await carregarPdfJs();
   const doc = await lib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
@@ -11276,9 +11301,19 @@ function peAplicarCorte() {
 /* ---------- Guardar ---------- */
 async function peGerarPdf() {
   const { PDFDocument, degrees } = await carregarPdfLib();
-  const docs = await Promise.all(pe.fontes.map(f => PDFDocument.load(f.bytes, { ignoreEncryption: true })));
+  const docs = await Promise.all(pe.fontes.map(f => f.tipo === 'pdf' ? PDFDocument.load(f.bytes, { ignoreEncryption: true }) : null));
   const out = await PDFDocument.create();
   for (const p of pe.paginas) {
+    if (pe.fontes[p.s].tipo === 'img') {
+      // foto anexada: entra como página (largura A4; retrato ou paisagem conforme a foto)
+      const f = pe.fontes[p.s];
+      const c = peCompor(await peBase(p, Math.min(2400, Math.max(f.w, f.h))), p, true);
+      const jpg = await new Promise(r => c.toBlob(b => b.arrayBuffer().then(r), 'image/jpeg', 0.9));
+      const img = await out.embedJpg(jpg);
+      const W = c.width > c.height ? 841.89 : 595.28, H = W * c.height / c.width;
+      out.addPage([W, H]).drawImage(img, { x: 0, y: 0, width: W, height: H });
+      continue;
+    }
     const [pg] = await out.copyPages(docs[p.s], [p.i]);
     const r0 = (((pg.getRotation().angle || 0) % 360) + 360) % 360;
     if (p.crop) {
@@ -11307,18 +11342,18 @@ async function peGerarPdfImagens() {
 }
 async function peGerarFicheiro(nome) {
   nome = String(nome || 'documento').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'documento';
-  if (pe.ehPdf) {
+  if (peSaidaPdf()) {
     let bytes;
     try { bytes = await peGerarPdf(); }
     catch (e) { console.warn('pdf-lib:', e); bytes = await peGerarPdfImagens(); }
     return new File([bytes], nome + '.pdf', { type: 'application/pdf' });
   }
-  const f = pe.fontes[0], p = pe.paginas[0];
+  const p = pe.paginas[0], f = pe.fontes[p.s], mime = f.mime || 'image/jpeg';
   const base = await peBase(p, Math.max(f.w, f.h)); // resolução total
   const c = peCompor(base, p, true);
-  const ext = pe.mime === 'image/png' ? 'png' : pe.mime === 'image/webp' ? 'webp' : 'jpg';
-  const blob = await new Promise(r => c.toBlob(r, pe.mime, 0.93));
-  return new File([blob], nome + '.' + ext, { type: pe.mime });
+  const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+  const blob = await new Promise(r => c.toBlob(r, mime, 0.93));
+  return new File([blob], nome + '.' + ext, { type: mime });
 }
 function peAbrirGuardar() {
   if (!pe.alterado) { toast('Ainda não fez alterações.'); return; }
@@ -11358,25 +11393,36 @@ async function peGuardar() {
   } catch (e) { hideOverlay(); toast('Não foi possível guardar: ' + friendlyError(e), true); }
 }
 
-/* ---------- Juntar outro PDF ---------- */
+/* ---------- Anexar outros documentos (PDF e fotos) ---------- */
 function peAbrirJuntar() {
-  const lista = (pe.o.outrosPdfs || []);
+  const lista = (pe.o.outrosDocs || []);
   $pe('pjLista').innerHTML = lista.length
-    ? lista.map((d, i) => `<button type="button" class="pj-item" data-pj="${i}"><span class="ftype ftype-pdf">PDF</span><span>${escapeHtml(d.nome)}</span></button>`).join('')
-    : '<p class="pj-vazio">Não há outros PDF nesta pasta.</p>';
+    ? lista.map((d, i) => `<button type="button" class="pj-item" data-pj="${i}">${docIcon(d.format)}<span>${escapeHtml(d.nome)}</span></button>`).join('')
+    : '<p class="pj-vazio">Não há outros documentos nesta pasta.</p>';
   openModal('peJuntarModal');
 }
-async function peJuntarDe(obterBytes, nome) {
+// Acrescenta no fim as páginas de um PDF ou uma foto
+async function peJuntarDe(obterBytes, nome, mime) {
   closeModal('peJuntarModal');
-  showOverlay('A juntar "' + nome + '"…');
+  showOverlay('A anexar "' + nome + '"…');
   try {
-    const n0 = pe.paginas.length;
-    await peJuntarFonte(await obterBytes());
+    const n0 = pe.paginas.length, buf = await obterBytes();
+    if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf);
+    else await peJuntarImagem(buf, mime || peMimeDe(nome));
     pe.alterado = true; pe.atual = n0;
     hideOverlay();
-    toast(`Juntadas ${pe.paginas.length - n0} página(s) de "${nome}".`);
+    const n = pe.paginas.length - n0;
+    toast(`Anexado "${nome}" (${n} página${n === 1 ? '' : 's'}).`);
+    $pe('peMinis').innerHTML = '';
     peRender();
-  } catch (e) { hideOverlay(); toast('Não foi possível juntar esse PDF.', true); }
+  } catch (e) { hideOverlay(); toast('Não foi possível anexar "' + nome + '".', true); }
+}
+async function peJuntarFicheiros(files) {
+  for (const f of [...files]) {
+    const mime = f.type === 'application/pdf' || /\.pdf$/i.test(f.name) ? 'application/pdf' : (f.type || peMimeDe(f.name));
+    if (mime !== 'application/pdf' && !/^image\//.test(mime)) { toast(`"${f.name}" não é PDF nem foto.`, true); continue; }
+    await peJuntarDe(() => f.arrayBuffer(), f.name, mime);
+  }
 }
 
 /* ---------- Ligações ---------- */
@@ -11389,6 +11435,7 @@ function peLigar() {
     const i = pe.atual, P = pe.paginas, a = b.dataset.pe;
     if (a === 'cortar') peAbrirCorte();
     else if (a === 'rodar') { P[i].r = (P[i].r + 1) % 4; pe.alterado = true; peRender(); }
+    else if (a === 'rodartudo') { P.forEach(q => { q.r = (q.r + 1) % 4; }); pe.alterado = true; peRender(); }
     else if (a === 'esq' && i > 0) { [P[i - 1], P[i]] = [P[i], P[i - 1]]; pe.atual = i - 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
     else if (a === 'dir' && i < P.length - 1) { [P[i + 1], P[i]] = [P[i], P[i + 1]]; pe.atual = i + 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
     else if (a === 'apagar' && P.length > 1) { if (!confirm(`Apagar a página ${i + 1}?`)) return; P.splice(i, 1); pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
@@ -11433,11 +11480,15 @@ function peLigar() {
   // juntar
   $pe('pjLista').addEventListener('click', e => {
     const b = e.target.closest('[data-pj]'); if (!b) return;
-    const d = pe.o.outrosPdfs[+b.dataset.pj];
-    peJuntarDe(async () => { const r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome);
+    const d = pe.o.outrosDocs[+b.dataset.pj];
+    peJuntarDe(async () => { const r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(d.format));
   });
   $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
-  $pe('pjInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) peJuntarDe(() => f.arrayBuffer(), f.name); });
+  $pe('pjInput').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) peJuntarFicheiros(fs); });
+  $pe('pjDigitalizar').addEventListener('click', () => {
+    closeModal('peJuntarModal');
+    abrirScanner({ destino: 'anexar a "' + (pe.o.nome || 'documento') + '"', aoTerminar: f => peJuntarDe(() => f.arrayBuffer(), f.name, 'application/pdf') });
+  });
   $pe('pjFechar').addEventListener('click', () => closeModal('peJuntarModal'));
   window.addEventListener('resize', () => { if (pe && pe.ecra === 'corte') peLayoutCorte(); });
   document.addEventListener('keydown', e => {
