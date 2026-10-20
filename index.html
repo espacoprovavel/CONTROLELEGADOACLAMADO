@@ -1485,7 +1485,7 @@ footer .ver { color: #9ca3af; }
             <div class="field"><label for="f_cc">CC / BI</label><input type="text" id="f_cc"></div>
             <div class="field"><label for="f_cc_val">Validade CC</label><div class="field-val-row"><input type="date" id="f_cc_val"><span id="f_cc_val_badge" class="val-badge none">Sem data</span></div></div>
             <div class="field full"><label for="f_cc_obs">Observações CC</label><textarea id="f_cc_obs" rows="2" placeholder="Notas sobre o cartão de cidadão"></textarea></div>
-            <div class="field"><label for="f_nif">NIF <span class="req">*</span></label><input type="text" id="f_nif" required inputmode="numeric"></div>
+            <div class="field"><label for="f_nif">NIF</label><input type="text" id="f_nif" inputmode="numeric"></div>
             <div class="field"><label for="f_niss">NISS</label><input type="text" id="f_niss" inputmode="numeric"></div>
             <div class="field"><label for="f_passaporte">N.º Passaporte</label><input type="text" id="f_passaporte"></div>
             <div class="field"><label for="f_pass_val">Validade Passaporte</label><div class="field-val-row"><input type="date" id="f_pass_val"><span id="f_pass_val_badge" class="val-badge none">Sem data</span></div></div>
@@ -1506,7 +1506,7 @@ footer .ver { color: #9ca3af; }
         <div class="form-section">
           <div class="form-section-title">4 · Contrato de Trabalho</div>
           <div class="form-grid">
-            <div class="field"><label for="f_funcao">Função <span class="req">*</span></label><input type="text" id="f_funcao" required></div>
+            <div class="field"><label for="f_funcao">Função</label><input type="text" id="f_funcao"></div>
             <div class="field"><label for="f_categoria">Categoria profissional</label><input type="text" id="f_categoria"></div>
             <div class="field"><label for="f_tipocontrato">Tipo de contrato</label>
               <select id="f_tipocontrato"><option value="">—</option><option>Sem termo</option><option>Termo certo</option><option>Termo incerto</option><option>Part-time</option><option>Estágio</option></select>
@@ -1514,7 +1514,7 @@ footer .ver { color: #9ca3af; }
             <div class="field"><label for="f_estado">Estado</label>
               <select id="f_estado"><option value="ativo">Activo</option><option value="inativo">Inactivo</option></select>
             </div>
-            <div class="field"><label for="f_adm">Data admissão <span class="req">*</span></label><input type="date" id="f_adm" required></div>
+            <div class="field"><label for="f_adm">Data admissão</label><input type="date" id="f_adm"></div>
             <div class="field"><label for="f_cess">Data cessação</label><input type="date" id="f_cess"></div>
             <div class="field"><label for="f_venc">Vencimento base (€) <span id="f_venc_hint" class="es-sub" style="display:none;">(referência — não usado no cálculo)</span></label><input type="number" id="f_venc" step="0.01" min="0"></div>
             <div class="field"><label for="f_horario">Horário semanal (h)</label><input type="number" id="f_horario" step="1" min="0" value="40"></div>
@@ -2863,13 +2863,7 @@ function setSelectValue(id, val) {
 async function saveForm() {
   if (!isEditor()) { toast('Sem permissões para guardar.', true); return; }
   const nome = document.getElementById('f_nome').value.trim();
-  const nif = document.getElementById('f_nif').value.trim();
-  const funcao = document.getElementById('f_funcao').value.trim();
-  const adm = document.getElementById('f_adm').value;
-  if (!nome || !nif || !funcao || !adm) {
-    toast('Preencha os campos obrigatórios: Nome, NIF, Função e Data de admissão.', true);
-    return;
-  }
+  if (!nome) { toast('Escreva pelo menos o nome. O resto pode ficar para depois.', true); return; }
   const existingId = document.getElementById('f_id').value;
   if (!confirm(existingId ? `Tem a certeza que quer guardar as alterações de "${nome}"?` : `Tem a certeza que quer criar o colaborador "${nome}"?`)) return;
   const id = existingId || uid();
@@ -5451,6 +5445,7 @@ function pxMergeKeys(grupos, extras) {
 }
 function pxNomeValido(s) {
   s = String(s == null ? '' : s).trim().replace(/\s+/g, ' ');
+  s = s.replace(/›/g, '-'); // "›" separa pastas dentro de pastas
   if (!s || s.startsWith('(')) return '';
   return s.slice(0, 80);
 }
@@ -5616,8 +5611,9 @@ async function migrarCisSeppe() {
 }
 
 /* ---------- Subpastas e ficheiros dentro da pasta do colaborador ----------
-   Subpastas guardadas em funcionarios/{id}.subpastas (lista de nomes);
-   cada documento tem o campo "pasta" (nome da subpasta) ou nenhum (pasta principal). */
+   Subpastas guardadas em funcionarios/{id}.subpastas (lista de caminhos);
+   cada documento tem o campo "pasta" (caminho da subpasta) ou nenhum (pasta principal).
+   Pastas dentro de pastas: o caminho junta os nomes com " › " (ex.: "Recibos › 2026"). */
 // Abre o editor para um documento da pasta de um colaborador
 function abrirEditorPx(emp, d, opcoes) {
   const subs = pxSubpastas(emp), pasta = d.pasta && subs.includes(d.pasta) ? d.pasta : null;
@@ -5637,37 +5633,69 @@ function abrirEditorPx(emp, d, opcoes) {
   });
 }
 function pxSubpastas(e) { return Array.isArray(e && e.subpastas) ? e.subpastas.filter(Boolean) : []; }
+const PX_SUB_SEP = ' › ';
+function pxSubPai(x) { const i = x.lastIndexOf(PX_SUB_SEP); return i < 0 ? '' : x.slice(0, i); }
+function pxSubNome(x) { const i = x.lastIndexOf(PX_SUB_SEP); return i < 0 ? x : x.slice(i + PX_SUB_SEP.length); }
+function pxSubFilhas(subs, pai) { return subs.filter(x => pxSubPai(x) === (pai || '')); }
+function pxSubDentro(x, sub) { return x === sub || x.startsWith(sub + PX_SUB_SEP); } // a própria pasta e tudo o que tem dentro
+function pxSubZip(x) { return x.split(PX_SUB_SEP).map(pxSafe).join('/'); }
 function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
 
-async function pxNovaSubpasta(emp) {
+// Pasta de colaborador só com o nome: os documentos podem entrar já, a ficha preenche-se depois
+async function pxNovaPastaColab(pais, empresa) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
-  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${emp.nome}"`, rotulo: 'Nome da pasta', placeholder: 'Ex.: Contratos', botao: 'Criar pasta', sugestoes: ['Recibos de vencimento', 'Contratos', 'Documentos pessoais', 'A1 / Destacamento', 'Faltas e baixas', 'Seguros'] }));
+  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${empresa}". Pode anexar documentos já e preencher a ficha mais tarde.`, rotulo: 'Nome da pasta (ex.: nome do colaborador)', placeholder: 'Ex.: João Silva', botao: 'Criar pasta' }));
+  if (!nome) return;
+  const igual = employees.find(e => pxPais(e) === pais && pxEmpresa(e) === empresa && pxNorm(String(e.nome || '').trim()) === pxNorm(nome));
+  if (igual) { toast('Já existe uma pasta com esse nome aqui.', true); return; }
+  const id = uid();
+  const dados = { nome, estado: 'ativo', modo_pagamento: 'salario_horas_extra',
+    cliente: empresa && empresa !== PX_SEM_EMP ? empresa : '', cli_pais: pais && pais !== PX_SEM_PAIS ? pais : '' };
+  try {
+    await db.collection('funcionarios').doc(id).set(dados, { merge: true });
+    logAudit('create', id, nome + ' (pasta sem ficha)');
+    toast(`Pasta "${nome}" criada. Já pode anexar documentos.`);
+    for (let i = 0; i < 25 && !employees.some(e => e.id === id); i++) await new Promise(r => setTimeout(r, 200));
+    pxGo({ scope: 'ativos', pais, empresa, funcId: id });
+  } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
+}
+
+async function pxNovaSubpasta(emp, pai) {
+  if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  pai = pai || '';
+  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${pai ? pxSubNome(pai) : emp.nome}"`, rotulo: 'Nome da pasta', placeholder: 'Ex.: Contratos', botao: 'Criar pasta', sugestoes: pai ? [] : ['Recibos de vencimento', 'Contratos', 'Documentos pessoais', 'A1 / Destacamento', 'Faltas e baixas', 'Seguros'] }));
   if (!nome) return;
   const subs = pxSubpastas(emp);
-  if (subs.some(x => pxNorm(x) === pxNorm(nome))) { toast('Já existe uma pasta com esse nome.', true); return; }
+  if (pxSubFilhas(subs, pai).some(x => pxNorm(pxSubNome(x)) === pxNorm(nome))) { toast('Já existe uma pasta com esse nome.', true); return; }
+  const caminho = pai ? pai + PX_SUB_SEP + nome : nome;
   try {
-    await db.collection('funcionarios').doc(emp.id).set({ subpastas: subs.concat([nome]) }, { merge: true });
-    logAudit('pastas', emp.id, `${emp.nome}: pasta criada "${nome}"`);
+    await db.collection('funcionarios').doc(emp.id).set({ subpastas: subs.concat(pai && !subs.includes(pai) ? [pai, caminho] : [caminho]) }, { merge: true });
+    logAudit('pastas', emp.id, `${emp.nome}: pasta criada "${caminho}"`);
     toast(`Pasta "${nome}" criada.`);
   } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
 }
 
 async function pxRenomearSubpasta(emp, sub) {
   if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
-  const novo = pxNomeValido(await pedirTexto({ titulo: 'Renomear pasta', rotulo: 'Novo nome', valor: sub, botao: 'Guardar' }));
-  if (!novo || novo === sub) return;
+  const nomeAtual = pxSubNome(sub), pai = pxSubPai(sub);
+  const novoNome = pxNomeValido(await pedirTexto({ titulo: 'Renomear pasta', rotulo: 'Novo nome', valor: nomeAtual, botao: 'Guardar' }));
+  if (!novoNome || novoNome === nomeAtual) return;
   const subs = pxSubpastas(emp);
-  if (subs.some(x => x !== sub && pxNorm(x) === pxNorm(novo))) { toast('Já existe uma pasta com esse nome.', true); return; }
-  const dentro = (pxDocs || []).filter(d => d.pasta === sub);
-  if (!confirm(`Renomear a pasta "${sub}" para "${novo}"?${dentro.length ? `\n\nOs ${dentro.length} ficheiro(s) lá dentro mantêm-se na pasta.` : ''}`)) return;
+  if (pxSubFilhas(subs, pai).some(x => x !== sub && pxNorm(pxSubNome(x)) === pxNorm(novoNome))) { toast('Já existe uma pasta com esse nome.', true); return; }
+  const novo = pai ? pai + PX_SUB_SEP + novoNome : novoNome;
+  const trocar = x => pxSubDentro(x, sub) ? novo + x.slice(sub.length) : x; // a pasta e as pastas lá dentro
+  const dentro = (pxDocs || []).filter(d => d.pasta && pxSubDentro(d.pasta, sub));
+  if (!confirm(`Renomear a pasta "${nomeAtual}" para "${novoNome}"?${dentro.length ? `\n\nOs ${dentro.length} ficheiro(s) lá dentro mantêm-se na pasta.` : ''}`)) return;
   showOverlay('A renomear pasta…');
   try {
-    const b = db.batch();
-    dentro.forEach(d => b.update(db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id), { pasta: novo }));
-    b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.map(x => x === sub ? novo : x) }, { merge: true });
-    await b.commit();
+    for (let i = 0; i < Math.max(dentro.length, 1); i += 400) {
+      const b = db.batch();
+      dentro.slice(i, i + 400).forEach(d => b.update(db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id), { pasta: trocar(d.pasta) }));
+      if (i === 0) b.set(db.collection('funcionarios').doc(emp.id), { subpastas: subs.map(trocar) }, { merge: true });
+      await b.commit();
+    }
     logAudit('pastas', emp.id, `${emp.nome}: pasta "${sub}" → "${novo}"`);
-    if (pxPath.sub === sub) pxPath = Object.assign({}, pxPath, { sub: novo });
+    if (pxPath.sub && pxSubDentro(pxPath.sub, sub)) pxPath = Object.assign({}, pxPath, { sub: trocar(pxPath.sub) });
     toast('Pasta renomeada.');
     renderPastas();
   } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); } finally { hideOverlay(); }
@@ -5675,17 +5703,19 @@ async function pxRenomearSubpasta(emp, sub) {
 
 async function pxEliminarSubpasta(emp, sub) {
   if (!isAdmin()) { toast('Apenas administradores podem eliminar pastas.', true); return; }
-  const dentro = (pxDocs || []).filter(d => d.pasta === sub);
+  const dentro = (pxDocs || []).filter(d => d.pasta && pxSubDentro(d.pasta, sub));
+  const nome = pxSubNome(sub);
   if (dentro.length) {
-    alert(`A pasta "${sub}" tem ${dentro.length} ficheiro(s).\n\nPara a eliminar, primeiro move os ficheiros para outra pasta (Mover) ou elimina-os.`);
+    alert(`A pasta "${nome}" tem ${dentro.length} ficheiro(s).\n\nPara a eliminar, primeiro move os ficheiros para outra pasta (Mover) ou elimina-os.`);
     return;
   }
-  if (!confirm(`Eliminar a pasta vazia "${sub}"?`)) return;
+  const nSubs = pxSubpastas(emp).filter(x => x !== sub && pxSubDentro(x, sub)).length;
+  if (!confirm(`Eliminar a pasta vazia "${nome}"?${nSubs ? `\n\nAs ${nSubs} pasta(s) vazia(s) lá dentro também são eliminadas.` : ''}`)) return;
   try {
-    await db.collection('funcionarios').doc(emp.id).set({ subpastas: pxSubpastas(emp).filter(x => x !== sub) }, { merge: true });
+    await db.collection('funcionarios').doc(emp.id).set({ subpastas: pxSubpastas(emp).filter(x => !pxSubDentro(x, sub)) }, { merge: true });
     logAudit('pastas', emp.id, `${emp.nome}: pasta eliminada "${sub}"`);
     toast('Pasta eliminada.');
-    pxGo(Object.assign({}, pxPath, { sub: null }));
+    pxGo(Object.assign({}, pxPath, { sub: pxPath.sub && pxSubDentro(pxPath.sub, sub) ? (pxSubPai(sub) || null) : pxPath.sub }));
   } catch (err) { toast('Erro ao eliminar pasta: ' + friendlyError(err), true); }
 }
 
@@ -6021,7 +6051,10 @@ function renderPastas() {
     emp = employees.find(x => x.id === funcId);
     if (!emp) { pxGo({ scope, pais, empresa }); return; }
     pxCrumbs.push({ scope, pais, empresa, funcId }); labels.push(emp.nome || '(sem nome)');
-    if (sub) { pxCrumbs.push({ scope, pais, empresa, funcId, sub }); labels.push(sub); }
+    if (sub) {
+      const partes = sub.split(PX_SUB_SEP);
+      partes.forEach((nm, i) => { pxCrumbs.push({ scope, pais, empresa, funcId, sub: partes.slice(0, i + 1).join(PX_SUB_SEP) }); labels.push(nm); });
+    }
   }
   const crumbsHtml = labels.map((l, i) => i === labels.length - 1
     ? `<span class="cur">${escapeHtml(l)}</span>`
@@ -6076,7 +6109,19 @@ function renderPastas() {
     const faixa = isEditor() && destinos.length
       ? `<div class="px-dropbar"><span>Largar aqui para mover:</span>` + destinos.map(x => `<span class="px-drop-chip" data-px-drop="${escapeHtml(x)}">${x ? escapeHtml(x) : 'Pasta principal'}</span>`).join('') + `</div>`
       : '';
-    const vazio = sub
+    // Pastas dentro da pasta aberta (com a pasta "+ Nova pasta" à frente)
+    const filhas = pxSubFilhas(subs, sub || '');
+    pxItems = filhas.map(x => ({ scope, pais, empresa, funcId, sub: x }));
+    const contar = x => (pxDocs || []).filter(d => d.pasta && pxSubDentro(d.pasta, x)).length;
+    const subsHtml = filhas.length || isEditor()
+      ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + (isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-subpasta" title="Criar uma pasta nova"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Criar pasta</span></button>` : '') + filhas.map((x, i) => {
+          const n = contar(x), nf = pxSubFilhas(subs, x).length;
+          const info = pxDocs === null ? '…' : [nf ? `${nf} pasta${nf === 1 ? '' : 's'}` : '', n ? `${n} ficheiro${n === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || 'Pasta vazia';
+          return pxCard(i, 'pasta', pxSubNome(x), info, isEditor() ? `data-px-drop="${escapeHtml(x)}"` : '');
+        }).join('') + '</div>'
+      : '';
+    const vazio = sub && filhas.length ? ''
+      : sub
       ? `<div class="px-empty">Esta pasta está vazia.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> ou <strong>Mover</strong> um ficheiro para aqui.' : ''}</div>`
       : `<div class="px-empty">Ainda não há documentos soltos nesta pasta.${isEditor() ? ' Usa <strong>Anexar ficheiros</strong> para adicionar recibos, contratos, passaporte…' : ''}</div>`;
     const docsHtml = pxDocs === null ? '<div class="px-empty">A carregar documentos…</div>'
@@ -6084,10 +6129,11 @@ function renderPastas() {
     if (sub) {
       // ----- Subpasta dentro da pasta do colaborador -----
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros', 'btn-primary');
+      if (isEditor()) actions += pxBtn('nova-subpasta', '+ Nova pasta');
       if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
       if (isEditor()) actions += pxBtn('renomear-sub', 'Renomear pasta');
       if (isAdmin()) actions += pxBtn('eliminar-sub', 'Eliminar pasta', 'btn-danger');
-      body = `${faixa}<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}`;
+      body = `${faixa}${subsHtml}${daVista.length || !filhas.length ? `<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}` : ''}`;
     } else {
       if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
@@ -6099,14 +6145,6 @@ function renderPastas() {
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
       const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
-      pxItems = subs.map(nomeSub => ({ scope, pais, empresa, funcId, sub: nomeSub }));
-      const contar = nomeSub => (pxDocs || []).filter(d => d.pasta === nomeSub).length;
-      const subsHtml = subs.length || isEditor()
-        ? `<div class="px-section-title">Pastas</div><div class="px-grid-big px-grid-sub">` + (isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-subpasta" title="Criar uma pasta nova"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Criar pasta</span></button>` : '') + subs.map((nomeSub, i) => {
-            const n = contar(nomeSub);
-            return pxCard(i, 'pasta', nomeSub, pxDocs === null ? '…' : (n ? `${n} ficheiro${n === 1 ? '' : 's'}` : 'Pasta vazia'), isEditor() ? `data-px-drop="${escapeHtml(nomeSub)}"` : '');
-          }).join('') + '</div>'
-        : '';
       body = `${faixa}${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title px-section-row"><span>Documentos</span>${selTodos}</div>${barra}${docsHtml}`;
     }
   } else {
@@ -6115,7 +6153,7 @@ function renderPastas() {
     if (empresa) {
       // ----- Colaboradores da empresa -----
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
-      if (isEditor() && scope === 'ativos') actions += pxBtn('novo-aqui', '+ Novo colaborador aqui', 'btn-primary');
+      if (isEditor() && scope === 'ativos') actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', '+ Novo colaborador (com ficha)');
       actions += pxBtn('zip-empresa', 'Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
       actions += pxBtn('offline', 'Guardar offline');
       if (scope === 'ativos' && empresa !== PX_SEM_EMP) {
@@ -6123,9 +6161,10 @@ function renderPastas() {
         if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
       pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
-      body = emps.length
-        ? '<div class="px-grid-big">' + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
-        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>+ Novo colaborador aqui</strong> para criar a primeira ficha.' : ''}</div>`;
+      const novaTile = isEditor() && scope === 'ativos' ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-pasta-colab" title="Criar uma pasta só com o nome (a ficha preenche-se depois)"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Só com o nome</span></button>` : '';
+      body = emps.length || novaTile
+        ? '<div class="px-grid-big">' + novaTile + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
+        : '<div class="px-empty">Pasta vazia.</div>';
     } else if (pais) {
       // ----- Empresas do país (+ pastas de empresa criadas à mão) -----
       const extras = scope === 'ativos' ? ((window.pxEstrutura || {})[pais] || []) : [];
@@ -6199,7 +6238,7 @@ function pxLigarEventos(root) {
   // Botão direito: ficheiros e subpastas dentro da pasta do colaborador
   root.addEventListener('contextmenu', ev => {
     const row = ev.target.closest('[data-px-row]');
-    const tile = !row && pxPath.funcId && !pxPath.sub ? ev.target.closest('.px-tile[data-px-i]') : null;
+    const tile = !row && pxPath.funcId ? ev.target.closest('.px-tile[data-px-i]') : null;
     if (!row && !tile) return; // resto da página: menu normal do navegador
     ev.preventDefault();
     const emp = employees.find(x => x.id === pxPath.funcId);
@@ -6232,7 +6271,7 @@ function pxLigarEventos(root) {
     }
     const alvo = pxItems[Number(tile.dataset.pxI)];
     if (!emp || !alvo || !alvo.sub) return;
-    abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: alvo.sub },
+    abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: pxSubNome(alvo.sub) },
       { label: 'Abrir', fn: () => pxGo(alvo) },
       isEditor() ? { label: 'Renomear', fn: () => pxRenomearSubpasta(emp, alvo.sub) } : null,
       isAdmin() ? '-' : null,
@@ -6322,7 +6361,7 @@ function pxOnClick(ev) {
   switch (t.dataset.pxAct) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome, sub || null); break;
     case 'scan': if (emp) abrirScanner({ destino: emp.nome + (sub ? ' › ' + sub : ''), aoTerminar: f => openUploadWidget(emp.id, emp.nome, sub || null, [f]) }); break;
-    case 'nova-subpasta': if (emp) pxNovaSubpasta(emp); break;
+    case 'nova-subpasta': if (emp) pxNovaSubpasta(emp, sub || ''); break;
     case 'renomear-sub': if (emp && sub) pxRenomearSubpasta(emp, sub); break;
     case 'eliminar-sub': if (emp && sub) pxEliminarSubpasta(emp, sub); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
@@ -6343,6 +6382,7 @@ function pxOnClick(ev) {
     }
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
+    case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa); break;
     case 'novo-aqui':
       openForm();
       setSelectValue('f_estado', 'ativo');
@@ -6406,11 +6446,11 @@ async function pxDownloadZip(entries, zipName) {
       folder.file(`Ficha_${slug(e.nome)}.pdf`, pxFichaBlob(e));
       const snap = await db.collection('funcionarios').doc(e.id).collection('documentos').get();
       const subs = pxSubpastas(e);
-      subs.forEach(x => folder.folder(pxSafe(x))); // subpastas (mesmo vazias)
+      subs.forEach(x => folder.folder(pxSubZip(x))); // subpastas (mesmo vazias)
       const usados = {};
       snap.docs.forEach(d => {
         const meta = d.data();
-        const naSub = meta.pasta && subs.includes(meta.pasta) ? pxSafe(meta.pasta) : '';
+        const naSub = meta.pasta && subs.includes(meta.pasta) ? pxSubZip(meta.pasta) : '';
         const alvo = naSub ? folder.folder(naSub) : folder;
         let nome = pxSafe(docFullName(meta));
         const chave = naSub + '/' + nome;
