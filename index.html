@@ -267,6 +267,7 @@ footer strong { color: var(--ink); }
   box-shadow: 0 20px 60px rgba(0,34,68,0.3); overflow: hidden; animation: modalIn 0.2s ease;
 }
 .modal.narrow { max-width: 560px; }
+.modal-backdrop > .modal { margin-top: auto; margin-bottom: auto; }
 @keyframes modalIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
 .modal-head {
   background: var(--accent); color: #fff; padding: 18px 24px; border-bottom: 3px solid var(--gold);
@@ -1173,9 +1174,19 @@ footer .ver { color: #9ca3af; }
 #peFerr { overflow-x: auto; scrollbar-width: none; justify-content: safe center; gap: 2px; }
 #peFerr::-webkit-scrollbar { display: none; }
 #peFerr button { flex-shrink: 0; }
-.pe-grelha-barra { display: flex; justify-content: flex-end; padding: 0 12px; }
+.pe-grelha-barra { display: flex; justify-content: space-between; align-items: center; padding: 0 12px 0 16px; }
+.pe-zoom { display: flex; gap: 6px; }
+.pe-zoom button { width: 34px; height: 30px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.08); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; }
+.pe-zoom button:disabled { opacity: .3; }
+.pe-grelha-ferr { justify-content: center; gap: 28px; }
 .pe-grelha-barra .sc-txtbtn { min-width: 0; font-size: 14px; color: #ffd54a; }
-.pe-grelha-pags { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); column-gap: 14px; row-gap: 34px; padding: 10px 18px 34px; align-content: start; -webkit-overflow-scrolling: touch; }
+.pe-grelha-pags { --pg: 220px; flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--pg), 42vw), 1fr)); column-gap: 30px; row-gap: 38px; padding: 12px 30px 40px; align-content: start; -webkit-overflow-scrolling: touch; }
+.pe-ins { position: absolute; top: 50%; left: -15px; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; background: #ffd54a; color: #1a1400; font-size: 20px; font-weight: 700; line-height: 28px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.5); cursor: pointer; opacity: 0; transition: opacity .15s, transform .15s; z-index: 2; }
+.pe-ins-d { left: auto; right: -15px; transform: translate(50%, -50%); }
+.pe-pg:hover .pe-ins, .pe-ins:focus-visible { opacity: 1; }
+.pe-ins:hover { transform: translate(-50%, -50%) scale(1.15); }
+.pe-ins-d:hover { transform: translate(50%, -50%) scale(1.15); }
+@media (hover: none) { .pe-ins { opacity: .9; width: 26px; height: 26px; line-height: 26px; font-size: 18px; } }
 .pe-pg { position: relative; aspect-ratio: 3 / 4; border: none; padding: 0; border-radius: 6px; background: #fff center / contain no-repeat; box-shadow: 0 8px 22px rgba(0,0,0,0.5); cursor: pointer; outline: 3px solid transparent; outline-offset: 3px; transition: outline-color .12s, transform .12s; -webkit-touch-callout: none; }
 .pe-pg:active { transform: scale(.97); }
 .pe-pg.on { outline-color: #ffd54a; }
@@ -2018,9 +2029,13 @@ footer .ver { color: #9ca3af; }
       <div class="sc-titulo"><strong>Páginas</strong><span id="peGrelhaSub">Toque nas páginas para as selecionar</span></div>
       <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="peGrelhaConcluir">Concluir</button>
     </div>
-    <div class="pe-grelha-barra"><button type="button" class="sc-txtbtn" id="peGrelhaTodas">Selecionar todas</button></div>
+    <div class="pe-grelha-barra">
+      <div class="pe-zoom"><button type="button" id="peGrelhaMenos" aria-label="Páginas mais pequenas" title="Mais pequenas">−</button><button type="button" id="peGrelhaMais" aria-label="Páginas maiores" title="Maiores">+</button></div>
+      <button type="button" class="sc-txtbtn" id="peGrelhaTodas">Selecionar todas</button>
+    </div>
     <div class="pe-grelha-pags" id="peGrelhaPags"></div>
     <div class="sc-ferr pe-grelha-ferr">
+      <button type="button" data-pg="inserir"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 9v6M9 12h6"/></svg><span>Adicionar páginas</span></button>
       <button type="button" data-pg="rodar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Rodar</span></button>
       <button type="button" data-pg="esq"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Para trás</span></button>
       <button type="button" data-pg="dir"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span>Para a frente</span></button>
@@ -2055,8 +2070,8 @@ footer .ver { color: #9ca3af; }
     <div class="modal-head"><h2>Guardar alterações</h2><button class="modal-close" id="pgFechar" aria-label="Fechar">×</button></div>
     <div class="modal-body">
       <label class="pg-opcao on"><input type="radio" name="pgModo" value="copia" checked><span><strong>Guardar como cópia</strong><em>O original fica igual. A versão editada aparece ao lado.</em></span></label>
-      <div class="cfg-field pg-nome" id="pgNomeCampo"><label for="pgNome">Nome da cópia</label><input type="text" id="pgNome" maxlength="110"></div>
       <label class="pg-opcao"><input type="radio" name="pgModo" value="substituir"><span><strong>Substituir o original</strong><em>O documento passa a ser esta versão editada.</em></span></label>
+      <div class="cfg-field pg-nome" id="pgNomeCampo"><label for="pgNome" id="pgNomeRotulo">Nome da cópia</label><input type="text" id="pgNome" maxlength="110"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="pgNaoGuardar" style="margin-right:auto;">Não guardar</button>
@@ -2070,11 +2085,12 @@ footer .ver { color: #9ca3af; }
   <div class="modal narrow">
     <div class="modal-head"><h2>Anexar documentos</h2><button class="modal-close" id="pjFechar" aria-label="Fechar">×</button></div>
     <div class="modal-body">
-      <p class="pj-ajuda">PDF e fotos entram como páginas no fim do documento (fica tudo num só PDF). Depois pode mudar a ordem, rodar ou cortar.</p>
+      <p class="pj-ajuda" id="pjAjuda">PDF e fotos entram como páginas no fim do documento (fica tudo num só PDF). Depois pode mudar a ordem, rodar ou cortar.</p>
       <div class="pj-lista" id="pjLista"></div>
       <div class="pj-botoes">
         <button type="button" class="btn btn-ghost" id="pjAparelho">Escolher do telemóvel / computador</button>
         <button type="button" class="btn btn-ghost" id="pjDigitalizar">Digitalizar com a câmara</button>
+        <button type="button" class="btn btn-ghost" id="pjBranco">Página em branco</button>
       </div>
       <input type="file" id="pjInput" accept="application/pdf,.pdf,image/*" multiple hidden>
     </div>
@@ -5715,6 +5731,7 @@ function abrirEditorPx(emp, d, opcoes) {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
       await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
+        original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
         editado_em: firebase.firestore.FieldValue.serverTimestamp(), editado_por: currentUser ? currentUser.email : ''
       });
       logAudit('document_edit', emp.id, `${emp.nome}: "${docFullName(d)}" editado (substituído)`);
@@ -10323,6 +10340,7 @@ function abrirEditorEd(x, opcoes) {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
       await db.collection(ED_COL).doc(x.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
+        original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
         updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by_email: currentUser ? currentUser.email : ''
       });
       logAudit('empresa_docs', x.id, `ficheiro editado (substituído): ${docFullName(x)}`);
@@ -11492,16 +11510,29 @@ function peMostrar(ecra) {
 }
 
 /* ---------- Páginas: selecionar uma ou várias e eliminar / rodar / mudar de lugar (como no Adobe) ---------- */
+const PE_TAM = [110, 150, 220, 300, 400];
+function peTamPag() {
+  let t = 0; try { t = +localStorage.getItem('pe_tam_pag') || 0; } catch (e) { /* sem armazenamento */ }
+  return PE_TAM.includes(t) ? t : (ehTelemovel() ? 150 : 220);
+}
+function peMudarTam(passo) {
+  const i = Math.max(0, Math.min(PE_TAM.length - 1, PE_TAM.indexOf(peTamPag()) + passo));
+  try { localStorage.setItem('pe_tam_pag', PE_TAM[i]); } catch (e) { /* sem armazenamento */ }
+  peRenderGrelha();
+}
 async function peRenderGrelha() {
   if (!pe || pe.ecra !== 'grelha') return;
   const n = pe.paginas.length, sel = pe.selPags, k = sel.size;
   const box = $pe('peGrelhaPags');
-  if (box.childElementCount !== n) box.innerHTML = pe.paginas.map((q, i) => `<button type="button" class="pe-pg" data-pg-i="${i}" aria-label="Página ${i + 1}"><i></i><b>${i + 1}</b></button>`).join('');
+  box.style.setProperty('--pg', peTamPag() + 'px');
+  $pe('peGrelhaMenos').disabled = peTamPag() <= PE_TAM[0]; $pe('peGrelhaMais').disabled = peTamPag() >= PE_TAM[PE_TAM.length - 1];
+  const mais = (pos, cls, txt) => `<span class="pe-ins ${cls}" role="button" tabindex="0" data-ins="${pos}" title="${txt}" aria-label="${txt}">+</span>`;
+  if (box.childElementCount !== n) box.innerHTML = pe.paginas.map((q, i) => `<button type="button" class="pe-pg" data-pg-i="${i}" aria-label="Página ${i + 1}"><i></i><b>${i + 1}</b>${mais(i, 'pe-ins-a', i ? `Adicionar páginas entre a ${i} e a ${i + 1}` : 'Adicionar páginas antes da 1')}${i === n - 1 ? mais(n, 'pe-ins-d', `Adicionar páginas depois da ${n}`) : ''}</button>`).join('');
   box.querySelectorAll('[data-pg-i]').forEach((b, i) => { b.classList.toggle('on', sel.has(i)); b.setAttribute('aria-pressed', sel.has(i) ? 'true' : 'false'); });
   $pe('peGrelhaSub').textContent = k ? `${k} de ${n} selecionada${k === 1 ? '' : 's'}` : `${n} página${n === 1 ? '' : 's'} · toque para selecionar`;
   $pe('peGrelhaTodas').textContent = k === n ? 'Tirar seleção' : 'Selecionar todas';
   const min = Math.min(...sel), max = Math.max(...sel);
-  document.querySelectorAll('[data-pg]').forEach(b => { b.disabled = !k; });
+  document.querySelectorAll('[data-pg]').forEach(b => { b.disabled = !k && b.dataset.pg !== 'inserir'; });
   document.querySelector('[data-pg="esq"]').disabled = !k || min === 0;
   document.querySelector('[data-pg="dir"]').disabled = !k || max === n - 1;
   document.querySelector('[data-pg="apagar"]').disabled = !k || k === n;
@@ -11512,14 +11543,16 @@ async function peRenderGrelha() {
     if (meu !== peToken || !pe || pe.ecra !== 'grelha') return;
     const q = pe.paginas[i], b = box.querySelector(`[data-pg-i="${i}"]`); if (!b) continue;
     const chave = q.s + ':' + q.i + ':' + q.r + ':' + JSON.stringify(q.crop);
-    if (b.dataset.chave === chave) continue;
-    const m = peCompor(await peBase(q, 260), q, true);
+    if (b.dataset.chave === chave + '@' + Math.min(700, Math.round(peTamPag() * Math.min(window.devicePixelRatio || 1, 2) * 1.1))) continue;
+    const res = Math.min(700, Math.round(peTamPag() * Math.min(window.devicePixelRatio || 1, 2) * 1.1));
+    const m = peCompor(await peBase(q, res), q, true);
     if (meu !== peToken) return;
-    b.style.backgroundImage = `url(${m.toDataURL('image/jpeg', 0.75)})`; b.dataset.chave = chave;
+    b.style.backgroundImage = `url(${m.toDataURL('image/jpeg', 0.8)})`; b.dataset.chave = chave + '@' + res;
   }
 }
 function peGrelhaAcao(a) {
   const P = pe.paginas, sel = pe.selPags, idx = [...sel].sort((x, y) => x - y);
+  if (a === 'inserir') { peAbrirJuntar(idx.length ? idx[idx.length - 1] + 1 : P.length); return; } // depois da última selecionada (ou no fim)
   if (!idx.length) return;
   if (a === 'apagar') {
     if (idx.length === P.length) { toast('O documento tem de ficar com pelo menos 1 página.', true); return; }
@@ -11727,6 +11760,7 @@ async function peGerarFicheiro(nome) {
 function peAbrirGuardar() {
   if (!pe.alterado) { toast('Ainda não fez alterações.'); return; }
   const base = String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  pe.nomeMexido = false;
   $pe('pgNome').value = pe.o.juntar && pe.o.juntar.length ? base + ' (junto)' : base + ' (editado)';
   document.querySelector('input[name="pgModo"][value="copia"]').checked = true;
   // ao juntar vários ficheiros guarda-se sempre um documento novo (os originais ficam)
@@ -11736,7 +11770,10 @@ function peAbrirGuardar() {
 }
 function peModoGuardar() {
   const copia = document.querySelector('input[name="pgModo"]:checked').value === 'copia';
-  $pe('pgNomeCampo').hidden = !copia;
+  // o nome pode mudar-se nos dois casos; se ainda não foi mexido, sugere o adequado
+  const base = String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  if (!pe.nomeMexido) $pe('pgNome').value = copia ? base + (pe.o.juntar && pe.o.juntar.length ? ' (junto)' : ' (editado)') : base;
+  $pe('pgNomeRotulo').textContent = copia ? 'Nome da cópia' : 'Nome do documento';
   document.querySelectorAll('.pg-opcao').forEach(o => o.classList.toggle('on', o.querySelector('input').checked));
   $pe('pgGuardar').textContent = copia ? 'Guardar cópia' : 'Substituir';
   $pe('pgGuardar').classList.toggle('btn-danger', !copia);
@@ -11744,8 +11781,9 @@ function peModoGuardar() {
 }
 async function peGuardar() {
   const copia = document.querySelector('input[name="pgModo"]:checked').value === 'copia';
-  if (!copia && !confirm(`Substituir o documento original "${pe.o.nome}"?\n\nO original deixa de estar disponível na app.`)) return;
-  const nome = copia ? ($pe('pgNome').value.trim() || pe.o.nome + ' (editado)') : String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  const base = String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
+  const nome = $pe('pgNome').value.trim().replace(/\.(pdf|jpe?g|png|webp)$/i, '') || (copia ? base + ' (editado)' : base);
+  if (!copia && !confirm(`Substituir o documento original "${pe.o.nome}"?${nome !== base ? `\n\nO nome passa a ser "${nome}".` : ''}\n\nO original deixa de estar disponível na app.`)) return;
   closeModal('peGuardarModal');
   showOverlay('A preparar o documento…');
   let file;
@@ -11765,7 +11803,13 @@ async function peGuardar() {
 }
 
 /* ---------- Anexar outros documentos (PDF e fotos) ---------- */
-function peAbrirJuntar() {
+// "posicao": índice onde entram as páginas novas (sem valor = no fim)
+function peAbrirJuntar(posicao) {
+  const n = pe.paginas.length;
+  pe.inserirEm = Number.isInteger(posicao) && posicao < n ? Math.max(0, posicao) : null;
+  $pe('pjAjuda').textContent = pe.inserirEm === null
+    ? 'PDF e fotos entram como páginas no fim do documento (fica tudo num só PDF). Depois pode mudar a ordem, rodar ou cortar.'
+    : `As páginas novas entram ${pe.inserirEm === 0 ? 'antes da página 1' : `entre a página ${pe.inserirEm} e a ${pe.inserirEm + 1}`}. Escolha um documento desta pasta, do aparelho, digitalize ou junte uma página em branco.`;
   const lista = (pe.o.outrosDocs || []);
   $pe('pjLista').innerHTML = lista.length
     ? lista.map((d, i) => `<button type="button" class="pj-item" data-pj="${i}">${docIcon(d.format)}<span>${escapeHtml(d.nome)}</span></button>`).join('')
@@ -11780,12 +11824,16 @@ async function peJuntarDe(obterBytes, nome, mime) {
     const n0 = pe.paginas.length, buf = await obterBytes();
     if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf);
     else await peJuntarImagem(buf, mime || peMimeDe(nome));
-    pe.alterado = true; pe.atual = n0;
-    hideOverlay();
     const n = pe.paginas.length - n0;
-    toast(`Anexado "${nome}" (${n} página${n === 1 ? '' : 's'}).`);
+    // no sítio escolhido (o "+" entre páginas), em vez de no fim
+    const em = pe.inserirEm; pe.inserirEm = null;
+    if (em !== null && em !== undefined && em < n0) pe.paginas.splice(em, 0, ...pe.paginas.splice(n0, n));
+    pe.alterado = true; pe.atual = em !== null && em !== undefined && em < n0 ? em : n0;
+    hideOverlay();
+    toast(`Adicionado "${nome}" (${n} página${n === 1 ? '' : 's'}).`);
     $pe('peMinis').innerHTML = '';
-    peRender();
+    if (pe.ecra === 'grelha') { pe.selPags = new Set(Array.from({ length: n }, (x, k) => pe.atual + k)); $pe('peGrelhaPags').innerHTML = ''; peRenderGrelha(); }
+    else peRender();
   } catch (e) { hideOverlay(); toast('Não foi possível anexar "' + nome + '".', true); }
 }
 async function peJuntarFicheiros(files) {
@@ -11810,15 +11858,20 @@ function peLigar() {
     else if (a === 'esq' && i > 0) { [P[i - 1], P[i]] = [P[i], P[i - 1]]; pe.atual = i - 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
     else if (a === 'dir' && i < P.length - 1) { [P[i + 1], P[i]] = [P[i], P[i + 1]]; pe.atual = i + 1; pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
     else if (a === 'apagar' && P.length > 1) { if (!confirm(`Apagar a página ${i + 1}?`)) return; P.splice(i, 1); pe.alterado = true; $pe('peMinis').innerHTML = ''; peRender(); }
-    else if (a === 'juntar') peAbrirJuntar();
+    else if (a === 'juntar') peAbrirJuntar(null);
     else if (a === 'paginas') peMostrar('grelha');
   });
   $pe('peGrelhaPags').addEventListener('click', e => {
+    const ins = e.target.closest('[data-ins]');
+    if (ins && pe) { e.stopPropagation(); peAbrirJuntar(+ins.dataset.ins); return; }
     const b = e.target.closest('[data-pg-i]'); if (!b || !pe) return;
     const i = +b.dataset.pgI;
     if (pe.selPags.has(i)) pe.selPags.delete(i); else pe.selPags.add(i);
     peRenderGrelha();
   });
+  $pe('peGrelhaPags').addEventListener('keydown', e => { const ins = e.target.closest && e.target.closest('[data-ins]'); if (ins && pe && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); peAbrirJuntar(+ins.dataset.ins); } });
+  $pe('peGrelhaMenos').addEventListener('click', () => peMudarTam(-1));
+  $pe('peGrelhaMais').addEventListener('click', () => peMudarTam(1));
   $pe('peGrelhaTodas').addEventListener('click', () => {
     if (!pe) return;
     pe.selPags = pe.selPags.size === pe.paginas.length ? new Set() : new Set(pe.paginas.map((x, i) => i));
@@ -11875,6 +11928,7 @@ function peLigar() {
   ret.addEventListener('pointerup', soltar); ret.addEventListener('pointercancel', soltar);
   // guardar
   document.querySelectorAll('input[name="pgModo"]').forEach(i => i.addEventListener('change', peModoGuardar));
+  $pe('pgNome').addEventListener('input', () => { if (pe) pe.nomeMexido = true; });
   $pe('pgGuardar').addEventListener('click', peGuardar);
   $pe('pgNaoGuardar').addEventListener('click', () => { closeModal('peGuardarModal'); fecharEditorDoc(true); toast('Alterações descartadas. O documento ficou como estava.'); });
   $pe('pgVoltar').addEventListener('click', () => closeModal('peGuardarModal'));
@@ -11887,6 +11941,12 @@ function peLigar() {
     peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format));
   });
   $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
+  $pe('pjBranco').addEventListener('click', () => {
+    // página A4 branca (do tamanho da página atual, se houver)
+    const c = document.createElement('canvas'); c.width = 1240; c.height = 1754;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    peJuntarDe(() => new Promise(r => c.toBlob(b => r(b.arrayBuffer()), 'image/jpeg', 0.92)), 'Página em branco', 'image/jpeg');
+  });
   $pe('pjInput').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) peJuntarFicheiros(fs); });
   $pe('pjDigitalizar').addEventListener('click', () => {
     closeModal('peJuntarModal');
