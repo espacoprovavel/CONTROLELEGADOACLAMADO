@@ -5408,7 +5408,8 @@ let pxImportPlan = null;
    (permite ter pastas novas ainda vazias). Em window para ser lida também
    pelos menus do formulário (listaValoresEmUso). */
 window.pxEstrutura = window.pxEstrutura || {};
-let pxEstruturaUnsub = null;
+let pxEstruturaEx = {}; // o mesmo para os Ex-colaboradores (config/pastas_ex)
+let pxEstruturaUnsub = null, pxEstruturaExUnsub = null;
 function pxSubscribeEstrutura() {
   pxUnsubscribeEstrutura();
   pxEstruturaUnsub = db.collection('config').doc('pastas').onSnapshot(doc => {
@@ -5416,18 +5417,27 @@ function pxSubscribeEstrutura() {
     window.pxEstrutura = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
     pxOnEmployeesChanged();
   }, err => console.warn('Pastas:', err && err.code));
+  pxEstruturaExUnsub = db.collection('config').doc('pastas_ex').onSnapshot(doc => {
+    const d = doc.exists ? doc.data() : null;
+    pxEstruturaEx = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
+    pxOnEmployeesChanged();
+  }, err => console.warn('Pastas (ex):', err && err.code));
 }
 function pxUnsubscribeEstrutura() {
   if (pxEstruturaUnsub) { pxEstruturaUnsub(); pxEstruturaUnsub = null; }
+  if (pxEstruturaExUnsub) { pxEstruturaExUnsub(); pxEstruturaExUnsub = null; }
   window.pxEstrutura = {};
+  pxEstruturaEx = {};
 }
-function pxEstClone() {
+function pxEstDe(scope) { return (scope === 'ex' ? pxEstruturaEx : window.pxEstrutura) || {}; }
+function pxEstClone(scope) {
   const o = {};
-  Object.entries(window.pxEstrutura || {}).forEach(([k, v]) => { o[k] = Array.isArray(v) ? v.slice() : []; });
+  Object.entries(pxEstDe(scope)).forEach(([k, v]) => { o[k] = Array.isArray(v) ? v.slice() : []; });
   return o;
 }
-async function pxSaveEstrutura(est, motivo) {
-  await db.collection('config').doc('pastas').set({
+function pxEstGuardada(scope, est) { if (scope === 'ex') pxEstruturaEx = est; else window.pxEstrutura = est; }
+async function pxSaveEstrutura(est, motivo, scope) {
+  await db.collection('config').doc(scope === 'ex' ? 'pastas_ex' : 'pastas').set({
     estrutura: est,
     updated_at: firebase.firestore.FieldValue.serverTimestamp(),
     updated_by: currentUser ? currentUser.email : ''
@@ -5642,21 +5652,22 @@ function pxSubZip(x) { return x.split(PX_SUB_SEP).map(pxSafe).join('/'); }
 function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
 
 // Pasta de colaborador só com o nome: os documentos podem entrar já, a ficha preenche-se depois
-async function pxNovaPastaColab(pais, empresa) {
+async function pxNovaPastaColab(pais, empresa, scope) {
+  const ex = scope === 'ex';
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
   const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${empresa}". Pode anexar documentos já e preencher a ficha mais tarde.`, rotulo: 'Nome da pasta (ex.: nome do colaborador)', placeholder: 'Ex.: João Silva', botao: 'Criar pasta' }));
   if (!nome) return;
-  const igual = employees.find(e => pxPais(e) === pais && pxEmpresa(e) === empresa && pxNorm(String(e.nome || '').trim()) === pxNorm(nome));
+  const igual = pxList(ex ? 'ex' : 'ativos').find(e => pxPais(e) === pais && pxEmpresa(e) === empresa && pxNorm(String(e.nome || '').trim()) === pxNorm(nome));
   if (igual) { toast('Já existe uma pasta com esse nome aqui.', true); return; }
   const id = uid();
-  const dados = { nome, estado: 'ativo', modo_pagamento: 'salario_horas_extra',
+  const dados = { nome, estado: ex ? 'inativo' : 'ativo', modo_pagamento: 'salario_horas_extra',
     cliente: empresa && empresa !== PX_SEM_EMP ? empresa : '', cli_pais: pais && pais !== PX_SEM_PAIS ? pais : '' };
   try {
     await db.collection('funcionarios').doc(id).set(dados, { merge: true });
     logAudit('create', id, nome + ' (pasta sem ficha)');
     toast(`Pasta "${nome}" criada. Já pode anexar documentos.`);
     for (let i = 0; i < 25 && !employees.some(e => e.id === id); i++) await new Promise(r => setTimeout(r, 200));
-    pxGo({ scope: 'ativos', pais, empresa, funcId: id });
+    pxGo({ scope: ex ? 'ex' : 'ativos', pais, empresa, funcId: id });
   } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
 }
 
@@ -5836,25 +5847,27 @@ async function pxDescarregarVarios(emp, docs) {
 }
 
 // Nova pasta: sem país → novo país; com país → nova empresa dentro dele
-async function pxNovaPasta(pais) {
+async function pxNovaPasta(pais, scope) {
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  scope = scope === 'ex' ? 'ex' : 'ativos';
+  const lista = pxList(scope);
   const nome = pxNomeValido(await pedirTexto(pais ? { titulo: 'Nova empresa', texto: `Dentro de "${pais}"`, rotulo: 'Nome da empresa', botao: 'Criar pasta' } : { titulo: 'Novo país', rotulo: 'Nome do país', botao: 'Criar pasta', sugestoes: ['Bélgica', 'Portugal', 'França', 'Países Baixos', 'Alemanha', 'Luxemburgo'] }));
   if (!nome) return;
-  const est = pxEstClone();
+  const est = pxEstClone(scope);
   const n = pxNorm(nome);
   if (pais) {
-    const existe = (est[pais] || []).some(x => pxNorm(x) === n) || employees.some(e => pxPais(e) === pais && pxNorm(pxEmpresa(e)) === n);
+    const existe = (est[pais] || []).some(x => pxNorm(x) === n) || lista.some(e => pxPais(e) === pais && pxNorm(pxEmpresa(e)) === n);
     if (existe) { toast('Já existe uma pasta com esse nome.', true); return; }
     est[pais] = (est[pais] || []).concat([nome]);
   } else {
-    const existe = Object.keys(est).some(k => pxNorm(k) === n) || employees.some(e => pxNorm(pxPais(e)) === n);
+    const existe = Object.keys(est).some(k => pxNorm(k) === n) || lista.some(e => pxNorm(pxPais(e)) === n);
     if (existe) { toast('Já existe uma pasta com esse nome.', true); return; }
     est[nome] = [];
   }
   showOverlay('A criar pasta…');
   try {
-    await pxSaveEstrutura(est, `pasta criada: ${pais ? pais + ' › ' : ''}${nome}`);
-    window.pxEstrutura = est;
+    await pxSaveEstrutura(est, `pasta criada: ${scope === 'ex' ? PX_EX + ' › ' : ''}${pais ? pais + ' › ' : ''}${nome}`, scope);
+    pxEstGuardada(scope, est);
     toast(`Pasta "${nome}" criada.`);
     renderPastas();
   } catch (err) {
@@ -5863,13 +5876,15 @@ async function pxNovaPasta(pais) {
 }
 
 // Renomear pasta: muda o país/empresa de todos os colaboradores lá dentro
-async function pxRenomearPasta(pais, empresa) {
+async function pxRenomearPasta(pais, empresa, scope) {
   if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
+  const ex = scope === 'ex';
   const atual = empresa || pais;
   const novo = pxNomeValido(await pedirTexto({ titulo: 'Renomear pasta', rotulo: 'Novo nome', valor: atual, botao: 'Guardar' }));
   if (!novo || novo === atual) return;
-  const afetados = pxNaPasta(pais, empresa);
-  if (!confirm(`Renomear a pasta "${atual}" para "${novo}"?\n\n${afetados.length} colaborador(es) desta pasta (incluindo ex-colaboradores) passam a ter ${empresa ? 'a empresa' : 'o país'} "${novo}".`)) return;
+  // Nos Ex-colaboradores só mexe nos ex-colaboradores; nos ativos leva também os ex da mesma pasta
+  const afetados = pxNaPasta(pais, empresa).filter(e => !ex || pxIsEx(e));
+  if (!confirm(`Renomear a pasta "${atual}" para "${novo}"?\n\n${afetados.length} ${ex ? 'ex-colaborador(es)' : 'colaborador(es) desta pasta (incluindo ex-colaboradores)'} passam a ter ${empresa ? 'a empresa' : 'o país'} "${novo}".`)) return;
   showOverlay('A renomear pasta…');
   try {
     const campo = empresa ? 'cliente' : 'cli_pais';
@@ -5878,18 +5893,27 @@ async function pxRenomearPasta(pais, empresa) {
       afetados.slice(i, i + 400).forEach(e => b.set(db.collection('funcionarios').doc(e.id), { [campo]: novo }, { merge: true }));
       await b.commit();
     }
-    const est = pxEstClone();
-    if (empresa) {
-      const arr = (est[pais] || []).filter(x => x !== empresa);
-      if (!arr.includes(novo)) arr.push(novo);
-      est[pais] = arr;
-    } else {
-      const subs = est[pais] || [];
-      delete est[pais];
-      est[novo] = Array.from(new Set([].concat(est[novo] || [], subs)));
+    const renomearEm = sc => {
+      const est = pxEstClone(sc);
+      if (empresa) {
+        if (!(est[pais] || []).includes(empresa)) return null;
+        const arr = est[pais].filter(x => x !== empresa);
+        if (!arr.includes(novo)) arr.push(novo);
+        est[pais] = arr;
+      } else {
+        if (!est[pais]) return null;
+        const subs = est[pais];
+        delete est[pais];
+        est[novo] = Array.from(new Set([].concat(est[novo] || [], subs)));
+      }
+      return est;
+    };
+    for (const sc of ex ? ['ex'] : ['ativos', 'ex']) {
+      const est = renomearEm(sc);
+      if (!est) continue;
+      await pxSaveEstrutura(est, `pasta renomeada${sc === 'ex' ? ' (' + PX_EX + ')' : ''}: ${atual} → ${novo} (${afetados.length} colaborador(es))`, sc);
+      pxEstGuardada(sc, est);
     }
-    await pxSaveEstrutura(est, `pasta renomeada: ${atual} → ${novo} (${afetados.length} colaborador(es))`);
-    window.pxEstrutura = est;
     pxPath = empresa ? Object.assign({}, pxPath, { empresa: novo }) : Object.assign({}, pxPath, { pais: novo });
     toast('Pasta renomeada.');
     renderPastas();
@@ -5899,25 +5923,26 @@ async function pxRenomearPasta(pais, empresa) {
 }
 
 // Eliminar pasta: só quando está vazia (nunca apaga colaboradores)
-async function pxEliminarPasta(pais, empresa) {
+async function pxEliminarPasta(pais, empresa, scope) {
   if (!isAdmin()) { toast('Apenas administradores podem eliminar pastas.', true); return; }
+  scope = scope === 'ex' ? 'ex' : 'ativos';
   const nome = empresa || pais;
-  const dentro = pxNaPasta(pais, empresa);
+  const dentro = pxNaPasta(pais, empresa).filter(e => scope !== 'ex' || pxIsEx(e));
   if (dentro.length) {
-    alert(`A pasta "${nome}" tem ${dentro.length} colaborador(es) (incluindo ex-colaboradores).\n\nPara a eliminar, primeiro muda-os de pasta (Editar dados ou Renomear) ou elimina as fichas.`);
+    alert(`A pasta "${nome}" tem ${dentro.length} ${scope === 'ex' ? 'ex-colaborador(es)' : 'colaborador(es) (incluindo ex-colaboradores)'}.\n\nPara a eliminar, primeiro muda-os de pasta (Editar dados ou Renomear) ou elimina as fichas.`);
     return;
   }
-  const est = pxEstClone();
+  const est = pxEstClone(scope);
   const subs = !empresa ? (est[pais] || []).length : 0;
   if (!confirm(`Eliminar a pasta vazia "${nome}"?${subs ? `\n\nInclui ${subs} pasta(s) de empresa vazia(s).` : ''}`)) return;
   if (empresa) est[pais] = (est[pais] || []).filter(x => x !== empresa);
   else delete est[pais];
   showOverlay('A eliminar pasta…');
   try {
-    await pxSaveEstrutura(est, `pasta eliminada: ${empresa ? pais + ' › ' : ''}${nome}`);
-    window.pxEstrutura = est;
+    await pxSaveEstrutura(est, `pasta eliminada: ${scope === 'ex' ? PX_EX + ' › ' : ''}${empresa ? pais + ' › ' : ''}${nome}`, scope);
+    pxEstGuardada(scope, est);
     toast('Pasta eliminada.');
-    pxGo(empresa ? { scope: 'ativos', pais } : {});
+    pxGo(empresa ? { scope, pais } : { scope });
   } catch (err) {
     toast('Erro ao eliminar pasta: ' + friendlyError(err), true);
   } finally { hideOverlay(); }
@@ -6153,36 +6178,36 @@ function renderPastas() {
     if (empresa) {
       // ----- Colaboradores da empresa -----
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
-      if (isEditor() && scope === 'ativos') actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', '+ Novo colaborador (com ficha)');
-      actions += pxBtn('zip-empresa', 'Download empresa', scope === 'ativos' && isEditor() ? 'btn-ghost' : 'btn-primary');
+      if (isEditor()) actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', scope === 'ex' ? '+ Novo ex-colaborador (com ficha)' : '+ Novo colaborador (com ficha)');
+      actions += pxBtn('zip-empresa', 'Download empresa', isEditor() ? 'btn-ghost' : 'btn-primary');
       actions += pxBtn('offline', 'Guardar offline');
-      if (scope === 'ativos' && empresa !== PX_SEM_EMP) {
+      if (empresa !== PX_SEM_EMP) {
         if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
         if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
       pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
-      const novaTile = isEditor() && scope === 'ativos' ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-pasta-colab" title="Criar uma pasta só com o nome (a ficha preenche-se depois)"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Só com o nome</span></button>` : '';
+      const novaTile = isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-pasta-colab" title="Criar uma pasta só com o nome (a ficha preenche-se depois)"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Só com o nome</span></button>` : '';
       body = emps.length || novaTile
         ? '<div class="px-grid-big">' + novaTile + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
         : '<div class="px-empty">Pasta vazia.</div>';
     } else if (pais) {
       // ----- Empresas do país (+ pastas de empresa criadas à mão) -----
-      const extras = scope === 'ativos' ? ((window.pxEstrutura || {})[pais] || []) : [];
+      const extras = pxEstDe(scope)[pais] || [];
       const grupos = pxMergeKeys(pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa), extras);
-      if (isEditor() && scope === 'ativos' && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '+ Nova empresa', 'btn-primary');
-      actions += pxBtn('zip-pais', 'Download país', isEditor() && scope === 'ativos' ? 'btn-ghost' : 'btn-primary');
+      if (isEditor() && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '+ Nova empresa', 'btn-primary');
+      actions += pxBtn('zip-pais', 'Download país', isEditor() && pais !== PX_SEM_PAIS ? 'btn-ghost' : 'btn-primary');
       actions += pxBtn('offline', 'Guardar offline');
-      if (scope === 'ativos' && pais !== PX_SEM_PAIS) {
+      if (pais !== PX_SEM_PAIS) {
         if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
         if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
       pxItems = grupos.map(([emp]) => ({ scope, pais, empresa: emp }));
       body = grupos.length
         ? '<div class="px-grid-big">' + grupos.map(([emp, arr], i) => pxCard(i, 'empresa', emp, arr.length ? `${arr.length} colaborador${arr.length === 1 ? '' : 'es'}` : 'Pasta vazia')).join('') + '</div>'
-        : `<div class="px-empty">Pasta vazia.${isEditor() && scope === 'ativos' ? ' Usa <strong>+ Nova empresa</strong> para criar uma pasta de empresa.' : ''}</div>`;
+        : `<div class="px-empty">Pasta vazia.${isEditor() ? ' Usa <strong>+ Nova empresa</strong> para criar uma pasta de empresa.' : ''}</div>`;
     } else {
       // ----- Raiz (Ativos) ou raiz dos Ex-colaboradores: países -----
-      const est = scope === 'ativos' ? (window.pxEstrutura || {}) : {};
+      const est = pxEstDe(scope);
       const grupos = pxMergeKeys(pxGroup(list, pxPais), Object.keys(est));
       pxItems = grupos.map(([p]) => ({ scope, pais: p }));
       let cards = grupos.map(([p, arr], i) => {
@@ -6198,10 +6223,11 @@ function renderPastas() {
         if (isEditor()) actions += pxBtn('import', 'Importar pasta (ZIP)');
         actions += pxBtn('offline', 'Guardar tudo offline');
       } else {
-        actions += pxBtn('zip-ex', 'Download ex-colaboradores', 'btn-primary');
+        if (isEditor()) actions += pxBtn('nova-pasta', '+ Nova pasta (país)', 'btn-primary');
+        actions += pxBtn('zip-ex', 'Download ex-colaboradores', isEditor() ? 'btn-ghost' : 'btn-primary');
         actions += pxBtn('offline', 'Guardar offline');
       }
-      body = cards ? `<div class="px-grid-big">${cards}</div>` : '<div class="px-empty">Ainda não há colaboradores.</div>';
+      body = cards ? `<div class="px-grid-big">${cards}</div>` : `<div class="px-empty">${scope === 'ex' ? 'Ainda não há ex-colaboradores.' + (isEditor() ? ' Usa <strong>+ Nova pasta (país)</strong> para começar.' : '') : 'Ainda não há colaboradores.'}</div>`;
       // (explicação sobre País/Empresa removida: a organização é evidente pelas pastas)
     }
   }
@@ -6366,9 +6392,9 @@ function pxOnClick(ev) {
     case 'eliminar-sub': if (emp && sub) pxEliminarSubpasta(emp, sub); break;
     case 'ficha': if (emp) generateSinglePdf(emp.id); break;
     case 'limpar-pesquisa': { const s = document.getElementById('pxSearch'); if (s) s.value = ''; renderPastas(); break; }
-    case 'nova-pasta': pxNovaPasta(pais || null); break;
-    case 'renomear': pxRenomearPasta(pais, empresa || null); break;
-    case 'eliminar-pasta': pxEliminarPasta(pais, empresa || null); break;
+    case 'nova-pasta': pxNovaPasta(pais || null, scope); break;
+    case 'renomear': pxRenomearPasta(pais, empresa || null, scope); break;
+    case 'eliminar-pasta': pxEliminarPasta(pais, empresa || null, scope); break;
     case 'eliminar-ficha': if (emp) deleteEmployee(emp.id); break;
     case 'offline': {
       let alvo, label;
@@ -6382,10 +6408,10 @@ function pxOnClick(ev) {
     }
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
-    case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa); break;
+    case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa, scope); break;
     case 'novo-aqui':
       openForm();
-      setSelectValue('f_estado', 'ativo');
+      setSelectValue('f_estado', scope === 'ex' ? 'inativo' : 'ativo');
       if (pais && pais !== PX_SEM_PAIS) setSelectValue('f_cli_pais', pais);
       if (empresa && empresa !== PX_SEM_EMP) setSelectValue('f_cliente', empresa);
       break;
