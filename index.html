@@ -1170,6 +1170,7 @@ footer .ver { color: #9ca3af; }
 #peFerr button[hidden] { display: none; }
 .pe-minis .sc-mini { width: 50px; height: 66px; background-color: #fff; }
 .pe-palco canvas { position: absolute; background: #fff; }
+#pePalco { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .pe-ret { position: absolute; border: 2px solid #ffd54a; box-shadow: 0 0 0 9999px rgba(5,7,10,0.62); cursor: move; touch-action: none; }
 .pe-grelha { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33.2%, rgba(255,255,255,0.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,0.35) 66.6%, transparent 66.8%), linear-gradient(to bottom, transparent 33.2%, rgba(255,255,255,0.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,0.35) 66.6%, transparent 66.8%); }
 .pe-h { position: absolute; transform: translate(-50%, -50%); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); touch-action: none; }
@@ -1186,6 +1187,7 @@ footer .ver { color: #9ca3af; }
 #peConcluir.pe-pronto { background: #ffd54a; color: #1a1400; border-radius: 999px; padding: 8px 16px; min-width: 0; }
 .pg-opcao { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; margin-bottom: 10px; transition: border-color .15s, background .15s; }
 .pg-opcao.on { border-color: var(--accent); background: #f5f8ff; }
+.pg-opcao[hidden] { display: none; }
 .pg-opcao input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
 .pg-opcao strong { display: block; font-size: 15px; color: var(--ink); }
 .pg-opcao em { display: block; font-style: normal; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
@@ -1678,7 +1680,7 @@ footer .ver { color: #9ca3af; }
           <button type="button" class="vw-btn" id="viewerMaisZoom" aria-label="Aumentar" title="Aumentar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         </div>
         <button type="button" class="vw-btn" id="viewerRodar" aria-label="Rodar" title="Rodar 90°" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
-        <button type="button" class="vw-btn" id="viewerEditar" aria-label="Editar" title="Editar (cortar, rodar…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
+        <button type="button" class="vw-btn" id="viewerEditar" aria-label="Editar" title="Cortar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
         <button type="button" class="vw-btn" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
         <button type="button" class="vw-btn" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
@@ -3390,7 +3392,21 @@ const PDF_ZOOMS = [1, 1.5, 2, 3, 4];
 let pdfjsPromessa = null;
 let leitor = null; // { pdf, zoom, paginas: [{ wrap, n, page, escala, feito }], obs }
 let vwDoc = null;  // documento aberto (para o botão Descarregar)
-function podeEditarDocFmt(format) { const f = String(format || '').toLowerCase(); return f === 'pdf' || ['jpg', 'jpeg', 'png', 'webp'].includes(f); }
+// Fotos noutros formatos (ex.: HEIC do iPhone) abrem convertidas em JPG pelo Cloudinary
+const PE_FMT_CONVERTER = ['heic', 'heif', 'gif', 'bmp', 'tif', 'tiff', 'avif'];
+function podeEditarDocFmt(format) { const f = String(format || '').toLowerCase(); return f === 'pdf' || ['jpg', 'jpeg', 'png', 'webp'].includes(f) || PE_FMT_CONVERTER.includes(f); }
+// Formato de um documento: o guardado, ou a extensão do nome/endereço
+function docFmt(d) {
+  if (!d) return '';
+  if (d.format) return String(d.format).toLowerCase();
+  const m = /\.([a-z0-9]{2,5})(?:[?#].*)?$/i.exec(String(d.original_filename || '')) || /\.([a-z0-9]{2,5})(?:[?#].*)?$/i.exec(String(d.url || ''));
+  return m ? m[1].toLowerCase() : '';
+}
+function peFonteEditavel(url, format) {
+  const f = String(format || '').toLowerCase();
+  if (PE_FMT_CONVERTER.includes(f) && /res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(url)) return { url: url.replace(/\.[a-z0-9]{2,5}(?=$|[?#])/i, '.jpg'), format: 'jpg' };
+  return { url, format: f };
+}
 function usarLeitorPdf() {
   return !!(window.matchMedia && (matchMedia('(max-width: 600px)').matches || matchMedia('(pointer: coarse)').matches));
 }
@@ -3526,7 +3542,7 @@ function ligarLeitorPdf() {
     fecharLeitor(); closeModal('viewerModal'); document.getElementById('viewerBody').innerHTML = '';
     ed(opcoes);
   };
-  document.getElementById('viewerEditar').addEventListener('click', () => abrirNoEditor());
+  document.getElementById('viewerEditar').addEventListener('click', () => abrirNoEditor({ cortar: true }));
   document.getElementById('viewerRodar').addEventListener('click', () => abrirNoEditor({ rodar: true }));
   document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
@@ -3558,7 +3574,7 @@ function viewDocument(url, format, filename, opcoes) {
   if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
   fecharLeitor();
   vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar };
-  document.getElementById('viewerEditar').hidden = !(vwDoc.editar && isEditor() && podeEditarDocFmt(format));
+  document.getElementById('viewerEditar').hidden = !(vwDoc.editar && isEditor() && podeEditarDocFmt(format || docFmt({ url, original_filename: filename })));
   document.getElementById('viewerRodar').hidden = document.getElementById('viewerEditar').hidden;
   const podeEnviar = podePartilharFicheiros();
   document.getElementById('viewerEnviar').hidden = !podeEnviar;
@@ -5628,9 +5644,10 @@ async function migrarCisSeppe() {
 function abrirEditorPx(emp, d, opcoes) {
   const subs = pxSubpastas(emp), pasta = d.pasta && subs.includes(d.pasta) ? d.pasta : null;
   abrirEditorDoc({
-    nome: docFullName(d), url: d.url, format: d.format,
-    outrosDocs: (pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(x.format)).map(x => ({ nome: docFullName(x), url: x.url, format: x.format })),
-    rodar: !!(opcoes && opcoes.rodar),
+    nome: docFullName(d), url: d.url, format: docFmt(d),
+    outrosDocs: (pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(docFmt(x))).map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })),
+    rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar),
+    juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })) : null,
     guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
     substituir: async file => {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
@@ -5641,6 +5658,18 @@ function abrirEditorPx(emp, d, opcoes) {
       logAudit('document_edit', emp.id, `${emp.nome}: "${docFullName(d)}" editado (substituído)`);
     }
   });
+}
+// Junta vários ficheiros (PDF e fotos) num só PDF, pela ordem em que foram selecionados
+function juntarEscolher(docs) {
+  const bons = docs.filter(d => podeEditarDocFmt(docFmt(d)));
+  const fora = docs.length - bons.length;
+  if (bons.length < 2) { toast('Selecione pelo menos 2 ficheiros PDF ou fotos para juntar.', true); return null; }
+  if (fora) toast(`${fora} ficheiro(s) que não são PDF nem foto ficam de fora.`);
+  return bons;
+}
+function pxJuntarPdf(emp, docs) {
+  const bons = juntarEscolher(docs); if (!bons) return;
+  abrirEditorPx(emp, bons[0], { juntar: bons.slice(1) });
 }
 function pxSubpastas(e) { return Array.isArray(e && e.subpastas) ? e.subpastas.filter(Boolean) : []; }
 const PX_SUB_SEP = ' › ';
@@ -6123,6 +6152,7 @@ function renderPastas() {
     const selTodos = daVista.length ? `<label class="px-selall"><input type="checkbox" data-px-selall${nSel && nSel === daVista.length ? ' checked' : ''}> Selecionar todos</label>` : '';
     const barra = nSel
       ? `<div class="px-bulk"><strong>${nSel} selecionado${nSel === 1 ? '' : 's'}</strong>`
+        + (isEditor() && nSel > 1 ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="juntar">Juntar num PDF</button>` : '')
         + (isEditor() ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="mover">Mover para…</button>` : '')
         + (podePartilharFicheiros() ? `<button type="button" class="btn btn-primary btn-sm" data-px-bulk="enviar">Enviar</button>` : '')
         + `<button type="button" class="btn btn-ghost btn-sm" data-px-bulk="zip">Descarregar</button>`
@@ -6273,6 +6303,7 @@ function pxLigarEventos(root) {
       if (pxSelecionados.size > 1 && pxSelecionados.has(id)) {
         const docs = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
         abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: `${docs.length} selecionados` },
+          isEditor() ? { label: 'Juntar num PDF', fn: () => pxJuntarPdf(emp, docs) } : null,
           isEditor() ? { label: 'Mover para…', fn: () => pxAbrirMover(emp, docs) } : null,
           podePartilharFicheiros() ? { label: 'Enviar', fn: () => enviarVarios(docs.map(x => ({ url: x.url, nome: docFullName(x) })), slug(emp.nome)) } : null,
           { label: 'Descarregar (ZIP)', fn: () => pxDescarregarVarios(emp, docs) },
@@ -6288,8 +6319,9 @@ function pxLigarEventos(root) {
         !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
-        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
-        isEditor() && d && podeEditarDocFmt(d.format) ? { label: 'Editar (cortar, anexar…)', fn: () => abrirEditorPx(emp, d) } : null,
+        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
+        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
+        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
@@ -6351,6 +6383,7 @@ function pxOnClick(ev) {
     const docsSel = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
     if (t.dataset.pxBulk === 'limpar') { pxSelecionados.clear(); renderPastas(); }
     else if (!empB || !docsSel.length) return;
+    else if (t.dataset.pxBulk === 'juntar') pxJuntarPdf(empB, docsSel);
     else if (t.dataset.pxBulk === 'mover') pxAbrirMover(empB, docsSel);
     else if (t.dataset.pxBulk === 'zip') pxDescarregarVarios(empB, docsSel);
     else if (t.dataset.pxBulk === 'enviar') enviarVarios(docsSel.map(x => ({ url: x.url, nome: docFullName(x) })), slug(empB.nome));
@@ -9663,6 +9696,7 @@ function edBarraSelecao() {
   const n = edSel.size;
   if (!n) return isEditor() && edIdsVista.length ? '<div class="px-hint">Clica para selecionar · arrasta com o rato para uma pasta · botão direito para mais opções.</div>' : '';
   return `<div class="px-bulk"><strong>${n} selecionado${n === 1 ? '' : 's'}</strong>`
+    + (isEditor() && n > 1 ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="juntar">Juntar num PDF</button>' : '')
     + (isEditor() ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="mover">Mover para…</button>' : '')
     + (podePartilharFicheiros() ? '<button type="button" class="btn btn-primary btn-sm" data-ed-bulk="enviar">Enviar</button>' : '')
     + '<button type="button" class="btn btn-ghost btn-sm" data-ed-bulk="zip">Descarregar</button>'
@@ -9684,6 +9718,7 @@ function edLigarEventos(root) {
     if (t.dataset.edBulk) {
       const ids = [...edSel];
       if (t.dataset.edBulk === 'limpar') { edSel.clear(); renderEmpresaDocs(); }
+      else if (t.dataset.edBulk === 'juntar') edJuntarPdf(ids);
       else if (t.dataset.edBulk === 'mover') edAbrirMover(ids);
       else if (t.dataset.edBulk === 'zip') edDescarregar(ids);
       else if (t.dataset.edBulk === 'enviar') edEnviar(ids);
@@ -9805,14 +9840,19 @@ function edMenuItem(x) {
     else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
-  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(x.format)) itens.push({ label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (cortar, anexar…)', fn: () => abrirEditorEd(x) });
+  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
   return itens;
 }
+function edJuntarPdf(ids) {
+  const bons = juntarEscolher(ids.map(edItem).filter(x => x && x.tipo === 'ficheiro')); if (!bons) return;
+  abrirEditorEd(bons[0], { juntar: bons.slice(1) });
+}
 function edMenuVarios(ids) {
   return [{ titulo: `${ids.length} selecionados` },
+    isEditor() ? { label: 'Juntar num PDF', fn: () => edJuntarPdf(ids) } : null,
     isEditor() ? { label: 'Mover para…', fn: () => edAbrirMover(ids) } : null,
     podePartilharFicheiros() ? { label: 'Enviar', fn: () => edEnviar(ids) } : null,
     { label: 'Descarregar (ZIP)', fn: () => edDescarregar(ids) },
@@ -10163,9 +10203,10 @@ async function edEnviar(ids) {
 function abrirEditorEd(x, opcoes) {
   const pai = edPaiDe(x);
   abrirEditorDoc({
-    nome: docFullName(x), url: x.url, format: x.format,
-    outrosDocs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && podeEditarDocFmt(y.format)).map(y => ({ nome: docFullName(y), url: y.url, format: y.format })),
-    rodar: !!(opcoes && opcoes.rodar),
+    nome: docFullName(x), url: x.url, format: docFmt(x),
+    outrosDocs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(y))).map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })),
+    rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar),
+    juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })) : null,
     guardarCopia: file => edUpload(pai, [file]),
     substituir: async file => {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
@@ -10330,7 +10371,7 @@ function bindFiscal() {
 bindFiscal();
 </script>
 <!-- Botão flutuante de instalação do PWA -->
-<button id="pwaInstallBtn" style="display:none;position:fixed;right:16px;bottom:16px;z-index:9999;align-items:center;gap:8px;background:#003366;color:#fff;border:2px solid #d4af37;border-radius:30px;padding:12px 18px;font-weight:700;font-family:inherit;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;">Instalar app</button>
+<button id="pwaInstallBtn" style="display:none;position:fixed;right:16px;bottom:16px;z-index:80;align-items:center;gap:8px;background:#003366;color:#fff;border:2px solid #d4af37;border-radius:30px;padding:12px 18px;font-weight:700;font-family:inherit;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;">Instalar app</button>
 <div id="pwaHelpModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;color:#00224a;max-width:360px;width:100%;border-radius:14px;padding:22px;font-family:inherit;box-shadow:0 10px 40px rgba(0,0,0,.4);">
     <h3 style="margin:0 0 12px;font-size:17px;">Instalar no ecrã principal</h3>
@@ -11273,12 +11314,22 @@ async function abrirEditorDoc(o) {
   peLigar();
   showOverlay('A abrir o documento…');
   try {
-    const r = await fetch(o.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const fonte = peFonteEditavel(o.url, o.format);
+    const r = await fetch(fonte.url); if (!r.ok) throw new Error('HTTP ' + r.status);
     const buf = await r.arrayBuffer();
-    const ehPdf = String(o.format || '').toLowerCase() === 'pdf';
+    const ehPdf = fonte.format === 'pdf';
     pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false };
     if (ehPdf) await peJuntarFonte(buf);
-    else await peJuntarImagem(buf, peMimeDe(o.format));
+    else await peJuntarImagem(buf, peMimeDe(fonte.format));
+    // "Juntar num PDF": os outros ficheiros entram a seguir, pela ordem em que foram escolhidos
+    for (const [i, d] of (o.juntar || []).entries()) {
+      const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A juntar ${i + 2} de ${o.juntar.length + 1}…`;
+      const f = peFonteEditavel(d.url, d.format);
+      const rr = await fetch(f.url); if (!rr.ok) throw new Error('HTTP ' + rr.status);
+      const b2 = await rr.arrayBuffer();
+      if (f.format === 'pdf') await peJuntarFonte(b2); else await peJuntarImagem(b2, peMimeDe(f.format));
+    }
+    if (o.juntar && o.juntar.length) pe.alterado = true;
     if (o.rodar) { pe.paginas.forEach(p => { p.r = 1; }); pe.alterado = true; } // "Rodar" direto do menu
   } catch (err) {
     hideOverlay(); pe = null;
@@ -11289,6 +11340,8 @@ async function abrirEditorDoc(o) {
   const raiz = $pe('pe'); raiz.classList.add('open'); raiz.setAttribute('aria-hidden', 'false');
   document.documentElement.style.overflow = 'hidden';
   peMostrar('rever');
+  if (o.cortar) peAbrirCorte(); // "Cortar" direto do menu ou do leitor
+  if (o.juntar && o.juntar.length) toast(`${o.juntar.length + 1} ficheiros juntos (${pe.paginas.length} páginas). Confira a ordem e toque em "Concluir".`);
 }
 function peMimeDe(formatoOuNome) {
   const f = String(formatoOuNome || '').toLowerCase().split('.').pop();
@@ -11444,6 +11497,8 @@ function peAplicarCorte() {
   pe.alterado = true;
   pe.corte = null;
   peMostrar('rever');
+  if (pe.o.cortar) peAbrirGuardar();
+  else toast('Corte aplicado. Toque em "Concluir" para guardar.');
 }
 
 /* ---------- Guardar ---------- */
@@ -11506,8 +11561,10 @@ async function peGerarFicheiro(nome) {
 function peAbrirGuardar() {
   if (!pe.alterado) { toast('Ainda não fez alterações.'); return; }
   const base = String(pe.o.nome || 'documento').replace(/\.[a-z0-9]{2,4}$/i, '');
-  $pe('pgNome').value = base + ' (editado)';
+  $pe('pgNome').value = pe.o.juntar && pe.o.juntar.length ? base + ' (junto)' : base + ' (editado)';
   document.querySelector('input[name="pgModo"][value="copia"]').checked = true;
+  // ao juntar vários ficheiros guarda-se sempre um documento novo (os originais ficam)
+  document.querySelector('input[name="pgModo"][value="substituir"]').closest('.pg-opcao').hidden = !!(pe.o.juntar && pe.o.juntar.length);
   peModoGuardar();
   openModal('peGuardarModal');
 }
@@ -11590,16 +11647,32 @@ function peLigar() {
     else if (a === 'juntar') peAbrirJuntar();
   });
   $pe('peMinis').addEventListener('click', e => { const b = e.target.closest('[data-pe-mini]'); if (b && pe) { pe.atual = +b.dataset.peMini; peRender(); } });
-  $pe('peCorteCancelar').addEventListener('click', () => { pe.corte = null; peMostrar('rever'); });
+  $pe('peCorteCancelar').addEventListener('click', () => {
+    pe.corte = null;
+    if (pe.o.cortar && !pe.alterado) fecharEditorDoc(); else peMostrar('rever');
+  });
   $pe('peCorteOk').addEventListener('click', peAplicarCorte);
   $pe('peAuto').addEventListener('click', peTirarMargens);
   $pe('peInteira').addEventListener('click', () => { pe.corte.ret = { x0: 0, y0: 0, x1: 1, y1: 1 }; peDesenharRet(); });
-  // arrastar o retângulo (cantos, bordas ou o meio)
-  const ret = $pe('peRet'); let arr = null;
+  // arrastar o retângulo (cantos, bordas ou o meio). Com o dedo não é preciso acertar
+  // nas pegas: conta o canto/borda mais perto do toque (até ~34 px), dentro ou fora do retângulo.
+  const ret = $pe('pePalco'); let arr = null;
   ret.addEventListener('pointerdown', e => {
-    if (!pe || !pe.corte) return;
+    if (!pe || !pe.corte || !pe.corte.caixa) return;
+    const pr = ret.getBoundingClientRect(), { caixa, ret: q } = pe.corte;
+    const x = e.clientX - pr.left, y = e.clientY - pr.top;
+    const L = caixa.l + q.x0 * caixa.w, R = caixa.l + q.x1 * caixa.w, T = caixa.t + q.y0 * caixa.h, B = caixa.t + q.y1 * caixa.h;
+    const tol = e.pointerType === 'mouse' ? 14 : 34;
+    let h = '';
+    if (x >= L - tol && x <= R + tol && y >= T - tol && y <= B + tol) {
+      const dT = Math.abs(y - T), dB = Math.abs(y - B), dL = Math.abs(x - L), dR = Math.abs(x - R);
+      if (Math.min(dT, dB) <= tol) h += dT <= dB ? 'n' : 's';
+      if (Math.min(dL, dR) <= tol) h += dL <= dR ? 'w' : 'e';
+      if (!h) h = 'mover';
+    }
+    if (!h) return;
     e.preventDefault();
-    const h = e.target.closest('[data-h]'); arr = { h: h ? h.dataset.h : 'mover', x: e.clientX, y: e.clientY, r0: { ...pe.corte.ret }, id: e.pointerId };
+    arr = { h, x: e.clientX, y: e.clientY, r0: { ...q }, id: e.pointerId };
     try { ret.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ }
   });
   ret.addEventListener('pointermove', e => {
@@ -11629,7 +11702,8 @@ function peLigar() {
   $pe('pjLista').addEventListener('click', e => {
     const b = e.target.closest('[data-pj]'); if (!b) return;
     const d = pe.o.outrosDocs[+b.dataset.pj];
-    peJuntarDe(async () => { const r = await fetch(d.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(d.format));
+    const f = peFonteEditavel(d.url, d.format);
+    peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format));
   });
   $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
   $pe('pjInput').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) peJuntarFicheiros(fs); });
