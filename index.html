@@ -2409,6 +2409,11 @@ function formatDate(d) {
   const [y,m,day] = d.split('-');
   return `${day}/${m}/${y}`;
 }
+// Nome do PDF de uma ficha: só o nome (ex.: "Adelmo De Souza Costa.pdf"), sem "Ficha_", traços nem data
+function nomePdf(nome) {
+  const n = String(nome || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 120);
+  return (n || 'Ficha') + '.pdf';
+}
 function slug(s) {
   return (s||'sem_nome').normalize('NFD').replace(/[̀-ͯ]/g,'')
     .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || 'sem_nome';
@@ -3929,7 +3934,7 @@ function generateSinglePdf(id) {
   const doc = new jsPDF({ unit:'mm', format:'a4' });
   drawEmployeePdf(doc, e);
   pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-  doc.save(`Ficha_${slug(e.nome)}_${dateStamp()}.pdf`);
+  doc.save(nomePdf(e.nome));
   toast('PDF gerado.');
 }
 function buildConsolidatedPdf(list) {
@@ -3969,7 +3974,7 @@ async function buildZip(list, label) {
       const doc = new jsPDF({ unit:'mm', format:'a4' });
       drawEmployeePdf(doc, e);
       pdfFooter(doc, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
-      folder.file(`Ficha_${slug(e.nome)}.pdf`, doc.output('blob'));
+      folder.file(nomePdf(e.nome), doc.output('blob'));
     });
     zip.file(`Fichas_Consolidado_${label === 'Completo' ? 'Todos' : slug(label)}.pdf`, buildConsolidatedPdf(list).output('blob'));
     zip.file('backup.json', JSON.stringify(list, null, 2));
@@ -6319,7 +6324,7 @@ function renderPastas() {
       actions += pxBtn('zip-func', partilhaNoTelemovel() ? 'Enviar pasta' : 'Download pasta');
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
-      const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">Ficha_${escapeHtml(slug(emp.nome))}.pdf</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
+      const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">${escapeHtml(nomePdf(emp.nome))}</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
       body = `${faixa}${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title px-section-row"><span>Documentos</span>${selTodos}</div>${barra}${docsHtml}`;
     }
   } else {
@@ -6626,11 +6631,11 @@ async function pxDownloadZip(entries, zipName) {
       if (usedFolders.has(pasta)) pasta += ` (${pxSafe(e.nif || e.id)})`;
       usedFolders.add(pasta);
       const folder = zip.folder(pasta);
-      folder.file(`Ficha_${slug(e.nome)}.pdf`, pxFichaBlob(e));
+      folder.file(pxSafe(nomePdf(e.nome)), pxFichaBlob(e));
       const snap = await db.collection('funcionarios').doc(e.id).collection('documentos').get();
       const subs = pxSubpastas(e);
       subs.forEach(x => folder.folder(pxSubZip(x))); // subpastas (mesmo vazias)
-      const usados = {};
+      const usados = { ['/' + pxSafe(nomePdf(e.nome))]: 1 }; // um documento com o mesmo nome da ficha não a apaga
       snap.docs.forEach(d => {
         const meta = d.data();
         const naSub = meta.pasta && subs.includes(meta.pasta) ? pxSubZip(meta.pasta) : '';
@@ -10264,7 +10269,7 @@ function edDesenharFichaPdf(f, parent) {
   return doc;
 }
 function edFichaPdfDescarregar(x) {
-  edDesenharFichaPdf(x, edPaiDe(x)).save(`Ficha_${slug(x.nome || 'ficha')}_${dateStamp()}.pdf`);
+  edDesenharFichaPdf(x, edPaiDe(x)).save(nomePdf(x.nome));
 }
 
 // ---------- Descarregar (ZIP com as pastas) e guardar offline ----------
@@ -10321,7 +10326,7 @@ async function edEnviar(ids) {
   let files;
   try {
     files = await Promise.all(itens.map(async x => x.tipo === 'ficha'
-      ? ficheiroDe(edDesenharFichaPdf(x, edPaiDe(x)).output('blob'), `Ficha_${slug(x.nome || 'ficha')}.pdf`)
+      ? ficheiroDe(edDesenharFichaPdf(x, edPaiDe(x)).output('blob'), nomePdf(x.nome))
       : ficheiroDe(await obterBlob(x.url), docFullName(x))));
   } catch (e) { hideOverlay(); toast('Não foi possível obter todos os ficheiros.', true); return; }
   hideOverlay();
@@ -10376,7 +10381,7 @@ function edBind() {
   document.getElementById('edFichaPdf').addEventListener('click', () => {
     if (!edFicha) return;
     const dados = edFichaLer();
-    edDesenharFichaPdf(dados, edFicha.parent).save(`Ficha_${slug(dados.nome || 'ficha')}_${dateStamp()}.pdf`);
+    edDesenharFichaPdf(dados, edFicha.parent).save(nomePdf(dados.nome));
   });
   document.getElementById('edFichaDel').addEventListener('click', async () => {
     if (!edFicha || !edFicha.id) return;
