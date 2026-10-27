@@ -22,10 +22,16 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CONTROLE_LEGADO_ACLAMADO }}
           channelId: live
           projectId: controle-legado-aclamado
+          # Versão fixa: a 15.34.1 passou a exigir uma permissão (serviceusage.services.get)
+          # que a conta de publicação não tem, e a publicação falhava com 403.
+          firebaseToolsVersion: 15.34.0
 
       # Publica também as regras de segurança do Firestore (firestore.rules),
       # para não ser preciso copiá-las à mão no Firebase Console.
       - name: Publicar regras do Firestore
+        # A conta de publicação ainda não tem permissão para as regras (403); as regras
+        # publicam-se pela app (guia "Falta um passo"). Não marca a publicação como falhada.
+        continue-on-error: true
         env:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CONTROLE_LEGADO_ACLAMADO }}
         run: |
