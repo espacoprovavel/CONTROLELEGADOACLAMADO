@@ -3948,6 +3948,58 @@ function generateAllPdf() {
   buildConsolidatedPdf(employees).save(`Fichas_Consolidado_${dateStamp()}.pdf`);
   toast('PDF consolidado gerado.');
 }
+// PDF só com os nomes (lista numerada), agrupada por país › empresa quando há mais de um grupo
+function buildNamesPdf(list, titulo, subtitulo) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin = 18;
+  const cmp = (a, b) => String(a).localeCompare(String(b), 'pt', { sensitivity: 'base' });
+  const cab = () => {
+    doc.setFillColor(...C.navy); doc.rect(0, 0, pageW, 24, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
+    doc.text(titulo, margin, 11);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C.gold);
+    doc.text(MARCA.empresa + (subtitulo ? ' · ' + subtitulo : ''), margin, 18);
+    return 36;
+  };
+  let y = cab();
+  const grupos = new Map();
+  list.forEach(e => {
+    const k = (String(e.cli_pais || '').trim() || 'Sem país') + ' › ' + (String(e.cliente || '').trim() || 'Sem empresa');
+    if (!grupos.has(k)) grupos.set(k, []);
+    grupos.get(k).push(e);
+  });
+  const chaves = [...grupos.keys()].sort(cmp);
+  const varios = chaves.length > 1;
+  let n = 0;
+  chaves.forEach(k => {
+    const nomes = grupos.get(k).map(e => String(e.nome || '(sem nome)').trim()).sort(cmp);
+    if (varios) {
+      if (y > pageH - 30) { doc.addPage(); y = cab(); }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C.navy);
+      doc.text(`${k}  (${nomes.length})`, margin, y); y += 2;
+      doc.setDrawColor(...C.gold); doc.setLineWidth(0.4); doc.line(margin, y, pageW - margin, y); y += 6;
+    }
+    nomes.forEach(nome => {
+      if (y > pageH - 18) { doc.addPage(); y = cab(); }
+      n++;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...C.gray);
+      doc.text(String(n) + '.', margin + 8, y, { align: 'right' });
+      doc.setTextColor(...C.text);
+      doc.text(nome, margin + 11, y);
+      y += 7;
+    });
+    y += varios ? 4 : 0;
+  });
+  if (y > pageH - 22) { doc.addPage(); y = cab(); }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...C.text);
+  doc.text(`Total: ${n} colaborador${n === 1 ? '' : 'es'}`, margin, y + 2);
+  pdfFooter(doc, pageW, pageH);
+  return doc;
+}
+function generateNamesPdf(list, titulo, subtitulo, ficheiro) {
+  if (!list.length) { toast('Sem colaboradores nesta lista.', true); return; }
+  buildNamesPdf(list, titulo, subtitulo).save(nomePdf(ficheiro || titulo));
+}
 function generateGroupPdf(group) {
   const list = employees.filter(e => getGroup(e) === group);
   if (list.length === 0) { toast(`Sem colaboradores no grupo ${group}.`, true); return; }
@@ -6335,6 +6387,7 @@ function renderPastas() {
       const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
       if (isEditor()) actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', scope === 'ex' ? '+ Novo ex-colaborador (com ficha)' : '+ Novo colaborador (com ficha)');
       actions += pxBtn('zip-empresa', 'Download empresa', isEditor() ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('pdf-nomes', 'PDF dos nomes');
       actions += pxBtn('offline', 'Guardar offline');
       if (empresa !== PX_SEM_EMP) {
         if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
@@ -6351,6 +6404,7 @@ function renderPastas() {
       const grupos = pxMergeKeys(pxGroup(list.filter(e => pxPais(e) === pais), pxEmpresa), extras);
       if (isEditor() && pais !== PX_SEM_PAIS) actions += pxBtn('nova-pasta', '+ Nova empresa', 'btn-primary');
       actions += pxBtn('zip-pais', 'Download país', isEditor() && pais !== PX_SEM_PAIS ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('pdf-nomes', 'PDF dos nomes');
       actions += pxBtn('offline', 'Guardar offline');
       if (pais !== PX_SEM_PAIS) {
         if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
@@ -6571,6 +6625,12 @@ function pxOnClick(ev) {
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
     case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa, scope); break;
+    case 'pdf-nomes': {
+      const lista = pxList(scope).filter(e => pxPais(e) === pais && (!empresa || pxEmpresa(e) === empresa));
+      const onde = empresa || pais;
+      generateNamesPdf(lista, (scope === 'ex' ? 'Ex-colaboradores' : 'Colaboradores') + ' — ' + onde, empresa ? pais : '', (scope === 'ex' ? 'Ex-colaboradores ' : 'Colaboradores ') + onde);
+      break;
+    }
     case 'novo-aqui':
       openForm();
       setSelectValue('f_estado', scope === 'ex' ? 'inativo' : 'ativo');
@@ -9580,7 +9640,8 @@ function abrirMenuMais(btn) {
     return { label, fn: () => b.click() };
   };
   abrirMenuContexto(r.left, r.bottom + 6, [
-    item('btnPdfAll', 'PDF de todos'),
+    item('btnPdfAll', 'PDF de todos (fichas completas)'),
+    { label: 'PDF só com os nomes', fn: () => generateNamesPdf(employees.filter(e => (e.estado || 'ativo') === 'ativo'), 'Lista de colaboradores', 'Ativos', 'Colaboradores (nomes)') },
     item('btnZipAll', 'ZIP completo'),
     item('btnBackup', 'Backup (JSON)'),
     item('btnImport', 'Importar'),
