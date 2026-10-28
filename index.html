@@ -3465,18 +3465,18 @@ function upLigar() {
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && upAberto()) upFechar(); });
 }
 
-function openUploadWidget(funcId, funcNome, pasta, ficheiros) {
+function openUploadWidget(funcId, funcNome, pasta, ficheiros, extra) {
   abrirEnvio({
     titulo: 'Anexar documentos',
     destino: (funcNome || 'Colaborador') + (pasta ? ' › ' + pasta : ''),
     pastaCloud: `${CLOUDINARY_FOLDER}/${funcId}`,
     formatos: UP_FORMATOS_DOC,
     ficheiros,
-    guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true)
+    guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true, extra)
   });
 }
 
-async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
+async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso, extra) {
   try {
     await db.collection('funcionarios').doc(funcId).collection('documentos').add({
       ...(pasta ? { pasta } : {}), // subpasta dentro da pasta do colaborador (Pastas)
@@ -3488,7 +3488,8 @@ async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
       resource_type: info.resource_type,
       uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
       uploaded_by_uid: currentUser.uid,
-      uploaded_by_email: currentUser.email
+      uploaded_by_email: currentUser.email,
+      ...(extra || {}) // ex.: "edicao" = receita para voltar a editar (ver editor de documentos)
     });
     await db.collection('funcionarios').doc(funcId).update({
       doc_count: firebase.firestore.FieldValue.increment(1)
@@ -5922,12 +5923,14 @@ function abrirEditorPx(emp, d, opcoes) {
     outrosDocs: ((opcoes && opcoes.lista) || pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(docFmt(x))).map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })),
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })) : null,
-    guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
-    substituir: async file => {
+    edicao: d.edicao || null, pastaCloud: `${CLOUDINARY_FOLDER}/${emp.id}`,
+    guardarCopia: (file, edicao) => openUploadWidget(emp.id, emp.nome, pasta, [file], edicao ? { edicao } : null),
+    substituir: async (file, edicao) => {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
       await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
         original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
+        edicao: edicao || firebase.firestore.FieldValue.delete(),
         editado_em: firebase.firestore.FieldValue.serverTimestamp(), editado_por: currentUser ? currentUser.email : ''
       });
       logAudit('document_edit', emp.id, `${emp.nome}: "${docFullName(d)}" editado (substituído)`);
@@ -10351,17 +10354,17 @@ function edExtensao(info) {
   const m = /\.([a-z0-9]{2,5})$/i.exec(info.public_id || '') || /\.([a-z0-9]{2,5})$/i.exec(info.secure_url || '');
   return m ? m[1].toLowerCase() : '';
 }
-function edUpload(pai, ficheiros) {
+function edUpload(pai, ficheiros, extra) {
   abrirEnvio({
     titulo: 'Anexar ficheiros',
     destino: edCaminhoTxt(pai),
     pastaCloud: ED_CLOUD_FOLDER,
     formatos: ED_FORMATOS,
     ficheiros,
-    guardar: info => edGuardarFicheiro(pai, info, true)
+    guardar: info => edGuardarFicheiro(pai, info, true, extra)
   });
 }
-async function edGuardarFicheiro(pai, info, silencioso) {
+async function edGuardarFicheiro(pai, info, silencioso, extra) {
   const format = edExtensao(info);
   let base = info.original_filename || 'documento';
   if (format && base.toLowerCase().endsWith('.' + format)) base = base.slice(0, -(format.length + 1));
@@ -10370,7 +10373,7 @@ async function edGuardarFicheiro(pai, info, silencioso) {
       url: info.secure_url, public_id: info.public_id, original_filename: base, format, bytes: info.bytes,
       resource_type: info.resource_type || '', uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
       uploaded_by_email: currentUser ? currentUser.email : ''
-    }));
+    }, extra || {}));
     logAudit('empresa_docs', ref.id, `ficheiro anexado: ${edCaminhoTxt(pai)} › ${base}${format ? '.' + format : ''}`);
     if (!silencioso) toast('Ficheiro anexado.');
     return true;
@@ -10543,12 +10546,14 @@ function abrirEditorEd(x, opcoes) {
     outrosDocs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(y))).map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })),
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })) : null,
-    guardarCopia: file => edUpload(pai, [file]),
-    substituir: async file => {
+    edicao: x.edicao || null, pastaCloud: ED_CLOUD_FOLDER,
+    guardarCopia: (file, edicao) => edUpload(pai, [file], edicao ? { edicao } : null),
+    substituir: async (file, edicao) => {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
       await db.collection(ED_COL).doc(x.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
         original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
+        edicao: edicao || firebase.firestore.FieldValue.delete(),
         updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by_email: currentUser ? currentUser.email : ''
       });
       logAudit('empresa_docs', x.id, `ficheiro editado (substituído): ${docFullName(x)}`);
@@ -11656,15 +11661,21 @@ async function abrirEditorDoc(o) {
     const buf = await r.arrayBuffer();
     const ehPdf = fonte.format === 'pdf';
     pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false };
-    if (ehPdf) await peJuntarFonte(buf);
-    else await peJuntarImagem(buf, peMimeDe(fonte.format));
+    let recuperado = false;
+    if (o.edicao) {
+      try { await peCarregarReceita(o.edicao); recuperado = true; }
+      catch (e) { console.warn('Receita da edição:', e); pe.fontes = []; pe.paginas = []; pe.extras = null; }
+    }
+    if (recuperado) pe.recuperado = true;
+    else if (ehPdf) await peJuntarFonte(buf, fonte.url);
+    else await peJuntarImagem(buf, peMimeDe(fonte.format), fonte.url);
     // "Juntar num PDF": os outros ficheiros entram a seguir, pela ordem em que foram escolhidos
     for (const [i, d] of (o.juntar || []).entries()) {
       const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A juntar ${i + 2} de ${o.juntar.length + 1}…`;
       const f = peFonteEditavel(d.url, d.format);
       const rr = await fetch(f.url); if (!rr.ok) throw new Error('HTTP ' + rr.status);
       const b2 = await rr.arrayBuffer();
-      if (f.format === 'pdf') await peJuntarFonte(b2); else await peJuntarImagem(b2, peMimeDe(f.format));
+      if (f.format === 'pdf') await peJuntarFonte(b2, f.url); else await peJuntarImagem(b2, peMimeDe(f.format), f.url);
     }
     if (o.juntar && o.juntar.length) pe.alterado = true;
     if (o.rodar) { pe.paginas.forEach(p => { p.r = 1; }); pe.alterado = true; } // "Rodar" direto do menu
@@ -11681,25 +11692,68 @@ async function abrirEditorDoc(o) {
   else if (o.paginas) peMostrar('grelha'); // "Páginas" direto do menu
   else if (o.anotar) paAbrir(0); // "Editar e assinar" direto
   if (o.juntar && o.juntar.length) toast(`${o.juntar.length + 1} ficheiros juntos (${pe.paginas.length} páginas). Confira a ordem e toque em "Concluir".`);
+  else if (pe.recuperado) toast('As edições anteriores estão soltas: pode mudá-las, movê-las ou apagá-las.');
 }
 function peMimeDe(formatoOuNome) {
   const f = String(formatoOuNome || '').toLowerCase().split('.').pop();
   return f === 'png' ? 'image/png' : f === 'webp' ? 'image/webp' : f === 'pdf' ? 'application/pdf' : 'image/jpeg';
 }
-async function peJuntarImagem(buf, mime) {
+// "url": de onde veio (para voltar a editar mais tarde); sem url (aparelho, câmara, página em branco) guarda os bytes
+async function peAddFonteImg(buf, mime, url) {
   const bmp = await scCarregarImagem(new Blob([buf], { type: mime }));
-  const s = pe.fontes.length;
-  pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, mime, cache: {} });
+  pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, mime, cache: {}, url: url || null, buf: url ? null : buf });
+  return pe.fontes.length - 1;
+}
+async function peJuntarImagem(buf, mime, url) {
+  const s = await peAddFonteImg(buf, mime, url);
   pe.paginas.push({ s, i: 0, r: 0, crop: null });
 }
 // Saída em PDF sempre que o resultado tiver mais de uma página ou incluir um PDF
 function peSaidaPdf(paginas) { paginas = paginas || pe.paginas; return pe.ehPdf || paginas.length > 1 || paginas.some(p => pe.fontes[p.s].tipo === 'pdf'); }
-async function peJuntarFonte(buf) {
+async function peAddFontePdf(buf, url) {
   const lib = await carregarPdfJs();
   const doc = await lib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
-  const s = pe.fontes.length;
-  pe.fontes.push({ tipo: 'pdf', bytes: buf, doc, cache: {} });
-  for (let i = 0; i < doc.numPages; i++) pe.paginas.push({ s, i, r: 0, crop: null });
+  pe.fontes.push({ tipo: 'pdf', bytes: buf, doc, cache: {}, url: url || null });
+  return { s: pe.fontes.length - 1, n: doc.numPages };
+}
+async function peJuntarFonte(buf, url) {
+  const { s, n } = await peAddFontePdf(buf, url);
+  for (let i = 0; i < n; i++) pe.paginas.push({ s, i, r: 0, crop: null });
+}
+/* ---------- Voltar a editar: a "receita" da edição ----------
+   Ao guardar, além do PDF final guarda-se no registo do documento ("edicao", texto JSON):
+   os ficheiros de origem (endereços no Cloudinary) + páginas (ordem, rotação, corte) + anotações.
+   Ao abrir outra vez, o editor reconstrói tudo a partir dos originais: o que se escreveu,
+   assinou ou tapou continua solto e editável, sem perder qualidade. */
+async function peReceita(paginas) {
+  const usadas = [...new Set(paginas.map(p => p.s))], mapa = {}, fontes = [];
+  for (const s0 of usadas) {
+    const f = pe.fontes[s0];
+    if (!f.url) { // veio do aparelho / câmara / página em branco: guarda uma cópia do original
+      if (!pe.o.pastaCloud) return null;
+      const pdf = f.tipo === 'pdf', bytes = pdf ? f.bytes : f.buf;
+      if (!bytes) return null;
+      const ext = pdf ? 'pdf' : (f.mime === 'image/png' ? 'png' : 'jpg');
+      const info = await upCloudinary(new File([bytes], 'original-edicao.' + ext, { type: pdf ? 'application/pdf' : (f.mime || 'image/jpeg') }), pe.o.pastaCloud, () => {});
+      f.url = info.secure_url;
+    }
+    mapa[s0] = fontes.length;
+    fontes.push({ tipo: f.tipo, url: f.url, mime: f.mime || null });
+  }
+  const rec = JSON.stringify({ v: 1, fontes, paginas: paginas.map(p => ({ s: mapa[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: p.anot || [] })), extras: pe.extras || null });
+  return rec.length < 850000 ? rec : null; // limite de tamanho do registo
+}
+async function peCarregarReceita(txt) {
+  const rec = JSON.parse(txt);
+  if (!rec || rec.v !== 1 || !Array.isArray(rec.fontes) || !Array.isArray(rec.paginas) || !rec.paginas.length) throw new Error('receita inválida');
+  const idx = [];
+  for (const f of rec.fontes) {
+    const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const buf = await r.arrayBuffer();
+    idx.push(f.tipo === 'pdf' ? (await peAddFontePdf(buf, f.url)).s : await peAddFonteImg(buf, f.mime || 'image/jpeg', f.url));
+  }
+  pe.paginas = rec.paginas.map(p => ({ s: idx[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: Array.isArray(p.anot) ? p.anot : [] }));
+  pe.extras = rec.extras || null;
 }
 function fecharEditorDoc(forcar) {
   if (!pe) return;
@@ -11838,6 +11892,7 @@ async function peRender() {
   try {
     const folha = $pe('peFolha');
     const larg = Math.min(1600, Math.round(Math.max(folha.clientWidth, 300) * Math.min(window.devicePixelRatio || 1, 2)));
+    await peMapearFontes(p);
     const c = peCompor(peComAnot(await peBase(p, larg), p), p, true);
     if (meu !== peToken || !pe) return;
     folha.querySelectorAll('canvas').forEach(x => x.remove());
@@ -11934,6 +11989,7 @@ async function peGerarPdf(paginas) {
     const cb = pg.getCropBox();
     // ponto da página "base" (frações) → coordenadas do PDF
     const pdfPt = (bx, by) => { const w = peParaBase(bx, by, q0); return { x: cb.x + w.x * cb.width, y: cb.y + (1 - w.y) * cb.height }; };
+    await peMapearFontes(p);
     if ((p.anot || []).some(o => o.t === 'tapar' || o.t === 'troca')) {
       // "Tapar" e "Editar texto": a página passa a imagem, para o texto antigo desaparecer mesmo do PDF
       const c = peCompor(peComAnot(await peBase(p, 2000), p), p, true);
@@ -12041,12 +12097,16 @@ async function peGuardar() {
   catch (e) { hideOverlay(); toast('Não foi possível criar o documento: ' + (e.message || e), true); return; }
   if (file.size > 10 * 1024 * 1024) { hideOverlay(); toast('O documento ficou com mais de 10 MB. Tire algumas páginas ou corte mais.', true); return; }
   const o = pe.o;
+  // receita para voltar a editar mais tarde (se falhar, guarda-se na mesma o documento)
+  let edicao = null;
+  try { const el = document.getElementById('overlayMsg'); if (el) el.textContent = 'A guardar as edições para poder voltar a editar…'; edicao = await peReceita(pe.extrair || pe.paginas); }
+  catch (e) { console.warn('Receita da edição:', e); }
   try {
-    if (copia && pe.extrair) { hideOverlay(); pe.extrair = null; o.guardarCopia(file); toast('Páginas extraídas para um documento novo. O original não mudou.'); }
-    else if (copia) { hideOverlay(); fecharEditorDoc(true); o.guardarCopia(file); }
+    if (copia && pe.extrair) { hideOverlay(); pe.extrair = null; o.guardarCopia(file, edicao); toast('Páginas extraídas para um documento novo. O original não mudou.'); }
+    else if (copia) { hideOverlay(); fecharEditorDoc(true); o.guardarCopia(file, edicao); }
     else {
       const el = document.getElementById('overlayMsg'); if (el) el.textContent = 'A substituir o original…';
-      await o.substituir(file);
+      await o.substituir(file, edicao);
       hideOverlay(); fecharEditorDoc(true);
       toast('Documento substituído pela versão editada.');
     }
@@ -12068,13 +12128,13 @@ function peAbrirJuntar(posicao) {
   openModal('peJuntarModal');
 }
 // Acrescenta no fim as páginas de um PDF ou uma foto
-async function peJuntarDe(obterBytes, nome, mime) {
+async function peJuntarDe(obterBytes, nome, mime, url) {
   closeModal('peJuntarModal');
   showOverlay('A anexar "' + nome + '"…');
   try {
     const n0 = pe.paginas.length, buf = await obterBytes();
-    if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf);
-    else await peJuntarImagem(buf, mime || peMimeDe(nome));
+    if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf, url);
+    else await peJuntarImagem(buf, mime || peMimeDe(nome), url);
     const n = pe.paginas.length - n0;
     // no sítio escolhido (o "+" entre páginas), em vez de no fim
     const em = pe.inserirEm; pe.inserirEm = null;
@@ -12140,7 +12200,7 @@ function paObjsPagina(p, idx, ratio) {
 function paMedirTexto(o, BW) {
   const g = paMedirTexto.g || (paMedirTexto.g = document.createElement('canvas').getContext('2d'));
   const px = o.fs * BW;
-  g.font = `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+  g.font = paFonteCss(o, px);
   const linhas = String(o.txt || '').split('\n');
   const larg = Math.max(...linhas.map(l => g.measureText(l).width), px * 0.5);
   return { w: (larg + px * 0.4) / BW, h: (linhas.length * px * 1.22 + px * 0.25) / BW };
@@ -12166,7 +12226,7 @@ function paDesenharObj(g, o, BW, BH) {
     const px = o.fs * BW, linhas = String(o.txt || '').split('\n');
     g.fillStyle = o.fundo || '#ffffff'; g.fillRect(-W / 2, -H / 2, W, H);
     g.fillStyle = o.cor || '#111';
-    g.font = `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+    g.font = paFonteCss(o, px);
     g.textBaseline = 'alphabetic';
     const y0 = H / 2 - (o.desc || 0) * BW - (linhas.length - 1) * px * 1.18;
     linhas.forEach((l, i) => g.fillText(l, -W / 2 + (o.padx || 0) * BW, y0 + i * px * 1.18));
@@ -12226,6 +12286,7 @@ async function paCarregarPagina() {
   const larg = Math.min(2000, Math.round(Math.max(palco.clientWidth, 320) * Math.min(window.devicePixelRatio || 1, 2) * 1.15));
   pa.base = await peBase(p, larg);
   pa.BW = pa.base.width; pa.BH = pa.base.height;
+  await peMapearFontes(p);
   pa.sel = null;
   paAtualizarBarra();
   paDesenhar();
@@ -12260,8 +12321,66 @@ async function paItensDoPdf() {
     if (Math.abs(B) > 0.02 * Math.abs(A) || A <= 0) return null; // texto na vertical ou inclinado: fica de fora
     const w = it.width * vp.scale * (Math.hypot(A, B) / (Math.hypot(...it.transform.slice(0, 2)) * vp.scale || 1));
     const familia = ((tc.styles && tc.styles[it.fontName]) || {}).fontFamily || '';
-    return { str: it.str, x0: E, y0: F - fh * 0.92, x1: E + w, y1: F + fh * 0.24, base: [E, F], fh, bold: /bold|black|heavy/i.test(it.fontName + ' ' + familia) };
+    const fonte = peInfoFonte(pg, it.fontName, familia);
+    return { str: it.str, x0: E, y0: F - fh * 0.92, x1: E + w, y1: F + fh * 0.24, base: [E, F], fh, fonte, bold: fonte ? fonte.bold : /bold|black|heavy/i.test(it.fontName + ' ' + familia) };
   }).filter(Boolean);
+}
+/* --- A mesma letra do documento (como no Adobe) ---
+   O pdf.js carrega no navegador as fontes que vêm dentro do PDF (nome interno "g_d0_f1"…).
+   Guarda-se o nome verdadeiro da fonte e, nesta sessão, o nome interno (pe.fontesMapa) para escrever
+   o texto novo com essa fonte; letras que não existam na fonte do PDF usam a fonte parecida. */
+function peInfoFonte(pg, nomeInterno, familia) {
+  let fo = null;
+  try { fo = pg.commonObjs.get(nomeInterno); } catch (e) { /* ainda não carregada */ }
+  const real = String((fo && fo.name) || nomeInterno || '');
+  const sem = real.replace(/^[A-Z]{6}\+/, '');
+  const fam = /courier|mono/i.test(sem) || familia === 'monospace' ? '"Courier New", Courier, monospace'
+    : /times|georgia|garamond|serif|roman|cambria|book/i.test(sem) && !/sans/i.test(sem) || (fo && fo.isSerifFont) || familia === 'serif' ? '"Times New Roman", Times, serif'
+    : /calibri/i.test(sem) ? 'Calibri, Carlito, "Segoe UI", Arial, sans-serif'
+    : /verdana|tahoma/i.test(sem) ? 'Verdana, Tahoma, sans-serif'
+    : 'Helvetica, Arial, sans-serif';
+  const bold = !!(fo && (fo.bold || fo.black)) || /bold|black|heavy|semibold|demi/i.test(sem);
+  const italic = !!(fo && fo.italic) || /italic|oblique/i.test(sem);
+  // embutida = o pdf.js registou-a no navegador com o nome interno (os dados da fonte são apagados depois de carregada)
+  const carregada = !!(fo && fo.loadedName && !fo.missingFile && [...document.fonts].some(ff => String(ff.family).replace(/["']/g, '') === fo.loadedName));
+  if (carregada) { pe.fontesMapa = pe.fontesMapa || {}; pe.fontesMapa[real] = fo.loadedName; }
+  return { real, fam, bold, italic, embutida: carregada || !!(fo && !fo.missingFile && !fo.isType3Font && fo.loadedName) };
+}
+// Volta a ligar as fontes de uma página (ex.: ao abrir de novo um documento já editado)
+async function peMapearFontes(p) {
+  const f = pe.fontes[p.s];
+  if (f.tipo !== 'pdf' || !(p.anot || []).some(o => o.fonte && o.fonte.embutida && !(pe.fontesMapa && pe.fontesMapa[o.fonte.real]))) return;
+  try {
+    const pg = await f.doc.getPage(p.i + 1);
+    await peBase(p, 300); // desenhar a página carrega as fontes
+    const tc = await pg.getTextContent();
+    tc.items.forEach(it => { if (it.fontName) peInfoFonte(pg, it.fontName, ((tc.styles || {})[it.fontName] || {}).fontFamily || ''); });
+  } catch (e) { /* fica com a fonte parecida */ }
+}
+// Letras que faltam na fonte do PDF (as fontes embutidas só trazem as letras usadas): usa uma fonte
+// do aparelho parecida e com o mesmo peso. Como a fonte do PDF é "normal", o negrito vem destas famílias.
+const PA_FB = { // nomes técnicos exatos primeiro (Windows, Mac/iPhone, Android/Linux)
+  'PA Serif Negrito': ['TimesNewRomanPS-BoldMT', 'DejaVuSerif-Bold', 'LiberationSerif-Bold', 'NotoSerif-Bold', 'Georgia-Bold', 'Times New Roman Bold'],
+  'PA Sans Negrito': ['Arial-BoldMT', 'Helvetica-Bold', 'DejaVuSans-Bold', 'LiberationSans-Bold', 'Roboto-Bold', 'NotoSans-Bold', 'Arial Bold'],
+  'PA Serif Italico': ['TimesNewRomanPS-ItalicMT', 'DejaVuSerif-Italic', 'LiberationSerif-Italic', 'NotoSerif-Italic', 'Times New Roman Italic'],
+  'PA Sans Italico': ['Arial-ItalicMT', 'Helvetica-Oblique', 'DejaVuSans-Oblique', 'LiberationSans-Italic', 'Roboto-Italic', 'NotoSans-Italic', 'Arial Italic']
+};
+let paFbPronto = false;
+function paFbCarregar() {
+  if (paFbPronto || typeof FontFace === 'undefined') return; paFbPronto = true;
+  Object.entries(PA_FB).forEach(([nome, locais]) => {
+    try { const ff = new FontFace(nome, locais.map(l => `local("${l}")`).join(', ')); document.fonts.add(ff); ff.load().then(() => { if (pa) paDesenhar(); }).catch(() => document.fonts.delete(ff)); } catch (e) { /* sem fontes locais */ }
+  });
+}
+// "font" do canvas / caixa de texto para um objeto com a fonte do documento
+function paFonteCss(o, px) {
+  const f = o.fonte, interno = f && pe && pe.fontesMapa && pe.fontesMapa[f.real];
+  if (!f) return `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+  paFbCarregar();
+  const serif = /serif/.test(f.fam) && !/sans-serif/.test(f.fam);
+  const fb = f.bold ? (serif ? '"PA Serif Negrito", ' : '"PA Sans Negrito", ') : f.italic ? (serif ? '"PA Serif Italico", ' : '"PA Sans Italico", ') : '';
+  // com a fonte original embutida o negrito já vem nas letras (pedir 700 engrossava-as ainda mais)
+  return `${f.italic && !interno ? 'italic ' : ''}${f.bold && !interno ? '700 ' : ''}${px}px ${interno ? `"${interno}", ` : ''}${fb}${f.fam}`;
 }
 /* --- Reconhecimento de texto (OCR) para documentos digitalizados e fotos --- */
 const OCR_JS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
@@ -12321,13 +12440,14 @@ function paCoresZona(x0, y0, x1, y1) {
   const X0 = Math.max(0, Math.floor(x0) - 3), Y0 = Math.max(0, Math.floor(y0) - 3), X1 = Math.min(W - 1, Math.ceil(x1) + 3), Y1 = Math.min(H - 1, Math.ceil(y1) + 3);
   const d = g.getImageData(X0, Y0, Math.max(1, X1 - X0 + 1), Math.max(1, Y1 - Y0 + 1)), w = d.width, h = d.height;
   const hex = (r, gg, b) => '#' + [r, gg, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
-  const br = [0, 0, 0, 0]; let esc = [17, 17, 17], lumMin = 999;
+  const br = [0, 0, 0, 0]; let esc = [17, 17, 17], lumMin = 999, tinta = 0, dentro = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = (y * w + x) * 4, r = d.data[i], gg = d.data[i + 1], b = d.data[i + 2], lum = 0.3 * r + 0.59 * gg + 0.11 * b;
     if (x < 2 || y < 2 || x >= w - 2 || y >= h - 2) { br[0] += r; br[1] += gg; br[2] += b; br[3]++; } // borda = fundo
+    else { dentro++; if (lum < 110) tinta++; }
     if (lum < lumMin) { lumMin = lum; esc = [r, gg, b]; }
   }
-  return { fundo: br[3] ? hex(br[0] / br[3], br[1] / br[3], br[2] / br[3]) : '#ffffff', texto: lumMin < 160 ? hex(...esc) : '#111111' };
+  return { fundo: br[3] ? hex(br[0] / br[3], br[1] / br[3], br[2] / br[3]) : '#ffffff', texto: lumMin < 160 ? hex(...esc) : '#111111', tinta: dentro ? tinta / dentro : 0 };
 }
 // "Editar texto": troca um texto do documento (tocado) ou uma zona arrastada (documentos digitalizados)
 async function paTrocarTexto(x, y, x1, y1) {
@@ -12345,7 +12465,7 @@ async function paTrocarTexto(x, y, x1, y1) {
   if (item) {
     cores = paCoresZona(item.x0, item.y0, item.x1, item.y1);
     const a = paBaseParaVista(item.x0, item.y0), b = paBaseParaVista(item.x1, item.y1), pd = item.fh * 0.08;
-    txt = await paEscrever({ r: { x: Math.min(a.x, b.x) - pd, y: Math.min(a.y, b.y) - pd, w: Math.abs(b.x - a.x) + pd * 2, h: Math.abs(b.y - a.y) + pd * 2 }, rodado: p.r !== 0, txt: item.str, fs: item.fh, cor: cores.texto, fundo: cores.fundo, bold: item.bold, titulo: 'Mudar texto' });
+    txt = await paEscrever({ r: { x: Math.min(a.x, b.x) - pd, y: Math.min(a.y, b.y) - pd, w: Math.abs(b.x - a.x) + pd * 2, h: Math.abs(b.y - a.y) + pd * 2 }, rodado: p.r !== 0, txt: item.str, fs: item.fh, cor: cores.texto, fundo: cores.fundo, bold: item.bold, fonte: item.fonte, titulo: 'Mudar texto' });
   } else {
     const a = paVistaParaBase(Math.min(x, x1), Math.min(y, y1)), b = paVistaParaBase(Math.max(x, x1), Math.max(y, y1));
     cores = paCoresZona(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y));
@@ -12354,8 +12474,11 @@ async function paTrocarTexto(x, y, x1, y1) {
   // apagar tudo num texto do documento = apagar esse texto (fica só a cor do fundo)
   if (txt == null || (!txt.trim() && !item) || (item && txt === item.str)) return;
   if (item) {
-    const o = { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: item.fh / pa.BW, bold: item.bold, cor: cores.texto, fundo: cores.fundo };
-    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW);
+    // negrito: pelo nome/descrição da fonte ou pela espessura das letras na página
+    const negrito = item.bold || (item.fh > 9 && cores.tinta > 0.2);
+    const o = { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: item.fh / pa.BW, bold: negrito, cor: cores.texto, fundo: cores.fundo };
+    if (item.fonte) o.fonte = Object.assign({}, item.fonte, { bold: item.fonte.bold || negrito });
+    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold, fonte: o.fonte }, pa.BW);
     const pad = item.fh * 0.06, W0 = item.x1 - item.x0 + pad * 2, H0 = item.y1 - item.y0 + pad * 2;
     const W = Math.max(W0, m.w * pa.BW - item.fh * 0.4 + pad * 2);
     o.w = W / pa.BW; o.h = H0 / pa.BW; o.padx = pad / pa.BW; o.desc = (item.y1 + pad - item.base[1]) / pa.BW;
@@ -12390,6 +12513,11 @@ function paEscrever(o) {
       fontSize: fs + 'px', fontWeight: o.bold ? '700' : '400', color: o.cor || '#111', background: o.fundo || 'rgba(255,255,255,0.92)',
       transform: esc !== 1 ? `scale(${esc})` : '', minWidth: Math.max(40, o.r.w * k / esc) + 'px', height: Math.max(fs * 1.3, o.r.h * k / esc) + 'px'
     });
+    // a mesma letra e cor do documento (com prioridade: o estilo geral da app força "Inter" e a cor dos campos)
+    ta.style.setProperty('font', paFonteCss({ fonte: o.fonte, bold: o.bold }, fs), 'important');
+    ta.style.setProperty('line-height', '1.18', 'important');
+    ta.style.setProperty('-webkit-text-fill-color', o.cor || '#111', 'important');
+    ta.style.setProperty('color', o.cor || '#111', 'important');
     const ajustar = () => {
       ta.style.width = '0px'; ta.style.width = Math.max(parseFloat(ta.style.minWidth), ta.scrollWidth + fs * 0.6) + 'px';
       ta.style.height = 'auto'; ta.style.height = Math.max(fs * 1.3, ta.scrollHeight) + 'px';
@@ -12550,9 +12678,9 @@ async function paEditarTexto() {
   const k0 = paCaixaVista(o), rod = Math.abs(Math.sin(k0.ang)) > 0.01 || Math.cos(k0.ang) < 0;
   const rect = { x: k0.cx - k0.w / 2, y: k0.cy - k0.h / 2, w: k0.w, h: k0.h };
   if (o.t === 'troca') {
-    const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: o.fundo, bold: o.bold, titulo: 'Mudar texto' }); if (txt == null || txt === o.txt) return;
+    const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: o.fundo, bold: o.bold, fonte: o.fonte, titulo: 'Mudar texto' }); if (txt == null || txt === o.txt) return;
     paGuardarHist(); o.txt = txt.replace(/\s+$/, '');
-    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW), W = m.w - o.fs * 0.4 + (o.padx || 0) * 2;
+    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold, fonte: o.fonte }, pa.BW), W = m.w - o.fs * 0.4 + (o.padx || 0) * 2;
     if (W > o.w) { const k = paCaixaVista(o), cs = Math.cos(k.ang), sn = Math.sin(k.ang), dx = (W - o.w) * pa.BW / 2; const b = paVistaParaBase(k.cx + dx * cs, k.cy + dx * sn); o.cx = b.x / pa.BW; o.cy = b.y / pa.BH; o.w = W; }
     return paMudou();
   }
@@ -12857,7 +12985,7 @@ function peLigar() {
     const b = e.target.closest('[data-pj]'); if (!b) return;
     const d = pe.o.outrosDocs[+b.dataset.pj];
     const f = peFonteEditavel(d.url, d.format);
-    peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format));
+    peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format), f.url);
   });
   $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
   $pe('pjBranco').addEventListener('click', () => {
