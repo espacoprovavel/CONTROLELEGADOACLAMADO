@@ -1259,6 +1259,7 @@ footer .ver { color: #9ca3af; }
 .pg-opcao { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; margin-bottom: 10px; transition: border-color .15s, background .15s; }
 .pg-opcao.on { border-color: var(--accent); background: #f5f8ff; }
 .pg-opcao[hidden] { display: none; }
+.px-fbtns .px-btn-editar { background: #0b57d0 !important; color: #fff !important; border-color: #0b57d0 !important; }
 .pg-reduzir { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: 13.5px; cursor: pointer; }
 .pg-reduzir input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
 .pg-reduzir em { display: block; font-style: normal; color: var(--ink-soft); font-size: 12.5px; }
@@ -3251,7 +3252,9 @@ function subscribeDocs(funcId) {
     });
 }
 
+let detailDocs = []; // documentos do colaborador aberto na ficha (aba Colaboradores)
 function renderDocs(docs) {
+  detailDocs = docs;
   const list = document.getElementById('docsList');
   const count = document.getElementById('docsCount');
   if (!list) return;
@@ -3279,7 +3282,8 @@ function renderDocs(docs) {
         </div>
       </div>
       <div class="doc-actions">
-        <button class="btn btn-ghost btn-sm act-doc-view" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">Ver</button>
+        <button class="btn btn-ghost btn-sm act-doc-view" data-docid="${d.id}" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">Ver</button>
+        ${isEditor() && podeEditarDocFmt(docFmt(d)) ? `<button class="btn btn-primary btn-sm act-doc-edit" data-docid="${d.id}">Editar PDF</button>` : ''}
         <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">Descarregar</button>
         ${delBtn}
       </div>
@@ -4986,7 +4990,13 @@ function bind() {
     const fid = currentDetailEmp.id, fnome = currentDetailEmp.nome;
     if (btn.classList.contains('act-doc-add')) openUploadWidget(fid, fnome);
     else if (btn.classList.contains('act-doc-zip')) downloadAllDocsZip(fid, fnome);
-    else if (btn.classList.contains('act-doc-view')) viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename);
+    else if (btn.classList.contains('act-doc-view') || btn.classList.contains('act-doc-edit')) {
+      const emp = currentDetailEmp, d = detailDocs.find(x => x.id === btn.dataset.docid);
+      // editar a partir da ficha: fecha a ficha e abre o editor com os documentos desta pessoa
+      const editar = d && typeof abrirEditorPx === 'function' ? o => { unsubscribeDocsFn(); closeModal('detailModal'); abrirEditorPx(emp, d, Object.assign({ lista: detailDocs.slice() }, o)); } : null;
+      if (btn.classList.contains('act-doc-edit')) { if (editar) editar({ anotar: true }); }
+      else viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename, editar ? { editar } : null);
+    }
     else if (btn.classList.contains('act-doc-dl')) downloadDocument(btn.dataset.url);
     else if (btn.classList.contains('act-doc-del')) deleteDocument(fid, fnome, btn.dataset.docid, btn.dataset.filename, btn.dataset.size === '' ? null : Number(btn.dataset.size));
   });
@@ -5909,7 +5919,7 @@ function abrirEditorPx(emp, d, opcoes) {
   const subs = pxSubpastas(emp), pasta = d.pasta && subs.includes(d.pasta) ? d.pasta : null;
   abrirEditorDoc({
     nome: docFullName(d), url: d.url, format: docFmt(d),
-    outrosDocs: (pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(docFmt(x))).map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })),
+    outrosDocs: ((opcoes && opcoes.lista) || pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(docFmt(x))).map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })),
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })) : null,
     guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
@@ -6449,6 +6459,7 @@ function renderPastas() {
         + `<input type="checkbox" class="px-sel" data-px-sel="${id}"${marcado ? ' checked' : ''} aria-label="Selecionar ${escapeHtml(nome)}">`
         + `<span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
         + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
+        + (isEditor() && podeEditarDocFmt(docFmt(d)) ? `<button type="button" class="px-btn-editar" data-px-doc="editar" data-px-did="${id}" title="Editar PDF: mudar texto, escrever, assinar…">Editar PDF</button>` : '')
         + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
         + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
@@ -6720,6 +6731,7 @@ function pxOnClick(ev) {
     const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
     if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o) } : null);
+    if (t.dataset.pxDoc === 'editar' && emp) abrirEditorPx(emp, d, { anotar: true });
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
     else if (t.dataset.pxDoc === 'mov' && emp) pxAbrirMover(emp, [d]);
