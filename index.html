@@ -1055,6 +1055,10 @@ footer .ver { color: #9ca3af; }
 /* os nomes dos botões só aparecem quando a janela do leitor tem espaço; o título fica sempre à vista */
 .vw-head { container-type: inline-size; }
 .vw-head h2 { min-width: 90px; }
+.vw-btn.vw-destaque { background: #0b57d0; color: #fff; }
+.vw-btn.vw-destaque:hover { background: #0842a0; }
+.vw-btn.vw-acao.vw-destaque { width: auto !important; padding: 0 12px !important; }
+.vw-destaque .vw-lbl-sempre { display: inline !important; }
 @container (max-width: 1060px) { .vw-btn.vw-acao { width: 32px; padding: 0; } .vw-lbl { display: none; } }
 @media (max-width: 760px) { .vw-btn.vw-acao { width: 32px; padding: 0; } .vw-lbl { display: none; } }
 .vw-zoom[hidden] { display: none; }
@@ -1189,6 +1193,10 @@ footer .ver { color: #9ca3af; }
 .pa-op:disabled { opacity: .3; cursor: default; }
 .pa-op[hidden] { display: none; }
 .pa-perigo { color: #ff8a80; border-color: rgba(255,138,128,0.4); }
+.pa-inline { position: absolute; z-index: 5; transform-origin: 0 0; margin: 0; padding: 0 2px; border: 1.5px solid #1a73e8; border-radius: 2px; box-shadow: 0 0 0 3px rgba(26,115,232,0.25); outline: none; font-family: Helvetica, Arial, sans-serif; line-height: 1.18; resize: none; overflow: hidden; white-space: pre; box-sizing: content-box; caret-color: #1a73e8; }
+.pa-palco.pa-zoom { overflow: auto; align-items: flex-start; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+.pa-palco.pa-zoom #paCanvas { margin: auto; flex-shrink: 0; }
+.pa-zoomtxt { min-width: 42px; text-align: center; font-size: 12.5px; color: rgba(255,255,255,0.8); font-variant-numeric: tabular-nums; }
 .pa-palco { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 6px 12px; overflow: hidden; }
 #paCanvas { max-width: 100%; max-height: 100%; background: #fff; border-radius: 3px; box-shadow: 0 20px 50px -12px rgba(0,0,0,0.7); touch-action: none; cursor: crosshair; -webkit-touch-callout: none; }
 .pa-dica { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(10,12,15,0.72); color: rgba(255,255,255,0.9); font-size: 12.5px; white-space: nowrap; pointer-events: none; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }
@@ -1789,7 +1797,7 @@ footer .ver { color: #9ca3af; }
           <button type="button" class="vw-btn" id="viewerMaisZoom" aria-label="Aumentar" title="Aumentar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         </div>
         <button type="button" class="vw-btn vw-acao" id="viewerRodar" aria-label="Rodar" title="Rodar 90°" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span class="vw-lbl">Rodar</span></button>
-        <button type="button" class="vw-btn vw-acao" id="viewerAnotar" aria-label="Editar e assinar" title="Editar e assinar: texto, assinatura, destacar, desenhar…" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span class="vw-lbl">Editar e assinar</span></button>
+        <button type="button" class="vw-btn vw-acao vw-destaque" id="viewerAnotar" aria-label="Editar PDF" title="Editar PDF: mudar texto, escrever, assinar, destacar…" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span class="vw-lbl vw-lbl-sempre">Editar PDF</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerEditar" aria-label="Cortar" title="Cortar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span class="vw-lbl">Cortar</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerPaginas" aria-label="Páginas" title="Páginas: selecionar, eliminar, rodar, mudar de lugar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/></svg><span class="vw-lbl">Páginas</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="vw-lbl">Enviar</span></button>
@@ -2069,7 +2077,7 @@ footer .ver { color: #9ca3af; }
     </div>
     <div class="sc-folha" id="peFolha"><div class="sc-proc" id="peProc"><span></span></div></div>
     <div class="sc-ferr" id="peFerr">
-      <button type="button" data-pe="anotar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Editar e assinar</span></button>
+      <button type="button" data-pe="anotar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Editar PDF</span></button>
       <button type="button" data-pe="cortar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span>Cortar</span></button>
       <button type="button" data-pe="rodar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Rodar</span></button>
       <button type="button" data-pe="rodartudo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="9" height="11" rx="1.5"/><path d="M8 5h9a2 2 0 0 1 2 2v9"/><path d="M15 2l2 3-3 2"/></svg><span>Rodar tudo</span></button>
@@ -2104,7 +2112,7 @@ footer .ver { color: #9ca3af; }
   <section class="sc-ecra" id="peAnot" hidden>
     <div class="sc-topo">
       <button type="button" class="sc-txtbtn" id="paVoltar">Voltar</button>
-      <div class="sc-titulo"><strong>Editar e assinar</strong><span id="paSub"></span></div>
+      <div class="sc-titulo"><strong>Editar PDF</strong><span id="paSub"></span></div>
       <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="paConcluir">Concluir</button>
     </div>
     <div class="pa-palco" id="paPalco"><canvas id="paCanvas"></canvas><div class="pa-dica" id="paDica"></div></div>
@@ -2113,7 +2121,8 @@ footer .ver { color: #9ca3af; }
       <div class="pa-grupo" id="paCores"><button type="button" class="pa-cor" data-pa-cor="#111111" style="--c:#111111" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#1a56db" style="--c:#1a56db" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#d93025" style="--c:#d93025" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#188038" style="--c:#188038" aria-label="Cor"></button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paMenor" title="Mais pequeno" aria-label="Mais pequeno">A−</button><button type="button" class="pa-op" id="paMaior" title="Maior" aria-label="Maior">A+</button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paDesfazer" title="Desfazer" aria-label="Desfazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button type="button" class="pa-op" id="paRefazer" title="Refazer" aria-label="Refazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button></div>
-      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" hidden>Mudar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" hidden>Apagar</button></div>
+      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" disabled>Mudar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" disabled>Apagar</button></div>
+      <div class="pa-grupo pa-zoomg"><button type="button" class="pa-op" id="paZoomMenos" title="Afastar" aria-label="Afastar">−</button><span class="pa-zoomtxt" id="paZoomTxt">100%</span><button type="button" class="pa-op" id="paZoomMais" title="Aproximar (letras maiores)" aria-label="Aproximar">+</button></div>
       <div class="pa-grupo pa-pags"><button type="button" class="pa-op" id="paAnt" aria-label="Página anterior">‹</button><button type="button" class="pa-op" id="paSeg" aria-label="Página seguinte">›</button><button type="button" class="pa-op pa-op-txt" id="paMais">Mais…</button></div>
     </div>
     <div class="sc-ferr pa-ferr" id="paFerr"><button type="button" data-pa="sel" title="Selecionar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 2-2 6z"/></svg><span>Selecionar</span></button><button type="button" data-pa="editar" title="Editar texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h11v2M9.5 5v14M7 19h5"/><path d="M14 19l6-6-2-2-6 6v2z"/></svg><span>Editar texto</span></button><button type="button" data-pa="texto" title="Texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button><button type="button" data-pa="assinar" title="Assinar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 4-9 6-9s0 9 3 9 3-5 5-5 2 3 4 3"/><path d="M3 21h18"/></svg><span>Assinar</span></button><button type="button" data-pa="data" title="Data"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Data</span></button><button type="button" data-pa="visto" title="Visto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Visto</span></button><button type="button" data-pa="cruz" title="Cruz"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Cruz</span></button><button type="button" data-pa="destacar" title="Destacar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/></svg><span>Destacar</span></button><button type="button" data-pa="desenhar" title="Desenhar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4-1 5-4 8-8l6-6a2.1 2.1 0 0 1 3 3l-6 6c-4 3-7 4-8 8"/></svg><span>Desenhar</span></button><button type="button" data-pa="ret" title="Retângulo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Retângulo</span></button><button type="button" data-pa="seta" title="Seta"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Seta</span></button><button type="button" data-pa="corretor" title="Corretor"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h10" stroke-dasharray="2 2"/></svg><span>Corretor</span></button><button type="button" data-pa="tapar" title="Tapar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="currentColor"/></svg><span>Tapar</span></button></div>
@@ -6620,7 +6629,7 @@ function pxLigarEventos(root) {
         !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
-        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar e assinar', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
+        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
         isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
         isEditor() && d && docFmt(d) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorPx(emp, d, { paginas: true }) } : null,
         isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
@@ -10155,7 +10164,7 @@ function edMenuItem(x) {
     else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
-  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar e assinar', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
+  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -12195,7 +12204,7 @@ function peTemAnot(p) { return !!((p.anot && p.anot.length) || (pe.extras && (pe
 /* --- ecrã --- */
 async function paAbrir(idx) {
   if (!pe) return;
-  pa = { idx: Number.isInteger(idx) ? idx : pe.atual, ferr: 'editar', cor: PA_CORES[0], tam: 1, sel: null, arr: null, hist: [], fut: [] };
+  pa = { idx: Number.isInteger(idx) ? idx : pe.atual, zoom: 1, ferr: 'editar', cor: PA_CORES[0], tam: 1, sel: null, arr: null, hist: [], fut: [] };
   peMostrar('anot');
   await paCarregarPagina();
 }
@@ -12208,6 +12217,7 @@ async function paCarregarPagina() {
   pa.sel = null;
   paAtualizarBarra();
   paDesenhar();
+  paAplicarZoom();
   if (pa.ferr === 'editar') paItensTexto().then(() => paDesenhar());
 }
 // Textos da página (do próprio PDF), com a caixa de cada um no referencial base (px)
@@ -12248,16 +12258,25 @@ async function paTrocarTexto(x, y, x1, y1) {
   let item = null;
   if (!arrastou) {
     const ja = paAcertar(x, y);
-    if (ja && ja.t === 'troca') { pa.sel = ja.id; paDesenhar(); return paEditarTexto(); } // já trocado: muda outra vez
+    if (ja && (ja.t === 'troca' || ja.t === 'texto')) { pa.sel = ja.id; paDesenhar(); return paEditarTexto(); } // já escrito: muda outra vez
     const b = paVistaParaBase(x, y), pad = pa.BW / 300;
     const itens = await paItensTexto();
     item = itens.find(it => b.x >= it.x0 - pad && b.x <= it.x1 + pad && b.y >= it.y0 - pad && b.y <= it.y1 + pad);
     if (!item) { toast(itens.length ? 'Toque em cima de um texto marcado a azul, ou arraste por cima da zona a mudar.' : 'Este documento é uma imagem (digitalizado): arraste por cima da zona que quer mudar.'); return; }
   }
-  const txt = await paPedirTexto(item ? item.str : '', item ? 'Mudar texto' : 'Escrever no lugar');
-  if (txt == null || (!txt.trim() && !item)) return;
+  let txt, cores;
   if (item) {
-    const cores = paCoresZona(item.x0, item.y0, item.x1, item.y1);
+    cores = paCoresZona(item.x0, item.y0, item.x1, item.y1);
+    const a = paBaseParaVista(item.x0, item.y0), b = paBaseParaVista(item.x1, item.y1), pd = item.fh * 0.08;
+    txt = await paEscrever({ r: { x: Math.min(a.x, b.x) - pd, y: Math.min(a.y, b.y) - pd, w: Math.abs(b.x - a.x) + pd * 2, h: Math.abs(b.y - a.y) + pd * 2 }, rodado: p.r !== 0, txt: item.str, fs: item.fh, cor: cores.texto, fundo: cores.fundo, bold: item.bold, titulo: 'Mudar texto' });
+  } else {
+    const a = paVistaParaBase(Math.min(x, x1), Math.min(y, y1)), b = paVistaParaBase(Math.max(x, x1), Math.max(y, y1));
+    cores = paCoresZona(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y));
+    txt = await paEscrever({ r: { x: Math.min(x, x1), y: Math.min(y, y1), w: Math.abs(x1 - x), h: Math.abs(y1 - y) }, txt: '', fs: Math.abs(y1 - y) * 0.72, cor: cores.texto, fundo: cores.fundo, titulo: 'Escrever no lugar' });
+  }
+  // apagar tudo num texto do documento = apagar esse texto (fica só a cor do fundo)
+  if (txt == null || (!txt.trim() && !item) || (item && txt === item.str)) return;
+  if (item) {
     const o = { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: item.fh / pa.BW, bold: item.bold, cor: cores.texto, fundo: cores.fundo };
     const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW);
     const pad = item.fh * 0.06, W0 = item.x1 - item.x0 + pad * 2, H0 = item.y1 - item.y0 + pad * 2;
@@ -12268,14 +12287,71 @@ async function paTrocarTexto(x, y, x1, y1) {
     o.cx = (item.x0 - pad + W / 2) / pa.BW; o.cy = (item.y0 - pad + H0 / 2) / pa.BH;
     (p.anot = p.anot || []).push(o); pa.sel = o.id; paMudou();
   } else {
-    const a = paVistaParaBase(Math.min(x, x1), Math.min(y, y1)), b = paVistaParaBase(Math.max(x, x1), Math.max(y, y1));
-    const cores = paCoresZona(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y));
     const hv = Math.abs(y1 - y), wv = Math.abs(x1 - x), linhas = Math.max(1, txt.split('\n').length);
     const fsV = Math.min(hv / linhas * 0.72, hv * 0.72);
     paNovoEm((x + x1) / 2, (y + y1) / 2, wv, hv, { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: fsV / pa.BW, cor: cores.texto, fundo: cores.fundo, padx: (fsV * 0.15) / pa.BW, desc: (hv * 0.18) / pa.BW });
     const o = paObjSel(), m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs }, pa.BW);
     if (m.w > o.w) { o.w = m.w; paDesenhar(); }
   }
+}
+// Escrever diretamente no documento (como no Adobe): uma caixa de texto aparece por cima do sítio,
+// com a mesma letra, cor e fundo. Enter ou tocar fora confirma; Esc cancela.
+// r = retângulo na vista (px do canvas); fs = tamanho da letra (px do canvas). Se não der (página rodada), usa a janela.
+function paEscrever(o) {
+  if (!o.r || o.rodado) return paPedirTexto(o.txt || '', o.titulo);
+  return new Promise(res => {
+    paFecharEscrita(true);
+    const cv = $pe('paCanvas'), palco = $pe('paPalco');
+    const cr = cv.getBoundingClientRect(), pr = palco.getBoundingClientRect(), k = cr.width / cv.width;
+    const ta = document.createElement('textarea');
+    ta.className = 'pa-inline'; ta.rows = 1; ta.spellcheck = false; ta.value = o.txt || '';
+    ta.setAttribute('aria-label', o.titulo || 'Texto');
+    const fsCss = Math.max(6, o.fs * k), esc = fsCss < 16 ? fsCss / 16 : 1; // iPhone: letra < 16px faz zoom ao escrever
+    const fs = fsCss / esc;
+    Object.assign(ta.style, {
+      left: (cr.left - pr.left + palco.scrollLeft + o.r.x * k) + 'px', top: (cr.top - pr.top + palco.scrollTop + o.r.y * k) + 'px',
+      fontSize: fs + 'px', fontWeight: o.bold ? '700' : '400', color: o.cor || '#111', background: o.fundo || 'rgba(255,255,255,0.92)',
+      transform: esc !== 1 ? `scale(${esc})` : '', minWidth: Math.max(40, o.r.w * k / esc) + 'px', height: Math.max(fs * 1.3, o.r.h * k / esc) + 'px'
+    });
+    const ajustar = () => {
+      ta.style.width = '0px'; ta.style.width = Math.max(parseFloat(ta.style.minWidth), ta.scrollWidth + fs * 0.6) + 'px';
+      ta.style.height = 'auto'; ta.style.height = Math.max(fs * 1.3, ta.scrollHeight) + 'px';
+    };
+    let feito = false;
+    const fim = v => { if (feito) return; feito = true; ta.remove(); pa.escrita = null; res(v); };
+    ta.addEventListener('input', ajustar);
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fim(ta.value); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fim(null); }
+    });
+    ta.addEventListener('blur', () => setTimeout(() => fim(ta.value), 0));
+    palco.appendChild(ta);
+    pa.escrita = { fim: v => fim(v === undefined ? ta.value : v) };
+    ajustar();
+    ta.focus();
+    const n = ta.value.length; try { ta.setSelectionRange(n, n); } catch (e) { /* sem cursor */ }
+  });
+}
+function paFecharEscrita(confirmar) { if (pa && pa.escrita) pa.escrita.fim(confirmar ? undefined : null); }
+// Zoom do documento no ecrã de edição (1 = página inteira)
+const PA_ZOOMS = [1, 1.5, 2, 3];
+function paAplicarZoom() {
+  if (!pa) return;
+  paFecharEscrita(true);
+  const cv = $pe('paCanvas'), palco = $pe('paPalco'), z = pa.zoom || 1;
+  if (z === 1) { cv.style.width = ''; cv.style.maxWidth = ''; cv.style.maxHeight = ''; palco.classList.remove('pa-zoom'); }
+  else {
+    const fit = Math.min(palco.clientWidth - 24, (palco.clientHeight - 12) * cv.width / cv.height);
+    cv.style.width = Math.round(fit * z) + 'px'; cv.style.maxWidth = 'none'; cv.style.maxHeight = 'none'; palco.classList.add('pa-zoom');
+  }
+  $pe('paZoomMenos').disabled = z === 1; $pe('paZoomMais').disabled = z === PA_ZOOMS[PA_ZOOMS.length - 1];
+  $pe('paZoomTxt').textContent = Math.round(z * 100) + '%';
+  paTouchAction();
+}
+// Com zoom, um dedo arrasta a página (nas ferramentas de tocar); nas de arrastar desenha
+function paTouchAction() {
+  const cv = $pe('paCanvas'), tocar = ['editar', 'texto', 'assinar', 'data', 'visto', 'cruz'].includes(pa.ferr);
+  cv.style.touchAction = (pa.zoom || 1) > 1 && tocar ? 'pan-x pan-y' : 'none';
 }
 function paGeo() {
   const p = pe.paginas[pa.idx], c = paCorte(p), cw = c.x1 - c.x0, ch = c.y1 - c.y0, q = p.r % 2 === 1;
@@ -12336,7 +12412,8 @@ function paDesenhar() {
   $pe('paSub').textContent = `Página ${pa.idx + 1} de ${pe.paginas.length}`;
   $pe('paAnt').disabled = pa.idx === 0; $pe('paSeg').disabled = pa.idx >= pe.paginas.length - 1;
   $pe('paDesfazer').disabled = !pa.hist.length; $pe('paRefazer').disabled = !pa.fut.length;
-  $pe('paApagar').hidden = !o; $pe('paEditarTxt').hidden = !(o && (o.t === 'texto' || o.t === 'troca'));
+  // sempre no lugar (só esbatidos), para o documento não saltar ao selecionar
+  $pe('paApagar').disabled = !o; $pe('paEditarTxt').disabled = !(o && (o.t === 'texto' || o.t === 'troca'));
 }
 function paObjSel() { const p = pe.paginas[pa.idx]; return pa.sel ? (p.anot || []).find(o => o.id === pa.sel) : null; }
 // Caixa de um objeto na vista (centro, tamanho e ângulo em px da vista)
@@ -12382,9 +12459,9 @@ async function paPedirTexto(valor, titulo) {
   return new Promise(res => { pa.txtRes = res; });
 }
 async function paTextoEm(x, y) {
-  const txt = await paPedirTexto('');
-  if (!txt || !txt.trim()) return;
   const cv = $pe('paCanvas'), fsV = cv.width * 0.024 * pa.tam;
+  const txt = await paEscrever({ r: { x, y, w: cv.width * 0.25, h: fsV * 1.3 }, txt: '', fs: fsV, cor: pa.cor, fundo: 'rgba(255,255,255,0.75)', titulo: 'Texto' });
+  if (!txt || !txt.trim()) return;
   const o = { t: 'texto', txt: txt.replace(/\s+$/, ''), fs: fsV / pa.BW, cor: pa.cor };
   const m = paMedirTexto(o, pa.BW);
   // o ponto tocado fica no canto de cima à esquerda do texto
@@ -12393,15 +12470,17 @@ async function paTextoEm(x, y) {
 }
 async function paEditarTexto() {
   const o = paObjSel(); if (!o || (o.t !== 'texto' && o.t !== 'troca')) return;
+  const k0 = paCaixaVista(o), rod = Math.abs(Math.sin(k0.ang)) > 0.01 || Math.cos(k0.ang) < 0;
+  const rect = { x: k0.cx - k0.w / 2, y: k0.cy - k0.h / 2, w: k0.w, h: k0.h };
   if (o.t === 'troca') {
-    const txt = await paPedirTexto(o.txt, 'Mudar texto'); if (txt == null) return;
+    const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: o.fundo, bold: o.bold, titulo: 'Mudar texto' }); if (txt == null || txt === o.txt) return;
     paGuardarHist(); o.txt = txt.replace(/\s+$/, '');
     const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW), W = m.w - o.fs * 0.4 + (o.padx || 0) * 2;
     if (W > o.w) { const k = paCaixaVista(o), cs = Math.cos(k.ang), sn = Math.sin(k.ang), dx = (W - o.w) * pa.BW / 2; const b = paVistaParaBase(k.cx + dx * cs, k.cy + dx * sn); o.cx = b.x / pa.BW; o.cy = b.y / pa.BH; o.w = W; }
     return paMudou();
   }
-  const txt = await paPedirTexto(o.txt);
-  if (txt == null) return;
+  const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: 'rgba(255,255,255,0.75)', bold: o.bold, titulo: 'Texto' });
+  if (txt == null || txt === o.txt) return;
   paGuardarHist();
   if (!txt.trim()) { const p = pe.paginas[pa.idx]; p.anot = p.anot.filter(x => x !== o); pa.sel = null; return paMudou(); }
   // o canto de cima à esquerda fica no mesmo sítio
@@ -12461,7 +12540,8 @@ function paLigar() {
   const cv = $pe('paCanvas');
   $pe('paFerr').addEventListener('click', e => {
     const b = e.target.closest('[data-pa]'); if (!b || !pa) return;
-    pa.ferr = b.dataset.pa; if (pa.ferr !== 'sel') pa.sel = null; paAtualizarBarra(); paDesenhar();
+    paFecharEscrita(true);
+    pa.ferr = b.dataset.pa; paTouchAction(); if (pa.ferr !== 'sel') pa.sel = null; paAtualizarBarra(); paDesenhar();
     if (pa.ferr === 'editar') paItensTexto().then(() => paDesenhar());
   });
   $pe('paCores').addEventListener('click', e => {
@@ -12480,10 +12560,14 @@ function paLigar() {
   $pe('paRefazer').addEventListener('click', () => { if (!pa || !pa.fut.length) return; pa.hist.push(JSON.stringify(pe.paginas.map(p => p.anot || []))); paRepor(pa.fut.pop()); pa.sel = null; paMudou(); });
   $pe('paApagar').addEventListener('click', () => pa && paApagarSel());
   $pe('paEditarTxt').addEventListener('click', () => pa && paEditarTexto());
-  $pe('paAnt').addEventListener('click', () => { if (pa && pa.idx > 0) { pa.idx--; paCarregarPagina(); } });
-  $pe('paSeg').addEventListener('click', () => { if (pa && pa.idx < pe.paginas.length - 1) { pa.idx++; paCarregarPagina(); } });
-  $pe('paVoltar').addEventListener('click', () => { if (!pa) return; pe.atual = pa.idx; pa = null; peMostrar('rever'); });
-  $pe('paConcluir').addEventListener('click', () => { if (!pa) return; pe.atual = pa.idx; pa = null; peMostrar('rever'); peAbrirGuardar(); });
+  $pe('paAnt').addEventListener('click', () => { if (pa && pa.idx > 0) { paFecharEscrita(true); pa.idx--; paCarregarPagina(); } });
+  $pe('paSeg').addEventListener('click', () => { if (pa && pa.idx < pe.paginas.length - 1) { paFecharEscrita(true); pa.idx++; paCarregarPagina(); } });
+  const sair = () => { paFecharEscrita(true); $pe('paCanvas').style.width = ''; $pe('paPalco').classList.remove('pa-zoom'); pe.atual = pa.idx; pa = null; peMostrar('rever'); };
+  $pe('paVoltar').addEventListener('click', () => { if (pa) sair(); });
+  // "Concluir": espera que o texto que está a ser escrito fique guardado
+  $pe('paConcluir').addEventListener('click', () => { if (!pa) return; setTimeout(() => { if (!pa) return; sair(); peAbrirGuardar(); }, 30); });
+  $pe('paZoomMenos').addEventListener('click', () => { if (!pa) return; pa.zoom = PA_ZOOMS[Math.max(0, PA_ZOOMS.indexOf(pa.zoom || 1) - 1)]; paAplicarZoom(); });
+  $pe('paZoomMais').addEventListener('click', () => { if (!pa) return; pa.zoom = PA_ZOOMS[Math.min(PA_ZOOMS.length - 1, PA_ZOOMS.indexOf(pa.zoom || 1) + 1)]; paAplicarZoom(); });
   $pe('paMais').addEventListener('click', ev => {
     if (!pa) return;
     const r = ev.currentTarget.getBoundingClientRect(), ex = pe.extras || (pe.extras = {});
@@ -12593,7 +12677,7 @@ function paLigar() {
     if ((ev.key === 'Delete' || ev.key === 'Backspace') && paObjSel() && !/input|textarea/i.test(ev.target.tagName)) { ev.preventDefault(); paApagarSel(); }
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { ev.preventDefault(); $pe(ev.shiftKey ? 'paRefazer' : 'paDesfazer').click(); }
   });
-  window.addEventListener('resize', () => { if (pa) paDesenhar(); });
+  window.addEventListener('resize', () => { if (pa) { paDesenhar(); paAplicarZoom(); } });
 }
 
 /* ---------- Ligações ---------- */
@@ -12713,7 +12797,7 @@ function peLigar() {
   $pe('pjFechar').addEventListener('click', () => closeModal('peJuntarModal'));
   window.addEventListener('resize', () => { if (pe && pe.ecra === 'corte') peLayoutCorte(); });
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape' || !pe || document.querySelector('#peGuardarModal.open, #peJuntarModal.open, #paTextoModal.open, #paAssModal.open, #textoModal.open')) return;
+    if (e.key !== 'Escape' || !pe || (pa && pa.escrita) || document.querySelector('#peGuardarModal.open, #peJuntarModal.open, #paTextoModal.open, #paAssModal.open, #textoModal.open')) return;
     e.stopImmediatePropagation();
     if (pe.ecra === 'corte') { pe.corte = null; peMostrar('rever'); } else if (pe.ecra === 'grelha') peMostrar('rever');
     else if (pe.ecra === 'anot') { if (pa && pa.sel) { pa.sel = null; paDesenhar(); } else { pe.atual = pa ? pa.idx : pe.atual; pa = null; peMostrar('rever'); } }
