@@ -1176,6 +1176,10 @@ footer .ver { color: #9ca3af; }
 .pe-modal { z-index: 6000; }
 #peFerr button[hidden] { display: none; }
 #textoModal { z-index: 6100; }
+.pa-lado { display: contents; }
+.pa-opcoes { order: 1; }
+.pa-palco { order: 2; }
+.pa-ferr { order: 3; }
 .pa-opcoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 2px 12px 8px; }
 .pa-grupo { display: flex; gap: 6px; align-items: center; }
 .pa-cor { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.35); background: var(--c); cursor: pointer; padding: 0; }
@@ -1381,6 +1385,22 @@ footer .ver { color: #9ca3af; }
   #pxContent:has(.px-bulk), #edContent:has(.px-bulk) { padding-bottom: 130px; }
   body.px-dragging .px-bulk { display: none; }
   body:has(.px-bulk) #pwaInstallBtn { display: none !important; }
+}
+
+/* Computador: documento em todo o ecrã e as ferramentas numa barra estreita ao lado (como no Adobe) */
+@media (min-width: 760px) {
+  #peAnot:not([hidden]) { display: grid; grid-template-columns: 190px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  #peAnot > .sc-topo { grid-column: 1 / -1; }
+  #peAnot .pa-palco { grid-column: 2; grid-row: 2; padding: 8px 16px 16px; }
+  .pa-lado { display: flex; flex-direction: column; grid-column: 1; grid-row: 2; min-height: 0; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); padding: 10px 10px 16px; gap: 12px; scrollbar-width: thin; }
+  .pa-lado .pa-ferr { order: 1; display: flex; flex-direction: column; gap: 1px; padding: 0; overflow: visible; }
+  .pa-lado .pa-ferr button { flex-direction: row; justify-content: flex-start; gap: 10px; min-width: 0; width: 100%; padding: 7px 10px; font-size: 13px; border-radius: 9px; text-align: left; }
+  .pa-lado .pa-ferr button:hover { background: rgba(255,255,255,0.07); }
+  .pa-lado .pa-ferr button svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .pa-lado .pa-ferr button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pa-lado .pa-opcoes { order: 2; justify-content: flex-start; padding: 10px 2px 0; border-top: 1px solid rgba(255,255,255,0.08); gap: 10px; }
+  .pa-lado .pa-grupo { flex-wrap: wrap; }
+  .pa-dica { bottom: 22px; }
 }
 </style>
 </head>
@@ -2087,15 +2107,17 @@ footer .ver { color: #9ca3af; }
       <div class="sc-titulo"><strong>Editar e assinar</strong><span id="paSub"></span></div>
       <button type="button" class="sc-txtbtn sc-txtbtn-forte" id="paConcluir">Concluir</button>
     </div>
+    <div class="pa-palco" id="paPalco"><canvas id="paCanvas"></canvas><div class="pa-dica" id="paDica"></div></div>
+    <aside class="pa-lado">
     <div class="pa-opcoes">
       <div class="pa-grupo" id="paCores"><button type="button" class="pa-cor" data-pa-cor="#111111" style="--c:#111111" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#1a56db" style="--c:#1a56db" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#d93025" style="--c:#d93025" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#188038" style="--c:#188038" aria-label="Cor"></button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paMenor" title="Mais pequeno" aria-label="Mais pequeno">A−</button><button type="button" class="pa-op" id="paMaior" title="Maior" aria-label="Maior">A+</button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paDesfazer" title="Desfazer" aria-label="Desfazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button type="button" class="pa-op" id="paRefazer" title="Refazer" aria-label="Refazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button></div>
-      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" hidden>Editar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" hidden>Apagar</button></div>
+      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" hidden>Mudar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" hidden>Apagar</button></div>
       <div class="pa-grupo pa-pags"><button type="button" class="pa-op" id="paAnt" aria-label="Página anterior">‹</button><button type="button" class="pa-op" id="paSeg" aria-label="Página seguinte">›</button><button type="button" class="pa-op pa-op-txt" id="paMais">Mais…</button></div>
     </div>
-    <div class="pa-palco" id="paPalco"><canvas id="paCanvas"></canvas><div class="pa-dica" id="paDica"></div></div>
-    <div class="sc-ferr pa-ferr" id="paFerr"><button type="button" data-pa="sel" title="Selecionar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 2-2 6z"/></svg><span>Selecionar</span></button><button type="button" data-pa="texto" title="Texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button><button type="button" data-pa="assinar" title="Assinar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 4-9 6-9s0 9 3 9 3-5 5-5 2 3 4 3"/><path d="M3 21h18"/></svg><span>Assinar</span></button><button type="button" data-pa="data" title="Data"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Data</span></button><button type="button" data-pa="visto" title="Visto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Visto</span></button><button type="button" data-pa="cruz" title="Cruz"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Cruz</span></button><button type="button" data-pa="destacar" title="Destacar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/></svg><span>Destacar</span></button><button type="button" data-pa="desenhar" title="Desenhar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4-1 5-4 8-8l6-6a2.1 2.1 0 0 1 3 3l-6 6c-4 3-7 4-8 8"/></svg><span>Desenhar</span></button><button type="button" data-pa="ret" title="Retângulo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Retângulo</span></button><button type="button" data-pa="seta" title="Seta"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Seta</span></button><button type="button" data-pa="corretor" title="Corretor"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h10" stroke-dasharray="2 2"/></svg><span>Corretor</span></button><button type="button" data-pa="tapar" title="Tapar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="currentColor"/></svg><span>Tapar</span></button></div>
+    <div class="sc-ferr pa-ferr" id="paFerr"><button type="button" data-pa="sel" title="Selecionar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 2-2 6z"/></svg><span>Selecionar</span></button><button type="button" data-pa="editar" title="Editar texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h11v2M9.5 5v14M7 19h5"/><path d="M14 19l6-6-2-2-6 6v2z"/></svg><span>Editar texto</span></button><button type="button" data-pa="texto" title="Texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button><button type="button" data-pa="assinar" title="Assinar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 4-9 6-9s0 9 3 9 3-5 5-5 2 3 4 3"/><path d="M3 21h18"/></svg><span>Assinar</span></button><button type="button" data-pa="data" title="Data"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Data</span></button><button type="button" data-pa="visto" title="Visto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Visto</span></button><button type="button" data-pa="cruz" title="Cruz"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Cruz</span></button><button type="button" data-pa="destacar" title="Destacar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/></svg><span>Destacar</span></button><button type="button" data-pa="desenhar" title="Desenhar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4-1 5-4 8-8l6-6a2.1 2.1 0 0 1 3 3l-6 6c-4 3-7 4-8 8"/></svg><span>Desenhar</span></button><button type="button" data-pa="ret" title="Retângulo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Retângulo</span></button><button type="button" data-pa="seta" title="Seta"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Seta</span></button><button type="button" data-pa="corretor" title="Corretor"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h10" stroke-dasharray="2 2"/></svg><span>Corretor</span></button><button type="button" data-pa="tapar" title="Tapar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="currentColor"/></svg><span>Tapar</span></button></div>
+    </aside>
   </section>
   <section class="sc-ecra" id="peCorte" hidden>
     <div class="sc-topo">
@@ -11891,8 +11913,8 @@ async function peGerarPdf(paginas) {
     const cb = pg.getCropBox();
     // ponto da página "base" (frações) → coordenadas do PDF
     const pdfPt = (bx, by) => { const w = peParaBase(bx, by, q0); return { x: cb.x + w.x * cb.width, y: cb.y + (1 - w.y) * cb.height }; };
-    if ((p.anot || []).some(o => o.t === 'tapar')) {
-      // "Tapar": a página passa a imagem, para o que está por baixo desaparecer mesmo
+    if ((p.anot || []).some(o => o.t === 'tapar' || o.t === 'troca')) {
+      // "Tapar" e "Editar texto": a página passa a imagem, para o texto antigo desaparecer mesmo do PDF
       const c = peCompor(peComAnot(await peBase(p, 2000), p), p, true);
       const jpg = await new Promise(r => c.toBlob(b => b.arrayBuffer().then(r), 'image/jpeg', 0.92));
       const img = await out.embedJpg(jpg);
@@ -12118,6 +12140,15 @@ function paDesenharObj(g, o, BW, BH) {
     g.textBaseline = 'top';
     if (o.auto) { g.textAlign = 'center'; linhas.forEach((l, i) => g.fillText(l, 0, -linhas.length * px * 0.61 + i * px * 1.22)); }
     else linhas.forEach((l, i) => g.fillText(l, -W / 2 + px * 0.2, -H / 2 + px * 0.12 + i * px * 1.22));
+  } else if (o.t === 'troca') {
+    // texto do documento trocado: tapa o antigo com a cor do fundo e escreve o novo no mesmo sítio
+    const px = o.fs * BW, linhas = String(o.txt || '').split('\n');
+    g.fillStyle = o.fundo || '#ffffff'; g.fillRect(-W / 2, -H / 2, W, H);
+    g.fillStyle = o.cor || '#111';
+    g.font = `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+    g.textBaseline = 'alphabetic';
+    const y0 = H / 2 - (o.desc || 0) * BW - (linhas.length - 1) * px * 1.18;
+    linhas.forEach((l, i) => g.fillText(l, -W / 2 + (o.padx || 0) * BW, y0 + i * px * 1.18));
   } else if (o.t === 'img') {
     const im = paImg(o.src);
     if (im.complete && im.naturalWidth) g.drawImage(im, -W / 2, -H / 2, W, H);
@@ -12164,7 +12195,7 @@ function peTemAnot(p) { return !!((p.anot && p.anot.length) || (pe.extras && (pe
 /* --- ecrã --- */
 async function paAbrir(idx) {
   if (!pe) return;
-  pa = { idx: Number.isInteger(idx) ? idx : pe.atual, ferr: 'sel', cor: PA_CORES[0], tam: 1, sel: null, arr: null, hist: [], fut: [] };
+  pa = { idx: Number.isInteger(idx) ? idx : pe.atual, ferr: 'editar', cor: PA_CORES[0], tam: 1, sel: null, arr: null, hist: [], fut: [] };
   peMostrar('anot');
   await paCarregarPagina();
 }
@@ -12177,6 +12208,74 @@ async function paCarregarPagina() {
   pa.sel = null;
   paAtualizarBarra();
   paDesenhar();
+  if (pa.ferr === 'editar') paItensTexto().then(() => paDesenhar());
+}
+// Textos da página (do próprio PDF), com a caixa de cada um no referencial base (px)
+async function paItensTexto() {
+  const p = pe.paginas[pa.idx], f = pe.fontes[p.s];
+  if (f.tipo !== 'pdf') return [];
+  if (pa.itens && pa.itens.idx === pa.idx && pa.itens.BW === pa.BW) return pa.itens.lista;
+  const pg = await f.doc.getPage(p.i + 1), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: pa.BW / v1.width });
+  const tc = await pg.getTextContent();
+  const lista = tc.items.filter(it => it.str && it.str.trim() && it.width > 0).map(it => {
+    const [a, b, c, d, e, ff] = it.transform, fh = Math.hypot(c, d) || it.height || 10;
+    if (Math.abs(b) > 0.01 * Math.abs(a) || Math.abs(c) > 0.01 * Math.abs(d)) return null; // texto inclinado: fica de fora
+    const p1 = vp.convertToViewportPoint(e, ff - fh * 0.24), p2 = vp.convertToViewportPoint(e + it.width, ff + fh * 0.92);
+    const base = vp.convertToViewportPoint(e, ff);
+    const familia = ((tc.styles && tc.styles[it.fontName]) || {}).fontFamily || '';
+    return { str: it.str, x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]), base, fh: fh * vp.scale, bold: /bold|black|heavy/i.test(it.fontName + ' ' + familia) };
+  }).filter(Boolean);
+  pa.itens = { idx: pa.idx, BW: pa.BW, lista };
+  return lista;
+}
+// Cores do fundo (à volta) e do texto (o mais escuro) numa zona da página base
+function paCoresZona(x0, y0, x1, y1) {
+  const g = pa.base.getContext('2d'), W = pa.base.width, H = pa.base.height;
+  const X0 = Math.max(0, Math.floor(x0) - 3), Y0 = Math.max(0, Math.floor(y0) - 3), X1 = Math.min(W - 1, Math.ceil(x1) + 3), Y1 = Math.min(H - 1, Math.ceil(y1) + 3);
+  const d = g.getImageData(X0, Y0, Math.max(1, X1 - X0 + 1), Math.max(1, Y1 - Y0 + 1)), w = d.width, h = d.height;
+  const hex = (r, gg, b) => '#' + [r, gg, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const br = [0, 0, 0, 0]; let esc = [17, 17, 17], lumMin = 999;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4, r = d.data[i], gg = d.data[i + 1], b = d.data[i + 2], lum = 0.3 * r + 0.59 * gg + 0.11 * b;
+    if (x < 2 || y < 2 || x >= w - 2 || y >= h - 2) { br[0] += r; br[1] += gg; br[2] += b; br[3]++; } // borda = fundo
+    if (lum < lumMin) { lumMin = lum; esc = [r, gg, b]; }
+  }
+  return { fundo: br[3] ? hex(br[0] / br[3], br[1] / br[3], br[2] / br[3]) : '#ffffff', texto: lumMin < 160 ? hex(...esc) : '#111111' };
+}
+// "Editar texto": troca um texto do documento (tocado) ou uma zona arrastada (documentos digitalizados)
+async function paTrocarTexto(x, y, x1, y1) {
+  const p = pe.paginas[pa.idx], arrastou = x1 != null && (Math.abs(x1 - x) > 6 || Math.abs(y1 - y) > 6);
+  let item = null;
+  if (!arrastou) {
+    const ja = paAcertar(x, y);
+    if (ja && ja.t === 'troca') { pa.sel = ja.id; paDesenhar(); return paEditarTexto(); } // já trocado: muda outra vez
+    const b = paVistaParaBase(x, y), pad = pa.BW / 300;
+    const itens = await paItensTexto();
+    item = itens.find(it => b.x >= it.x0 - pad && b.x <= it.x1 + pad && b.y >= it.y0 - pad && b.y <= it.y1 + pad);
+    if (!item) { toast(itens.length ? 'Toque em cima de um texto marcado a azul, ou arraste por cima da zona a mudar.' : 'Este documento é uma imagem (digitalizado): arraste por cima da zona que quer mudar.'); return; }
+  }
+  const txt = await paPedirTexto(item ? item.str : '', item ? 'Mudar texto' : 'Escrever no lugar');
+  if (txt == null || (!txt.trim() && !item)) return;
+  if (item) {
+    const cores = paCoresZona(item.x0, item.y0, item.x1, item.y1);
+    const o = { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: item.fh / pa.BW, bold: item.bold, cor: cores.texto, fundo: cores.fundo };
+    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW);
+    const pad = item.fh * 0.06, W0 = item.x1 - item.x0 + pad * 2, H0 = item.y1 - item.y0 + pad * 2;
+    const W = Math.max(W0, m.w * pa.BW - item.fh * 0.4 + pad * 2);
+    o.w = W / pa.BW; o.h = H0 / pa.BW; o.padx = pad / pa.BW; o.desc = (item.y1 + pad - item.base[1]) / pa.BW;
+    paGuardarHist();
+    o.id = paId(); o.r = 0; // alinhado com o texto do próprio documento
+    o.cx = (item.x0 - pad + W / 2) / pa.BW; o.cy = (item.y0 - pad + H0 / 2) / pa.BH;
+    (p.anot = p.anot || []).push(o); pa.sel = o.id; paMudou();
+  } else {
+    const a = paVistaParaBase(Math.min(x, x1), Math.min(y, y1)), b = paVistaParaBase(Math.max(x, x1), Math.max(y, y1));
+    const cores = paCoresZona(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y));
+    const hv = Math.abs(y1 - y), wv = Math.abs(x1 - x), linhas = Math.max(1, txt.split('\n').length);
+    const fsV = Math.min(hv / linhas * 0.72, hv * 0.72);
+    paNovoEm((x + x1) / 2, (y + y1) / 2, wv, hv, { t: 'troca', txt: txt.replace(/\s+$/, ''), fs: fsV / pa.BW, cor: cores.texto, fundo: cores.fundo, padx: (fsV * 0.15) / pa.BW, desc: (hv * 0.18) / pa.BW });
+    const o = paObjSel(), m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs }, pa.BW);
+    if (m.w > o.w) { o.w = m.w; paDesenhar(); }
+  }
 }
 function paGeo() {
   const p = pe.paginas[pa.idx], c = paCorte(p), cw = c.x1 - c.x0, ch = c.y1 - c.y0, q = p.r % 2 === 1;
@@ -12201,6 +12300,19 @@ function paDesenhar() {
   if (cv.width !== vista.width || cv.height !== vista.height) { cv.width = vista.width; cv.height = vista.height; }
   const g = cv.getContext('2d');
   g.clearRect(0, 0, cv.width, cv.height); g.drawImage(vista, 0, 0);
+  // "Editar texto": os textos do documento que se podem mudar ficam marcados a azul
+  if (pa.ferr === 'editar' && pa.itens && pa.itens.idx === pa.idx) {
+    g.save(); g.fillStyle = 'rgba(26,115,232,0.10)'; g.strokeStyle = 'rgba(26,115,232,0.55)'; g.lineWidth = Math.max(1, cv.width / 900);
+    const trocas = (pe.paginas[pa.idx].anot || []).filter(o => o.t === 'troca' && o.r === 0);
+    pa.itens.lista.forEach(it => {
+      const mx = (it.x0 + it.x1) / 2 / pa.BW, my = (it.y0 + it.y1) / 2 / pa.BH;
+      if (trocas.some(o => Math.abs(mx - o.cx) * pa.BW <= o.w * pa.BW / 2 && Math.abs(my - o.cy) * pa.BH <= o.h * pa.BW / 2)) return; // já trocado
+      const a = paBaseParaVista(it.x0, it.y0), b = paBaseParaVista(it.x1, it.y1);
+      const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+      g.fillRect(x, y, w, h); g.strokeRect(x, y, w, h);
+    });
+    g.restore();
+  }
   // traço a ser desenhado / caixa a ser criada
   if (pa.arr && pa.arr.novo) {
     const a = pa.arr;
@@ -12224,7 +12336,7 @@ function paDesenhar() {
   $pe('paSub').textContent = `Página ${pa.idx + 1} de ${pe.paginas.length}`;
   $pe('paAnt').disabled = pa.idx === 0; $pe('paSeg').disabled = pa.idx >= pe.paginas.length - 1;
   $pe('paDesfazer').disabled = !pa.hist.length; $pe('paRefazer').disabled = !pa.fut.length;
-  $pe('paApagar').hidden = !o; $pe('paEditarTxt').hidden = !(o && o.t === 'texto');
+  $pe('paApagar').hidden = !o; $pe('paEditarTxt').hidden = !(o && (o.t === 'texto' || o.t === 'troca'));
 }
 function paObjSel() { const p = pe.paginas[pa.idx]; return pa.sel ? (p.anot || []).find(o => o.id === pa.sel) : null; }
 // Caixa de um objeto na vista (centro, tamanho e ângulo em px da vista)
@@ -12261,10 +12373,12 @@ function paPonto(ev) {
   const cv = $pe('paCanvas'), r = cv.getBoundingClientRect();
   return { x: (ev.clientX - r.left) * cv.width / r.width, y: (ev.clientY - r.top) * cv.height / r.height };
 }
-async function paPedirTexto(valor) {
+async function paPedirTexto(valor, titulo) {
   $pe('paTxt').value = valor || '';
+  $pe('paTextoModal').querySelector('h2').textContent = titulo || 'Texto';
+  $pe('paTxtOk').textContent = titulo === 'Mudar texto' ? 'Trocar' : 'Pôr no documento';
   openModal('paTextoModal');
-  setTimeout(() => $pe('paTxt').focus(), 60);
+  setTimeout(() => { const t = $pe('paTxt'); t.focus(); t.select(); }, 60);
   return new Promise(res => { pa.txtRes = res; });
 }
 async function paTextoEm(x, y) {
@@ -12278,7 +12392,14 @@ async function paTextoEm(x, y) {
   pa.ferr = 'sel'; paAtualizarBarra();
 }
 async function paEditarTexto() {
-  const o = paObjSel(); if (!o || o.t !== 'texto') return;
+  const o = paObjSel(); if (!o || (o.t !== 'texto' && o.t !== 'troca')) return;
+  if (o.t === 'troca') {
+    const txt = await paPedirTexto(o.txt, 'Mudar texto'); if (txt == null) return;
+    paGuardarHist(); o.txt = txt.replace(/\s+$/, '');
+    const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold }, pa.BW), W = m.w - o.fs * 0.4 + (o.padx || 0) * 2;
+    if (W > o.w) { const k = paCaixaVista(o), cs = Math.cos(k.ang), sn = Math.sin(k.ang), dx = (W - o.w) * pa.BW / 2; const b = paVistaParaBase(k.cx + dx * cs, k.cy + dx * sn); o.cx = b.x / pa.BW; o.cy = b.y / pa.BH; o.w = W; }
+    return paMudou();
+  }
   const txt = await paPedirTexto(o.txt);
   if (txt == null) return;
   paGuardarHist();
@@ -12299,7 +12420,7 @@ function paApagarSel() {
 function paAtualizarBarra() {
   document.querySelectorAll('#paFerr [data-pa]').forEach(b => b.classList.toggle('on', b.dataset.pa === pa.ferr));
   document.querySelectorAll('#paCores [data-pa-cor]').forEach(b => b.classList.toggle('on', b.dataset.paCor === pa.cor));
-  const dica = { sel: 'Toque num objeto para o mover; puxe a bolinha azul para mudar o tamanho', texto: 'Toque onde quer escrever', assinar: 'Toque onde quer pôr a assinatura', data: 'Toque onde quer pôr a data', visto: 'Toque para marcar ✓', cruz: 'Toque para marcar ✗', destacar: 'Arraste por cima do texto a destacar', desenhar: 'Desenhe com o dedo ou o rato', ret: 'Arraste para desenhar um retângulo', seta: 'Arraste para desenhar uma seta', corretor: 'Arraste para tapar com branco (depois pode escrever por cima)', tapar: 'Arraste para tapar a preto (o que fica por baixo desaparece do PDF)' };
+  const dica = { editar: 'Toque num texto marcado a azul para o mudar (ou arraste por cima de uma zona)', sel: 'Toque num objeto para o mover; puxe a bolinha azul para mudar o tamanho', texto: 'Toque onde quer escrever', assinar: 'Toque onde quer pôr a assinatura', data: 'Toque onde quer pôr a data', visto: 'Toque para marcar ✓', cruz: 'Toque para marcar ✗', destacar: 'Arraste por cima do texto a destacar', desenhar: 'Desenhe com o dedo ou o rato', ret: 'Arraste para desenhar um retângulo', seta: 'Arraste para desenhar uma seta', corretor: 'Arraste para tapar com branco (depois pode escrever por cima)', tapar: 'Arraste para tapar a preto (o que fica por baixo desaparece do PDF)' };
   $pe('paDica').textContent = dica[pa.ferr] || '';
 }
 // Assinatura: desenhar, guardar e reutilizar
@@ -12338,7 +12459,11 @@ function paAssRecortada() {
 }
 function paLigar() {
   const cv = $pe('paCanvas');
-  $pe('paFerr').addEventListener('click', e => { const b = e.target.closest('[data-pa]'); if (!b || !pa) return; pa.ferr = b.dataset.pa; if (pa.ferr !== 'sel') pa.sel = null; paAtualizarBarra(); paDesenhar(); });
+  $pe('paFerr').addEventListener('click', e => {
+    const b = e.target.closest('[data-pa]'); if (!b || !pa) return;
+    pa.ferr = b.dataset.pa; if (pa.ferr !== 'sel') pa.sel = null; paAtualizarBarra(); paDesenhar();
+    if (pa.ferr === 'editar') paItensTexto().then(() => paDesenhar());
+  });
   $pe('paCores').addEventListener('click', e => {
     const b = e.target.closest('[data-pa-cor]'); if (!b || !pa) return;
     pa.cor = b.dataset.paCor; paAtualizarBarra();
@@ -12409,6 +12534,7 @@ function paLigar() {
     }
     // texto e assinatura abrem uma janela: só no "click" (senão, no telemóvel, o mesmo toque fecha-a logo)
     if (f === 'texto' || f === 'assinar') { pa.toque = { x, y, f }; return; }
+    if (f === 'editar') { pa.arr = { novo: true, editar: true, x0: x, y0: y, x1: x, y1: y }; return; }
     if (f === 'data') {
       const d = new Date(), txt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       const o = { t: 'texto', txt, fs: cvw * 0.024 * pa.tam / pa.BW, cor: pa.cor }, m = paMedirTexto(o, pa.BW);
@@ -12448,6 +12574,8 @@ function paLigar() {
       return;
     }
     const w = Math.abs(a.x1 - a.x0), h = Math.abs(a.y1 - a.y0), f = pa.ferr;
+    // "Editar texto": tocar = texto do documento; arrastar = zona (abre a janela no "click")
+    if (a.editar) { pa.toque = { f: 'editar', x: a.x0, y: a.y0, x1: a.x1, y1: a.y1 }; paDesenhar(); return; }
     if (w < 6 && h < 6) { paDesenhar(); return; }
     const cx = (a.x0 + a.x1) / 2, cy = (a.y0 + a.y1) / 2;
     if (f === 'seta') paNovoEm(cx, cy, Math.max(w, 8), Math.max(h, 8), { t: 'seta', lw: 0.004 * pa.tam, pts: [[(a.x0 - cx) / pa.BW, (a.y0 - cy) / pa.BW], [(a.x1 - cx) / pa.BW, (a.y1 - cy) / pa.BW]] });
@@ -12457,9 +12585,9 @@ function paLigar() {
   cv.addEventListener('click', () => {
     if (!pa || !pa.toque) return;
     const t = pa.toque; pa.toque = null;
-    if (t.f === 'texto') paTextoEm(t.x, t.y); else paAbrirAssinatura(t.x, t.y);
+    if (t.f === 'texto') paTextoEm(t.x, t.y); else if (t.f === 'editar') paTrocarTexto(t.x, t.y, t.x1, t.y1); else paAbrirAssinatura(t.x, t.y);
   });
-  cv.addEventListener('dblclick', ev => { if (!pa) return; const { x, y } = paPonto(ev), o = paAcertar(x, y); if (o && o.t === 'texto') { pa.sel = o.id; paEditarTexto(); } });
+  cv.addEventListener('dblclick', ev => { if (!pa) return; const { x, y } = paPonto(ev), o = paAcertar(x, y); if (o && (o.t === 'texto' || o.t === 'troca')) { pa.sel = o.id; paEditarTexto(); } });
   document.addEventListener('keydown', ev => {
     if (!pa || !pe || pe.ecra !== 'anot' || document.querySelector('#paTextoModal.open, #paAssModal.open, #textoModal.open')) return;
     if ((ev.key === 'Delete' || ev.key === 'Backspace') && paObjSel() && !/input|textarea/i.test(ev.target.tagName)) { ev.preventDefault(); paApagarSel(); }
