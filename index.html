@@ -3465,18 +3465,18 @@ function upLigar() {
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && upAberto()) upFechar(); });
 }
 
-function openUploadWidget(funcId, funcNome, pasta, ficheiros) {
+function openUploadWidget(funcId, funcNome, pasta, ficheiros, extra) {
   abrirEnvio({
     titulo: 'Anexar documentos',
     destino: (funcNome || 'Colaborador') + (pasta ? ' › ' + pasta : ''),
     pastaCloud: `${CLOUDINARY_FOLDER}/${funcId}`,
     formatos: UP_FORMATOS_DOC,
     ficheiros,
-    guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true)
+    guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true, extra)
   });
 }
 
-async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
+async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso, extra) {
   try {
     await db.collection('funcionarios').doc(funcId).collection('documentos').add({
       ...(pasta ? { pasta } : {}), // subpasta dentro da pasta do colaborador (Pastas)
@@ -3488,7 +3488,8 @@ async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso) {
       resource_type: info.resource_type,
       uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
       uploaded_by_uid: currentUser.uid,
-      uploaded_by_email: currentUser.email
+      uploaded_by_email: currentUser.email,
+      ...(extra || {}) // ex.: "edicao" = receita para voltar a editar (ver editor de documentos)
     });
     await db.collection('funcionarios').doc(funcId).update({
       doc_count: firebase.firestore.FieldValue.increment(1)
@@ -5922,12 +5923,14 @@ function abrirEditorPx(emp, d, opcoes) {
     outrosDocs: ((opcoes && opcoes.lista) || pxDocs || []).filter(x => x.id !== d.id && podeEditarDocFmt(docFmt(x))).map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })),
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })) : null,
-    guardarCopia: file => openUploadWidget(emp.id, emp.nome, pasta, [file]),
-    substituir: async file => {
+    edicao: d.edicao || null, pastaCloud: `${CLOUDINARY_FOLDER}/${emp.id}`,
+    guardarCopia: (file, edicao) => openUploadWidget(emp.id, emp.nome, pasta, [file], edicao ? { edicao } : null),
+    substituir: async (file, edicao) => {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
       await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
         original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
+        edicao: edicao || firebase.firestore.FieldValue.delete(),
         editado_em: firebase.firestore.FieldValue.serverTimestamp(), editado_por: currentUser ? currentUser.email : ''
       });
       logAudit('document_edit', emp.id, `${emp.nome}: "${docFullName(d)}" editado (substituído)`);
@@ -10351,17 +10354,17 @@ function edExtensao(info) {
   const m = /\.([a-z0-9]{2,5})$/i.exec(info.public_id || '') || /\.([a-z0-9]{2,5})$/i.exec(info.secure_url || '');
   return m ? m[1].toLowerCase() : '';
 }
-function edUpload(pai, ficheiros) {
+function edUpload(pai, ficheiros, extra) {
   abrirEnvio({
     titulo: 'Anexar ficheiros',
     destino: edCaminhoTxt(pai),
     pastaCloud: ED_CLOUD_FOLDER,
     formatos: ED_FORMATOS,
     ficheiros,
-    guardar: info => edGuardarFicheiro(pai, info, true)
+    guardar: info => edGuardarFicheiro(pai, info, true, extra)
   });
 }
-async function edGuardarFicheiro(pai, info, silencioso) {
+async function edGuardarFicheiro(pai, info, silencioso, extra) {
   const format = edExtensao(info);
   let base = info.original_filename || 'documento';
   if (format && base.toLowerCase().endsWith('.' + format)) base = base.slice(0, -(format.length + 1));
@@ -10370,7 +10373,7 @@ async function edGuardarFicheiro(pai, info, silencioso) {
       url: info.secure_url, public_id: info.public_id, original_filename: base, format, bytes: info.bytes,
       resource_type: info.resource_type || '', uploaded_at: firebase.firestore.FieldValue.serverTimestamp(),
       uploaded_by_email: currentUser ? currentUser.email : ''
-    }));
+    }, extra || {}));
     logAudit('empresa_docs', ref.id, `ficheiro anexado: ${edCaminhoTxt(pai)} › ${base}${format ? '.' + format : ''}`);
     if (!silencioso) toast('Ficheiro anexado.');
     return true;
@@ -10543,12 +10546,14 @@ function abrirEditorEd(x, opcoes) {
     outrosDocs: edFilhos(pai).filter(y => y.id !== x.id && y.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(y))).map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })),
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })) : null,
-    guardarCopia: file => edUpload(pai, [file]),
-    substituir: async file => {
+    edicao: x.edicao || null, pastaCloud: ED_CLOUD_FOLDER,
+    guardarCopia: (file, edicao) => edUpload(pai, [file], edicao ? { edicao } : null),
+    substituir: async (file, edicao) => {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
       await db.collection(ED_COL).doc(x.id).update({
         url: info.secure_url, public_id: info.public_id, bytes: info.bytes || file.size, format: info.format || upExt(file.name),
         original_filename: file.name.replace(/\.[^.]+$/, '').slice(0, 120),
+        edicao: edicao || firebase.firestore.FieldValue.delete(),
         updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by_email: currentUser ? currentUser.email : ''
       });
       logAudit('empresa_docs', x.id, `ficheiro editado (substituído): ${docFullName(x)}`);
@@ -11656,15 +11661,21 @@ async function abrirEditorDoc(o) {
     const buf = await r.arrayBuffer();
     const ehPdf = fonte.format === 'pdf';
     pe = { o, ehPdf, fontes: [], paginas: [], atual: 0, alterado: false };
-    if (ehPdf) await peJuntarFonte(buf);
-    else await peJuntarImagem(buf, peMimeDe(fonte.format));
+    let recuperado = false;
+    if (o.edicao) {
+      try { await peCarregarReceita(o.edicao); recuperado = true; }
+      catch (e) { console.warn('Receita da edição:', e); pe.fontes = []; pe.paginas = []; pe.extras = null; }
+    }
+    if (recuperado) pe.recuperado = true;
+    else if (ehPdf) await peJuntarFonte(buf, fonte.url);
+    else await peJuntarImagem(buf, peMimeDe(fonte.format), fonte.url);
     // "Juntar num PDF": os outros ficheiros entram a seguir, pela ordem em que foram escolhidos
     for (const [i, d] of (o.juntar || []).entries()) {
       const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A juntar ${i + 2} de ${o.juntar.length + 1}…`;
       const f = peFonteEditavel(d.url, d.format);
       const rr = await fetch(f.url); if (!rr.ok) throw new Error('HTTP ' + rr.status);
       const b2 = await rr.arrayBuffer();
-      if (f.format === 'pdf') await peJuntarFonte(b2); else await peJuntarImagem(b2, peMimeDe(f.format));
+      if (f.format === 'pdf') await peJuntarFonte(b2, f.url); else await peJuntarImagem(b2, peMimeDe(f.format), f.url);
     }
     if (o.juntar && o.juntar.length) pe.alterado = true;
     if (o.rodar) { pe.paginas.forEach(p => { p.r = 1; }); pe.alterado = true; } // "Rodar" direto do menu
@@ -11681,25 +11692,68 @@ async function abrirEditorDoc(o) {
   else if (o.paginas) peMostrar('grelha'); // "Páginas" direto do menu
   else if (o.anotar) paAbrir(0); // "Editar e assinar" direto
   if (o.juntar && o.juntar.length) toast(`${o.juntar.length + 1} ficheiros juntos (${pe.paginas.length} páginas). Confira a ordem e toque em "Concluir".`);
+  else if (pe.recuperado) toast('As edições anteriores estão soltas: pode mudá-las, movê-las ou apagá-las.');
 }
 function peMimeDe(formatoOuNome) {
   const f = String(formatoOuNome || '').toLowerCase().split('.').pop();
   return f === 'png' ? 'image/png' : f === 'webp' ? 'image/webp' : f === 'pdf' ? 'application/pdf' : 'image/jpeg';
 }
-async function peJuntarImagem(buf, mime) {
+// "url": de onde veio (para voltar a editar mais tarde); sem url (aparelho, câmara, página em branco) guarda os bytes
+async function peAddFonteImg(buf, mime, url) {
   const bmp = await scCarregarImagem(new Blob([buf], { type: mime }));
-  const s = pe.fontes.length;
-  pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, mime, cache: {} });
+  pe.fontes.push({ tipo: 'img', bmp, w: bmp.width, h: bmp.height, mime, cache: {}, url: url || null, buf: url ? null : buf });
+  return pe.fontes.length - 1;
+}
+async function peJuntarImagem(buf, mime, url) {
+  const s = await peAddFonteImg(buf, mime, url);
   pe.paginas.push({ s, i: 0, r: 0, crop: null });
 }
 // Saída em PDF sempre que o resultado tiver mais de uma página ou incluir um PDF
 function peSaidaPdf(paginas) { paginas = paginas || pe.paginas; return pe.ehPdf || paginas.length > 1 || paginas.some(p => pe.fontes[p.s].tipo === 'pdf'); }
-async function peJuntarFonte(buf) {
+async function peAddFontePdf(buf, url) {
   const lib = await carregarPdfJs();
   const doc = await lib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
-  const s = pe.fontes.length;
-  pe.fontes.push({ tipo: 'pdf', bytes: buf, doc, cache: {} });
-  for (let i = 0; i < doc.numPages; i++) pe.paginas.push({ s, i, r: 0, crop: null });
+  pe.fontes.push({ tipo: 'pdf', bytes: buf, doc, cache: {}, url: url || null });
+  return { s: pe.fontes.length - 1, n: doc.numPages };
+}
+async function peJuntarFonte(buf, url) {
+  const { s, n } = await peAddFontePdf(buf, url);
+  for (let i = 0; i < n; i++) pe.paginas.push({ s, i, r: 0, crop: null });
+}
+/* ---------- Voltar a editar: a "receita" da edição ----------
+   Ao guardar, além do PDF final guarda-se no registo do documento ("edicao", texto JSON):
+   os ficheiros de origem (endereços no Cloudinary) + páginas (ordem, rotação, corte) + anotações.
+   Ao abrir outra vez, o editor reconstrói tudo a partir dos originais: o que se escreveu,
+   assinou ou tapou continua solto e editável, sem perder qualidade. */
+async function peReceita(paginas) {
+  const usadas = [...new Set(paginas.map(p => p.s))], mapa = {}, fontes = [];
+  for (const s0 of usadas) {
+    const f = pe.fontes[s0];
+    if (!f.url) { // veio do aparelho / câmara / página em branco: guarda uma cópia do original
+      if (!pe.o.pastaCloud) return null;
+      const pdf = f.tipo === 'pdf', bytes = pdf ? f.bytes : f.buf;
+      if (!bytes) return null;
+      const ext = pdf ? 'pdf' : (f.mime === 'image/png' ? 'png' : 'jpg');
+      const info = await upCloudinary(new File([bytes], 'original-edicao.' + ext, { type: pdf ? 'application/pdf' : (f.mime || 'image/jpeg') }), pe.o.pastaCloud, () => {});
+      f.url = info.secure_url;
+    }
+    mapa[s0] = fontes.length;
+    fontes.push({ tipo: f.tipo, url: f.url, mime: f.mime || null });
+  }
+  const rec = JSON.stringify({ v: 1, fontes, paginas: paginas.map(p => ({ s: mapa[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: p.anot || [] })), extras: pe.extras || null });
+  return rec.length < 850000 ? rec : null; // limite de tamanho do registo
+}
+async function peCarregarReceita(txt) {
+  const rec = JSON.parse(txt);
+  if (!rec || rec.v !== 1 || !Array.isArray(rec.fontes) || !Array.isArray(rec.paginas) || !rec.paginas.length) throw new Error('receita inválida');
+  const idx = [];
+  for (const f of rec.fontes) {
+    const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const buf = await r.arrayBuffer();
+    idx.push(f.tipo === 'pdf' ? (await peAddFontePdf(buf, f.url)).s : await peAddFonteImg(buf, f.mime || 'image/jpeg', f.url));
+  }
+  pe.paginas = rec.paginas.map(p => ({ s: idx[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: Array.isArray(p.anot) ? p.anot : [] }));
+  pe.extras = rec.extras || null;
 }
 function fecharEditorDoc(forcar) {
   if (!pe) return;
@@ -12041,12 +12095,16 @@ async function peGuardar() {
   catch (e) { hideOverlay(); toast('Não foi possível criar o documento: ' + (e.message || e), true); return; }
   if (file.size > 10 * 1024 * 1024) { hideOverlay(); toast('O documento ficou com mais de 10 MB. Tire algumas páginas ou corte mais.', true); return; }
   const o = pe.o;
+  // receita para voltar a editar mais tarde (se falhar, guarda-se na mesma o documento)
+  let edicao = null;
+  try { const el = document.getElementById('overlayMsg'); if (el) el.textContent = 'A guardar as edições para poder voltar a editar…'; edicao = await peReceita(pe.extrair || pe.paginas); }
+  catch (e) { console.warn('Receita da edição:', e); }
   try {
-    if (copia && pe.extrair) { hideOverlay(); pe.extrair = null; o.guardarCopia(file); toast('Páginas extraídas para um documento novo. O original não mudou.'); }
-    else if (copia) { hideOverlay(); fecharEditorDoc(true); o.guardarCopia(file); }
+    if (copia && pe.extrair) { hideOverlay(); pe.extrair = null; o.guardarCopia(file, edicao); toast('Páginas extraídas para um documento novo. O original não mudou.'); }
+    else if (copia) { hideOverlay(); fecharEditorDoc(true); o.guardarCopia(file, edicao); }
     else {
       const el = document.getElementById('overlayMsg'); if (el) el.textContent = 'A substituir o original…';
-      await o.substituir(file);
+      await o.substituir(file, edicao);
       hideOverlay(); fecharEditorDoc(true);
       toast('Documento substituído pela versão editada.');
     }
@@ -12068,13 +12126,13 @@ function peAbrirJuntar(posicao) {
   openModal('peJuntarModal');
 }
 // Acrescenta no fim as páginas de um PDF ou uma foto
-async function peJuntarDe(obterBytes, nome, mime) {
+async function peJuntarDe(obterBytes, nome, mime, url) {
   closeModal('peJuntarModal');
   showOverlay('A anexar "' + nome + '"…');
   try {
     const n0 = pe.paginas.length, buf = await obterBytes();
-    if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf);
-    else await peJuntarImagem(buf, mime || peMimeDe(nome));
+    if ((mime || peMimeDe(nome)) === 'application/pdf') await peJuntarFonte(buf, url);
+    else await peJuntarImagem(buf, mime || peMimeDe(nome), url);
     const n = pe.paginas.length - n0;
     // no sítio escolhido (o "+" entre páginas), em vez de no fim
     const em = pe.inserirEm; pe.inserirEm = null;
@@ -12857,7 +12915,7 @@ function peLigar() {
     const b = e.target.closest('[data-pj]'); if (!b) return;
     const d = pe.o.outrosDocs[+b.dataset.pj];
     const f = peFonteEditavel(d.url, d.format);
-    peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format));
+    peJuntarDe(async () => { const r = await fetch(f.url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }, d.nome, peMimeDe(f.format), f.url);
   });
   $pe('pjAparelho').addEventListener('click', () => $pe('pjInput').click());
   $pe('pjBranco').addEventListener('click', () => {
