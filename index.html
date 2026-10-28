@@ -12232,23 +12232,88 @@ async function paCarregarPagina() {
   paAplicarZoom();
   if (pa.ferr === 'editar') paItensTexto().then(() => paDesenhar());
 }
-// Textos da página (do próprio PDF), com a caixa de cada um no referencial base (px)
+// Textos da página, com a caixa de cada um no referencial base (px):
+// 1) o texto que vem dentro do PDF; 2) se não houver (documento digitalizado / foto), reconhece as letras da imagem (OCR)
 async function paItensTexto() {
+  const idx = pa.idx, BW = pa.BW;
+  if (pa.itens && pa.itens.idx === idx && pa.itens.BW === BW) return pa.itens.lista;
+  if (pa.itensProm && pa.itensProm.idx === idx && pa.itensProm.BW === BW) return pa.itensProm.prom;
+  const prom = (async () => {
+    let lista = await paItensDoPdf();
+    if (!lista.length) lista = await paItensOcr();
+    if (pa && pa.idx === idx && pa.BW === BW) pa.itens = { idx, BW, lista };
+    return lista;
+  })();
+  pa.itensProm = { idx, BW, prom };
+  try { return await prom; } finally { if (pa && pa.itensProm && pa.itensProm.prom === prom) pa.itensProm = null; }
+}
+async function paItensDoPdf() {
   const p = pe.paginas[pa.idx], f = pe.fontes[p.s];
   if (f.tipo !== 'pdf') return [];
-  if (pa.itens && pa.itens.idx === pa.idx && pa.itens.BW === pa.BW) return pa.itens.lista;
+  const lib = await carregarPdfJs();
   const pg = await f.doc.getPage(p.i + 1), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: pa.BW / v1.width });
   const tc = await pg.getTextContent();
-  const lista = tc.items.filter(it => it.str && it.str.trim() && it.width > 0).map(it => {
-    const [a, b, c, d, e, ff] = it.transform, fh = Math.hypot(c, d) || it.height || 10;
-    if (Math.abs(b) > 0.01 * Math.abs(a) || Math.abs(c) > 0.01 * Math.abs(d)) return null; // texto inclinado: fica de fora
-    const p1 = vp.convertToViewportPoint(e, ff - fh * 0.24), p2 = vp.convertToViewportPoint(e + it.width, ff + fh * 0.92);
-    const base = vp.convertToViewportPoint(e, ff);
+  return tc.items.filter(it => it.str && it.str.trim() && it.width > 0).map(it => {
+    // matriz do texto já no ecrã (inclui rotações internas do PDF)
+    const [A, B, C, D, E, F] = lib.Util.transform(vp.transform, it.transform);
+    const fh = Math.hypot(C, D) || 10;
+    if (Math.abs(B) > 0.02 * Math.abs(A) || A <= 0) return null; // texto na vertical ou inclinado: fica de fora
+    const w = it.width * vp.scale * (Math.hypot(A, B) / (Math.hypot(...it.transform.slice(0, 2)) * vp.scale || 1));
     const familia = ((tc.styles && tc.styles[it.fontName]) || {}).fontFamily || '';
-    return { str: it.str, x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]), base, fh: fh * vp.scale, bold: /bold|black|heavy/i.test(it.fontName + ' ' + familia) };
+    return { str: it.str, x0: E, y0: F - fh * 0.92, x1: E + w, y1: F + fh * 0.24, base: [E, F], fh, bold: /bold|black|heavy/i.test(it.fontName + ' ' + familia) };
   }).filter(Boolean);
-  pa.itens = { idx: pa.idx, BW: pa.BW, lista };
-  return lista;
+}
+/* --- Reconhecimento de texto (OCR) para documentos digitalizados e fotos --- */
+const OCR_JS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorkerProm = null, ocrAviso = null;
+function carregarOcr() {
+  if (!ocrWorkerProm) ocrWorkerProm = (async () => {
+    if (!window.Tesseract) await new Promise((ok, falhou) => { const s = document.createElement('script'); s.src = OCR_JS; s.onload = ok; s.onerror = () => falhou(new Error('OCR indisponível')); document.head.appendChild(s); });
+    return window.Tesseract.createWorker('por', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+      langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0_best_int',
+      logger: m => { if (ocrAviso) ocrAviso(m); }
+    });
+  })().catch(e => { ocrWorkerProm = null; throw e; });
+  return ocrWorkerProm;
+}
+async function paItensOcr() {
+  const p = pe.paginas[pa.idx], f = pe.fontes[p.s], chave = p.i + '@' + pa.BW;
+  f.ocr = f.ocr || {};
+  if (f.ocr[chave]) return f.ocr[chave];
+  const dica = $pe('paDica'), antes = dica.textContent;
+  ocrAviso = m => {
+    if (!pa || pa.ferr !== 'editar') return;
+    dica.textContent = m.status === 'recognizing text' ? `A ler as letras da página… ${Math.round((m.progress || 0) * 100)}%` : 'A preparar a leitura das letras (só da primeira vez)…';
+  };
+  dica.textContent = 'A ler as letras da página…';
+  try {
+    const w = await carregarOcr();
+    const { data } = await w.recognize(pa.base);
+    // cada linha é partida onde há um espaço grande (colunas de formulários: "Morada:" | "R ABREU…")
+    const lista = [];
+    (data.lines || []).filter(l => l.text && l.text.trim() && l.confidence > 25).forEach(l => {
+      const ws = (l.words || []).filter(w => w.text && w.text.trim());
+      const h = l.bbox.y1 - l.bbox.y0;
+      const grupos = [];
+      ws.forEach(w => { const g = grupos[grupos.length - 1]; if (g && w.bbox.x0 - g[g.length - 1].bbox.x1 <= h * 1.3) g.push(w); else grupos.push([w]); });
+      (grupos.length ? grupos : [[{ text: l.text, bbox: l.bbox }]]).forEach(g => {
+        const x0 = Math.min(...g.map(w => w.bbox.x0)), x1 = Math.max(...g.map(w => w.bbox.x1));
+        const y0 = Math.min(...g.map(w => w.bbox.y0)), y1 = Math.max(...g.map(w => w.bbox.y1)), hh = Math.max(y1 - y0, h * 0.6);
+        if (x1 - x0 < 4) return;
+        lista.push({ str: g.map(w => w.text).join(' ').replace(/\s+$/, ''), x0, y0, x1, y1: y0 + hh, base: [x0, y0 + hh * 0.8], fh: hh * 0.82, bold: false, ocr: true });
+      });
+    });
+    f.ocr[chave] = lista;
+    if (pa && pa.ferr === 'editar') dica.textContent = lista.length ? 'Letras lidas: toque num texto marcado a azul para o mudar' : 'Não encontrei texto nesta página: arraste por cima da zona a mudar';
+    return lista;
+  } catch (e) {
+    console.warn('OCR:', e);
+    if (pa) dica.textContent = antes;
+    toast(navigator.onLine === false ? 'Sem Internet: não deu para ler as letras desta página. Arraste por cima da zona a mudar.' : 'Não deu para ler as letras desta página. Arraste por cima da zona a mudar.', true);
+    return [];
+  } finally { ocrAviso = null; }
 }
 // Cores do fundo (à volta) e do texto (o mais escuro) numa zona da página base
 function paCoresZona(x0, y0, x1, y1) {
@@ -12274,7 +12339,7 @@ async function paTrocarTexto(x, y, x1, y1) {
     const b = paVistaParaBase(x, y), pad = pa.BW / 300;
     const itens = await paItensTexto();
     item = itens.find(it => b.x >= it.x0 - pad && b.x <= it.x1 + pad && b.y >= it.y0 - pad && b.y <= it.y1 + pad);
-    if (!item) { toast(itens.length ? 'Toque em cima de um texto marcado a azul, ou arraste por cima da zona a mudar.' : 'Este documento é uma imagem (digitalizado): arraste por cima da zona que quer mudar.'); return; }
+    if (!item) { toast('Toque em cima de um texto marcado a azul, ou arraste por cima da zona que quer mudar.'); return; }
   }
   let txt, cores;
   if (item) {
