@@ -1193,6 +1193,32 @@ footer .ver { color: #9ca3af; }
 .pa-op:disabled { opacity: .3; cursor: default; }
 .pa-op[hidden] { display: none; }
 .pa-perigo { color: #ff8a80; border-color: rgba(255,138,128,0.4); }
+.pa-formatar, .pa-outras { display: flex; flex-direction: column; gap: 8px; }
+.pa-tit { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+.pa-linha { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pa-sel { height: 32px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.08) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; font-size: 13px; padding: 0 8px; min-width: 0; }
+.pa-sel option { color: #111; -webkit-text-fill-color: #111; background: #fff; }
+#paFonte { width: 100%; }
+.pa-sel-tam { width: 64px; }
+.pa-sel-entre { width: 66px; }
+.pa-corlivre { width: 32px; height: 32px; padding: 0; border: 1px solid rgba(255,255,255,0.25); border-radius: 9px; background: none !important; cursor: pointer; }
+.pa-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 2px; }
+.pa-op.pa-tog.on { background: rgba(255,213,74,0.2); border-color: #ffd54a; color: #ffd54a; }
+.pa-op b, .pa-op i, .pa-op u { font-family: Georgia, serif !important; font-size: 15px; }
+.pa-outras button { text-align: left; background: none; border: none; color: rgba(255,255,255,0.88); font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 9px; cursor: pointer; }
+.pa-outras button:hover { background: rgba(255,255,255,0.07); }
+.pa-formatar { order: 1; padding: 0 12px 6px; }
+.pa-outras { display: none; }
+/* telemóvel: o painel abre com o botão "Aa Formatar" e flutua por cima do documento (não o empurra); tocar no documento fecha-o */
+.pa-so-tel { display: none; }
+@media (max-width: 759px) {
+  .pa-so-tel { display: inline-flex; }
+  #peAnot:not(.pa-fmt-aberto) .pa-formatar { display: none; }
+  #peAnot { position: relative; }
+  .pa-formatar { position: absolute; left: 8px; right: 8px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 6; background: rgba(18,20,24,0.96); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 10px 10px 8px; box-shadow: 0 12px 30px rgba(0,0,0,0.5); gap: 6px; }
+  .pa-formatar .pa-tit { display: none; }
+  .pa-formatar .pa-linha { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+}
 .pa-inline { position: absolute; z-index: 5; transform-origin: 0 0; margin: 0; padding: 0 2px; border: 1.5px solid #1a73e8; border-radius: 2px; box-shadow: 0 0 0 3px rgba(26,115,232,0.25); outline: none; font-family: Helvetica, Arial, sans-serif; line-height: 1.18; resize: none; overflow: hidden; white-space: pre; box-sizing: content-box; caret-color: #1a73e8; }
 .pa-palco.pa-zoom { overflow: auto; align-items: flex-start; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
 .pa-palco.pa-zoom #paCanvas { margin: auto; flex-shrink: 0; }
@@ -1398,10 +1424,12 @@ footer .ver { color: #9ca3af; }
 
 /* Computador: documento em todo o ecrã e as ferramentas numa barra estreita ao lado (como no Adobe) */
 @media (min-width: 760px) {
-  #peAnot:not([hidden]) { display: grid; grid-template-columns: 190px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  #peAnot:not([hidden]) { display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   #peAnot > .sc-topo { grid-column: 1 / -1; }
   #peAnot .pa-palco { grid-column: 2; grid-row: 2; padding: 8px 16px 16px; }
   .pa-lado { display: flex; flex-direction: column; grid-column: 1; grid-row: 2; min-height: 0; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); padding: 10px 10px 16px; gap: 12px; scrollbar-width: thin; }
+  .pa-lado .pa-formatar { order: 0; display: flex !important; padding: 2px 2px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .pa-lado .pa-outras { order: 3; display: flex; padding: 10px 2px 0; border-top: 1px solid rgba(255,255,255,0.08); gap: 1px; }
   .pa-lado .pa-ferr { order: 1; display: flex; flex-direction: column; gap: 1px; padding: 0; overflow: visible; }
   .pa-lado .pa-ferr button { flex-direction: row; justify-content: flex-start; gap: 10px; min-width: 0; width: 100%; padding: 7px 10px; font-size: 13px; border-radius: 9px; text-align: left; }
   .pa-lado .pa-ferr button:hover { background: rgba(255,255,255,0.07); }
@@ -2118,15 +2146,26 @@ footer .ver { color: #9ca3af; }
     </div>
     <div class="pa-palco" id="paPalco"><canvas id="paCanvas"></canvas><div class="pa-dica" id="paDica"></div></div>
     <aside class="pa-lado">
+    <div class="pa-formatar" id="paFormatar">
+      <div class="pa-tit" id="paFormTit">Formatar texto</div>
+      <select id="paFonte" class="pa-sel" title="Fonte" aria-label="Fonte"><option value="doc">Do documento</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Calibri">Calibri</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Courier New">Courier New</option></select>
+      <div class="pa-linha"><select id="paTam" class="pa-sel pa-sel-tam" title="Tamanho da letra (pontos)" aria-label="Tamanho"></select><input type="color" id="paCorLivre" class="pa-corlivre" title="Cor do texto" aria-label="Cor"><button type="button" class="pa-op pa-tog" id="paNeg" title="Negrito" aria-label="Negrito"><b>B</b></button><button type="button" class="pa-op pa-tog" id="paIta" title="Itálico" aria-label="Itálico"><i>I</i></button><button type="button" class="pa-op pa-tog" id="paSubl" title="Sublinhado" aria-label="Sublinhado"><u>U</u></button></div>
+      <div class="pa-linha"><button type="button" class="pa-op pa-tog" data-pa-alinha="left" title="Alinhar à esquerda" aria-label="Alinhar à esquerda"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button><button type="button" class="pa-op pa-tog" data-pa-alinha="center" title="Centrar" aria-label="Centrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button><button type="button" class="pa-op pa-tog" data-pa-alinha="right" title="Alinhar à direita" aria-label="Alinhar à direita"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button><span class="pa-sep"></span><select id="paEntre" class="pa-sel pa-sel-entre" title="Espaço entre linhas" aria-label="Espaço entre linhas"><option value="1">1,0</option><option value="1.15">1,15</option><option value="1.18">1,18</option><option value="1.2">1,2</option><option value="1.5">1,5</option><option value="2">2,0</option></select></div>
+    </div>
     <div class="pa-opcoes">
       <div class="pa-grupo" id="paCores"><button type="button" class="pa-cor" data-pa-cor="#111111" style="--c:#111111" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#1a56db" style="--c:#1a56db" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#d93025" style="--c:#d93025" aria-label="Cor"></button><button type="button" class="pa-cor" data-pa-cor="#188038" style="--c:#188038" aria-label="Cor"></button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paMenor" title="Mais pequeno" aria-label="Mais pequeno">A−</button><button type="button" class="pa-op" id="paMaior" title="Maior" aria-label="Maior">A+</button></div>
       <div class="pa-grupo"><button type="button" class="pa-op" id="paDesfazer" title="Desfazer" aria-label="Desfazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button type="button" class="pa-op" id="paRefazer" title="Refazer" aria-label="Refazer"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button></div>
-      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" disabled>Mudar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" disabled>Apagar</button></div>
+      <div class="pa-grupo"><button type="button" class="pa-op pa-op-txt pa-so-tel" id="paFmtBtn" title="Fonte, tamanho, negrito…">Aa Formatar</button><button type="button" class="pa-op pa-op-txt" id="paEditarTxt" disabled>Mudar texto</button><button type="button" class="pa-op pa-op-txt pa-perigo" id="paApagar" disabled>Apagar</button></div>
       <div class="pa-grupo pa-zoomg"><button type="button" class="pa-op" id="paZoomMenos" title="Afastar" aria-label="Afastar">−</button><span class="pa-zoomtxt" id="paZoomTxt">100%</span><button type="button" class="pa-op" id="paZoomMais" title="Aproximar (letras maiores)" aria-label="Aproximar">+</button></div>
       <div class="pa-grupo pa-pags"><button type="button" class="pa-op" id="paAnt" aria-label="Página anterior">‹</button><button type="button" class="pa-op" id="paSeg" aria-label="Página seguinte">›</button><button type="button" class="pa-op pa-op-txt" id="paMais">Mais…</button></div>
     </div>
-    <div class="sc-ferr pa-ferr" id="paFerr"><button type="button" data-pa="sel" title="Selecionar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 2-2 6z"/></svg><span>Selecionar</span></button><button type="button" data-pa="editar" title="Editar texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h11v2M9.5 5v14M7 19h5"/><path d="M14 19l6-6-2-2-6 6v2z"/></svg><span>Editar texto</span></button><button type="button" data-pa="texto" title="Texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button><button type="button" data-pa="assinar" title="Assinar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 4-9 6-9s0 9 3 9 3-5 5-5 2 3 4 3"/><path d="M3 21h18"/></svg><span>Assinar</span></button><button type="button" data-pa="data" title="Data"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Data</span></button><button type="button" data-pa="visto" title="Visto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Visto</span></button><button type="button" data-pa="cruz" title="Cruz"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Cruz</span></button><button type="button" data-pa="destacar" title="Destacar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/></svg><span>Destacar</span></button><button type="button" data-pa="desenhar" title="Desenhar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4-1 5-4 8-8l6-6a2.1 2.1 0 0 1 3 3l-6 6c-4 3-7 4-8 8"/></svg><span>Desenhar</span></button><button type="button" data-pa="ret" title="Retângulo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Retângulo</span></button><button type="button" data-pa="seta" title="Seta"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Seta</span></button><button type="button" data-pa="corretor" title="Corretor"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h10" stroke-dasharray="2 2"/></svg><span>Corretor</span></button><button type="button" data-pa="tapar" title="Tapar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="currentColor"/></svg><span>Tapar</span></button></div>
+    <div class="sc-ferr pa-ferr" id="paFerr"><button type="button" data-pa="sel" title="Selecionar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 2-2 6z"/></svg><span>Selecionar</span></button><button type="button" data-pa="editar" title="Editar texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h11v2M9.5 5v14M7 19h5"/><path d="M14 19l6-6-2-2-6 6v2z"/></svg><span>Editar texto</span></button><button type="button" data-pa="texto" title="Texto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button><button type="button" data-pa="imagem" title="Imagem"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg><span>Imagem</span></button><button type="button" data-pa="assinar" title="Assinar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 4-9 6-9s0 9 3 9 3-5 5-5 2 3 4 3"/><path d="M3 21h18"/></svg><span>Assinar</span></button><button type="button" data-pa="data" title="Data"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Data</span></button><button type="button" data-pa="visto" title="Visto"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Visto</span></button><button type="button" data-pa="cruz" title="Cruz"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Cruz</span></button><button type="button" data-pa="destacar" title="Destacar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/></svg><span>Destacar</span></button><button type="button" data-pa="desenhar" title="Desenhar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4-1 5-4 8-8l6-6a2.1 2.1 0 0 1 3 3l-6 6c-4 3-7 4-8 8"/></svg><span>Desenhar</span></button><button type="button" data-pa="ret" title="Retângulo"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Retângulo</span></button><button type="button" data-pa="seta" title="Seta"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Seta</span></button><button type="button" data-pa="corretor" title="Corretor"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h10" stroke-dasharray="2 2"/></svg><span>Corretor</span></button><button type="button" data-pa="tapar" title="Tapar"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="currentColor"/></svg><span>Tapar</span></button></div>
+    <div class="pa-outras">
+      <div class="pa-tit">Outras opções</div>
+      <button type="button" data-pa-outra="organizar">Organizar páginas</button><button type="button" data-pa-outra="combinar">Combinar ficheiros</button><button type="button" data-pa-outra="cortar">Cortar página</button><button type="button" data-pa-outra="numerar">Numerar páginas</button><button type="button" data-pa-outra="marca">Marca d’água</button>
+      <input type="file" id="paImgInput" accept="image/*" hidden>
+    </div>
     </aside>
   </section>
   <section class="sc-ecra" id="peCorte" hidden>
@@ -11740,6 +11779,15 @@ async function peReceita(paginas) {
     mapa[s0] = fontes.length;
     fontes.push({ tipo: f.tipo, url: f.url, mime: f.mime || null });
   }
+  // imagens grandes postas na página (fotos, logótipos) vão para o Cloudinary; na receita fica só o endereço
+  for (const p of paginas) for (const o of (p.anot || [])) {
+    if (o.t === 'img' && /^data:/.test(o.src || '') && o.src.length > 60000 && pe.o.pastaCloud) {
+      const blob = await (await fetch(o.src)).blob();
+      const info = await upCloudinary(new File([blob], 'imagem-edicao.' + (blob.type === 'image/png' ? 'png' : 'jpg'), { type: blob.type }), pe.o.pastaCloud, () => {});
+      const im = paImgs.get(o.src); if (im) paImgs.set(info.secure_url, im);
+      o.src = info.secure_url;
+    }
+  }
   const rec = JSON.stringify({ v: 1, fontes, paginas: paginas.map(p => ({ s: mapa[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: p.anot || [] })), extras: pe.extras || null });
   return rec.length < 850000 ? rec : null; // limite de tamanho do registo
 }
@@ -12166,7 +12214,7 @@ let pa = null; // estado do ecrã { idx, base, BW, BH, ferr, cor, tam, sel, arr,
 const paImgs = new Map(); // dataURL → Image (assinaturas)
 function paImg(src) {
   let im = paImgs.get(src);
-  if (!im) { im = new Image(); im.onload = () => { if (pa) paDesenhar(); }; im.src = src; paImgs.set(src, im); }
+  if (!im) { im = new Image(); if (/^https?:/.test(src)) im.crossOrigin = 'anonymous'; im.onload = () => { if (pa) paDesenhar(); }; im.src = src; paImgs.set(src, im); }
   return im;
 }
 async function paImgsProntas() {
@@ -12202,8 +12250,15 @@ function paMedirTexto(o, BW) {
   const px = o.fs * BW;
   g.font = paFonteCss(o, px);
   const linhas = String(o.txt || '').split('\n');
-  const larg = Math.max(...linhas.map(l => g.measureText(l).width), px * 0.5);
-  return { w: (larg + px * 0.4) / BW, h: (linhas.length * px * 1.22 + px * 0.25) / BW };
+  const larg = Math.max(...linhas.map(l => g.measureText(l).width), px * 0.5), E = o.entre || 1.22;
+  return { w: (larg + px * 0.4) / BW, h: ((linhas.length - 1) * px * E + px * 1.22 + px * 0.25) / BW };
+}
+// Uma linha de texto com alinhamento e sublinhado (dy = posição do sublinhado em relação a y)
+function paLinhaTexto(g, l, o, W, y, px, pad, dy) {
+  const al = o.alinha || 'left', larg = g.measureText(l).width;
+  const x = al === 'center' ? -larg / 2 : al === 'right' ? W / 2 - pad - larg : -W / 2 + pad;
+  g.textAlign = 'left'; g.fillText(l, x, y);
+  if (o.sub && l.trim()) { g.save(); g.strokeStyle = g.fillStyle; g.lineWidth = Math.max(1, px * 0.06); g.beginPath(); g.moveTo(x, y + dy); g.lineTo(x + larg, y + dy); g.stroke(); g.restore(); }
 }
 // Desenha um objeto no referencial base (canvas BW×BH)
 function paDesenharObj(g, o, BW, BH) {
@@ -12216,11 +12271,11 @@ function paDesenharObj(g, o, BW, BH) {
   g.strokeStyle = g.fillStyle = o.cor || '#111';
   g.lineWidth = lw; g.lineCap = 'round'; g.lineJoin = 'round';
   if (o.t === 'texto') {
-    const px = o.fs * BW, linhas = String(o.txt || '').split('\n');
-    g.font = `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+    const px = o.fs * BW, linhas = String(o.txt || '').split('\n'), E = o.entre || 1.22;
+    g.font = paFonteCss(o, px);
     g.textBaseline = 'top';
     if (o.auto) { g.textAlign = 'center'; linhas.forEach((l, i) => g.fillText(l, 0, -linhas.length * px * 0.61 + i * px * 1.22)); }
-    else linhas.forEach((l, i) => g.fillText(l, -W / 2 + px * 0.2, -H / 2 + px * 0.12 + i * px * 1.22));
+    else linhas.forEach((l, i) => paLinhaTexto(g, l, o, W, -H / 2 + px * 0.12 + i * px * E, px, px * 0.2, px * 0.9));
   } else if (o.t === 'troca') {
     // texto do documento trocado: tapa o antigo com a cor do fundo e escreve o novo no mesmo sítio
     const px = o.fs * BW, linhas = String(o.txt || '').split('\n');
@@ -12228,8 +12283,8 @@ function paDesenharObj(g, o, BW, BH) {
     g.fillStyle = o.cor || '#111';
     g.font = paFonteCss(o, px);
     g.textBaseline = 'alphabetic';
-    const y0 = H / 2 - (o.desc || 0) * BW - (linhas.length - 1) * px * 1.18;
-    linhas.forEach((l, i) => g.fillText(l, -W / 2 + (o.padx || 0) * BW, y0 + i * px * 1.18));
+    const E = o.entre || 1.18, y0 = H / 2 - (o.desc || 0) * BW - (linhas.length - 1) * px * E;
+    linhas.forEach((l, i) => paLinhaTexto(g, l, o, W, y0 + i * px * E, px, (o.padx || 0) * BW, px * 0.12));
   } else if (o.t === 'img') {
     const im = paImg(o.src);
     if (im.complete && im.naturalWidth) g.drawImage(im, -W / 2, -H / 2, W, H);
@@ -12287,6 +12342,9 @@ async function paCarregarPagina() {
   pa.base = await peBase(p, larg);
   pa.BW = pa.base.width; pa.BH = pa.base.height;
   await peMapearFontes(p);
+  // px da página base por ponto (para o tamanho da letra em pontos, como no Word/Adobe)
+  const fp = pe.fontes[p.s];
+  pa.ptPx = pa.BW / (fp.tipo === 'pdf' ? (await fp.doc.getPage(p.i + 1)).getViewport({ scale: 1 }).width : 595.28);
   pa.sel = null;
   paAtualizarBarra();
   paDesenhar();
@@ -12372,15 +12430,20 @@ function paFbCarregar() {
     try { const ff = new FontFace(nome, locais.map(l => `local("${l}")`).join(', ')); document.fonts.add(ff); ff.load().then(() => { if (pa) paDesenhar(); }).catch(() => document.fonts.delete(ff)); } catch (e) { /* sem fontes locais */ }
   });
 }
-// "font" do canvas / caixa de texto para um objeto com a fonte do documento
+// "font" do canvas / caixa de texto: fonte escolhida, ou a do documento (com negrito/itálico do objeto)
 function paFonteCss(o, px) {
-  const f = o.fonte, interno = f && pe && pe.fontesMapa && pe.fontesMapa[f.real];
-  if (!f) return `${o.bold ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+  const f = o.fonte;
+  const ng = o.bold != null ? !!o.bold : !!(f && f.bold), it = o.italic != null ? !!o.italic : !!(f && f.italic);
+  if (o.familia && o.familia !== 'doc' && PA_FONTES[o.familia]) return `${it ? 'italic ' : ''}${ng ? '700 ' : ''}${px}px ${PA_FONTES[o.familia]}`;
+  if (!f) return `${it ? 'italic ' : ''}${ng ? '700 ' : ''}${px}px Helvetica, Arial, sans-serif`;
+  const interno = pe && pe.fontesMapa && pe.fontesMapa[f.real];
   paFbCarregar();
   const serif = /serif/.test(f.fam) && !/sans-serif/.test(f.fam);
-  const fb = f.bold ? (serif ? '"PA Serif Negrito", ' : '"PA Sans Negrito", ') : f.italic ? (serif ? '"PA Serif Italico", ' : '"PA Sans Italico", ') : '';
-  // com a fonte original embutida o negrito já vem nas letras (pedir 700 engrossava-as ainda mais)
-  return `${f.italic && !interno ? 'italic ' : ''}${f.bold && !interno ? '700 ' : ''}${px}px ${interno ? `"${interno}", ` : ''}${fb}${f.fam}`;
+  const fb = ng ? (serif ? '"PA Serif Negrito", ' : '"PA Sans Negrito", ') : it ? (serif ? '"PA Serif Italico", ' : '"PA Sans Italico", ') : '';
+  // com a fonte original embutida o negrito/itálico já vem nas letras (só se força quando a original não o tinha)
+  const peso = interno ? (ng && !f.bold ? '700 ' : '') : (ng ? '700 ' : '');
+  const estilo = interno ? (it && !f.italic ? 'italic ' : '') : (it ? 'italic ' : '');
+  return `${estilo}${peso}${px}px ${interno ? `"${interno}", ` : ''}${fb}${f.fam}`;
 }
 /* --- Reconhecimento de texto (OCR) para documentos digitalizados e fotos --- */
 const OCR_JS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
@@ -12482,6 +12545,7 @@ async function paTrocarTexto(x, y, x1, y1) {
     const pad = item.fh * 0.06, W0 = item.x1 - item.x0 + pad * 2, H0 = item.y1 - item.y0 + pad * 2;
     const W = Math.max(W0, m.w * pa.BW - item.fh * 0.4 + pad * 2);
     o.w = W / pa.BW; o.h = H0 / pa.BW; o.padx = pad / pa.BW; o.desc = (item.y1 + pad - item.base[1]) / pa.BW;
+    o.w0 = W0 / pa.BW; o.h0 = o.h; // tamanho mínimo: continua a tapar o texto original
     paGuardarHist();
     o.id = paId(); o.r = 0; // alinhado com o texto do próprio documento
     o.cx = (item.x0 - pad + W / 2) / pa.BW; o.cy = (item.y0 - pad + H0 / 2) / pa.BH;
@@ -12514,8 +12578,10 @@ function paEscrever(o) {
       transform: esc !== 1 ? `scale(${esc})` : '', minWidth: Math.max(40, o.r.w * k / esc) + 'px', height: Math.max(fs * 1.3, o.r.h * k / esc) + 'px'
     });
     // a mesma letra e cor do documento (com prioridade: o estilo geral da app força "Inter" e a cor dos campos)
-    ta.style.setProperty('font', paFonteCss({ fonte: o.fonte, bold: o.bold }, fs), 'important');
-    ta.style.setProperty('line-height', '1.18', 'important');
+    ta.style.setProperty('font', paFonteCss({ fonte: o.fonte, bold: o.bold, italic: o.italic, familia: o.familia }, fs), 'important');
+    ta.style.setProperty('line-height', String(o.entre || 1.18), 'important');
+    if (o.sub) ta.style.setProperty('text-decoration', 'underline', 'important');
+    if (o.alinha) ta.style.textAlign = o.alinha;
     ta.style.setProperty('-webkit-text-fill-color', o.cor || '#111', 'important');
     ta.style.setProperty('color', o.cor || '#111', 'important');
     const ajustar = () => {
@@ -12557,6 +12623,93 @@ function paAplicarZoom() {
 function paTouchAction() {
   const cv = $pe('paCanvas'), tocar = ['editar', 'texto', 'assinar', 'data', 'visto', 'cruz'].includes(pa.ferr);
   cv.style.touchAction = (pa.zoom || 1) > 1 && tocar ? 'pan-x pan-y' : 'none';
+}
+/* ---------- Formatar texto (como o painel "Formatar texto" do Adobe) ----------
+   Fonte, tamanho (pontos), negrito, itálico, sublinhado, cor, alinhamento e espaço entre linhas.
+   Aplica-se ao texto selecionado; sem seleção, fica para o próximo texto que se escrever. */
+const PA_FONTES = {
+  'Arial': 'Arial, Helvetica, "Liberation Sans", sans-serif',
+  'Times New Roman': '"Times New Roman", Times, "Liberation Serif", serif',
+  'Calibri': 'Calibri, Carlito, "Segoe UI", Arial, sans-serif',
+  'Georgia': 'Georgia, "DejaVu Serif", serif',
+  'Verdana': 'Verdana, "DejaVu Sans", sans-serif',
+  'Courier New': '"Courier New", Courier, "Liberation Mono", monospace'
+};
+const PA_TAMS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 48, 60, 72];
+function paTxtDef() { return pa.txtDef || (pa.txtDef = { familia: 'Arial', pt: 12, bold: false, italic: false, sub: false, alinha: 'left', entre: 1.2 }); }
+function paObjTxtSel() { const o = paObjSel(); return o && (o.t === 'texto' || o.t === 'troca') ? o : null; }
+function paPtDe(o) { return Math.round((o.fs * pa.BW / (pa.ptPx || 1)) * 2) / 2; }
+// Muda um texto mantendo o canto de cima à esquerda no mesmo sítio
+function paMudarTexto(o, muda) {
+  paGuardarHist();
+  const k = paCaixaVista(o), cs = Math.cos(k.ang), sn = Math.sin(k.ang);
+  const tlx = k.cx + (-k.w / 2) * cs - (-k.h / 2) * sn, tly = k.cy + (-k.w / 2) * sn + (-k.h / 2) * cs;
+  muda(o);
+  const m = paMedirTexto(o, pa.BW);
+  if (o.t === 'troca') { o.w = Math.max(o.w0 || o.w, m.w - o.fs * 0.4 + (o.padx || 0) * 2); o.h = Math.max(o.h0 || o.h, m.h); }
+  else { o.w = m.w; o.h = m.h; }
+  const W = o.w * pa.BW, H = o.h * pa.BW, ncx = tlx + (W / 2) * cs - (H / 2) * sn, ncy = tly + (W / 2) * sn + (H / 2) * cs;
+  const b = paVistaParaBase(ncx, ncy); o.cx = b.x / pa.BW; o.cy = b.y / pa.BH;
+  paMudou();
+}
+function paAplicarFormato(campo, valor) {
+  if (!pa) return;
+  paFecharEscrita(true);
+  const o = paObjTxtSel(), d = paTxtDef();
+  if (!o) { d[campo] = valor; paSyncFormatar(); return; }
+  paMudarTexto(o, ob => {
+    if (campo === 'pt') ob.fs = valor * (pa.ptPx || 1) / pa.BW;
+    else if (campo === 'familia') ob.familia = valor;
+    else ob[campo] = valor;
+  });
+}
+function paSyncFormatar() {
+  if (!pa) return;
+  const o = paObjTxtSel(), d = paTxtDef();
+  const v = o ? { familia: o.familia || (o.fonte ? 'doc' : 'Arial'), pt: paPtDe(o), bold: !!o.bold, italic: !!(o.italic != null ? o.italic : o.fonte && o.fonte.italic), sub: !!o.sub, alinha: o.alinha || 'left', entre: o.entre || (o.t === 'troca' ? 1.18 : 1.2), cor: o.cor } : Object.assign({ cor: pa.cor }, d);
+  const sf = $pe('paFonte'), doc = sf.querySelector('option[value="doc"]');
+  doc.hidden = doc.disabled = !(o && o.fonte);
+  doc.textContent = o && o.fonte ? 'Do documento (' + String(o.fonte.real).replace(/^[A-Z]{6}\+/, '').replace(/[-,].*$/, '') + ')' : 'Do documento';
+  sf.value = v.familia;
+  const st = $pe('paTam');
+  if (![...st.options].some(x => +x.value === v.pt)) { const op = document.createElement('option'); op.value = v.pt; op.textContent = v.pt; st.appendChild(op); [...st.options].sort((a, b) => a.value - b.value).forEach(x => st.appendChild(x)); }
+  st.value = String(v.pt);
+  $pe('paNeg').classList.toggle('on', v.bold); $pe('paIta').classList.toggle('on', v.italic); $pe('paSubl').classList.toggle('on', v.sub);
+  document.querySelectorAll('[data-pa-alinha]').forEach(b => b.classList.toggle('on', b.dataset.paAlinha === v.alinha));
+  $pe('paEntre').value = String(v.entre);
+  if (/^#[0-9a-f]{6}$/i.test(v.cor || '')) $pe('paCorLivre').value = v.cor;
+  $pe('paFormTit').textContent = o ? 'Formatar texto selecionado' : 'Formatar texto (próximo texto)';
+  $pe('paFmtBtn').classList.toggle('on', $pe('peAnot').classList.contains('pa-fmt-aberto'));
+}
+function paLigarFormatar() {
+  const st = $pe('paTam');
+  $pe('paFmtBtn').addEventListener('click', () => { $pe('peAnot').classList.toggle('pa-fmt-aberto'); if (pa) paSyncFormatar(); });
+  $pe('paCanvas').addEventListener('pointerdown', () => { $pe('peAnot').classList.remove('pa-fmt-aberto'); }, true);
+  st.innerHTML = PA_TAMS.map(t => `<option value="${t}">${t}</option>`).join('');
+  $pe('paFonte').addEventListener('change', e => paAplicarFormato('familia', e.target.value));
+  st.addEventListener('change', e => paAplicarFormato('pt', +e.target.value));
+  $pe('paNeg').addEventListener('click', () => { const o = paObjTxtSel(); paAplicarFormato('bold', !(o ? o.bold : paTxtDef().bold)); });
+  $pe('paIta').addEventListener('click', () => { const o = paObjTxtSel(); paAplicarFormato('italic', !(o ? (o.italic != null ? o.italic : o.fonte && o.fonte.italic) : paTxtDef().italic)); });
+  $pe('paSubl').addEventListener('click', () => { const o = paObjTxtSel(); paAplicarFormato('sub', !(o ? o.sub : paTxtDef().sub)); });
+  document.querySelectorAll('[data-pa-alinha]').forEach(b => b.addEventListener('click', () => paAplicarFormato('alinha', b.dataset.paAlinha)));
+  $pe('paEntre').addEventListener('change', e => paAplicarFormato('entre', +e.target.value));
+  $pe('paCorLivre').addEventListener('input', e => {
+    if (!pa) return; pa.cor = e.target.value; paAtualizarBarra();
+    const o = paObjSel(); if (o && o.t !== 'img' && o.t !== 'corretor' && o.t !== 'tapar') { paGuardarHist(); o.cor = pa.cor; paMudou(); }
+  });
+  // imagem (logótipo, foto, carimbo)
+  $pe('paImgInput').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f || !pa) return;
+    try {
+      const bmp = await createImageBitmap(f), k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const src = /png|gif|webp/i.test(f.type) ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.86);
+      const cv = $pe('paCanvas'), wv = cv.width * 0.3, hv = wv * c.height / c.width, at = pa.imgEm || { x: cv.width / 2, y: cv.height / 2 };
+      paNovoEm(at.x, at.y, wv, hv, { t: 'img', src });
+      pa.ferr = 'sel'; paAtualizarBarra();
+    } catch (err) { toast('Não foi possível abrir essa imagem.', true); }
+  });
 }
 function paGeo() {
   const p = pe.paginas[pa.idx], c = paCorte(p), cw = c.x1 - c.x0, ch = c.y1 - c.y0, q = p.r % 2 === 1;
@@ -12617,6 +12770,7 @@ function paDesenhar() {
   $pe('paSub').textContent = `Página ${pa.idx + 1} de ${pe.paginas.length}`;
   $pe('paAnt').disabled = pa.idx === 0; $pe('paSeg').disabled = pa.idx >= pe.paginas.length - 1;
   $pe('paDesfazer').disabled = !pa.hist.length; $pe('paRefazer').disabled = !pa.fut.length;
+  paSyncFormatar();
   // sempre no lugar (só esbatidos), para o documento não saltar ao selecionar
   $pe('paApagar').disabled = !o; $pe('paEditarTxt').disabled = !(o && (o.t === 'texto' || o.t === 'troca'));
 }
@@ -12664,10 +12818,11 @@ async function paPedirTexto(valor, titulo) {
   return new Promise(res => { pa.txtRes = res; });
 }
 async function paTextoEm(x, y) {
-  const cv = $pe('paCanvas'), fsV = cv.width * 0.024 * pa.tam;
-  const txt = await paEscrever({ r: { x, y, w: cv.width * 0.25, h: fsV * 1.3 }, txt: '', fs: fsV, cor: pa.cor, fundo: 'rgba(255,255,255,0.75)', titulo: 'Texto' });
+  const cv = $pe('paCanvas'), d = paTxtDef(), fsV = d.pt * (pa.ptPx || cv.width * 0.002);
+  const fmt = { familia: d.familia === 'doc' ? 'Arial' : d.familia, bold: d.bold, italic: d.italic, sub: d.sub, alinha: d.alinha, entre: d.entre };
+  const txt = await paEscrever(Object.assign({ r: { x, y, w: cv.width * 0.25, h: fsV * 1.3 }, txt: '', fs: fsV, cor: pa.cor, fundo: 'rgba(255,255,255,0.75)', titulo: 'Texto' }, fmt));
   if (!txt || !txt.trim()) return;
-  const o = { t: 'texto', txt: txt.replace(/\s+$/, ''), fs: fsV / pa.BW, cor: pa.cor };
+  const o = Object.assign({ t: 'texto', txt: txt.replace(/\s+$/, ''), fs: fsV / pa.BW, cor: pa.cor }, fmt);
   const m = paMedirTexto(o, pa.BW);
   // o ponto tocado fica no canto de cima à esquerda do texto
   paNovoEm(x + m.w * pa.BW / 2, y + m.h * pa.BW / 2, m.w * pa.BW, m.h * pa.BW, o);
@@ -12678,13 +12833,13 @@ async function paEditarTexto() {
   const k0 = paCaixaVista(o), rod = Math.abs(Math.sin(k0.ang)) > 0.01 || Math.cos(k0.ang) < 0;
   const rect = { x: k0.cx - k0.w / 2, y: k0.cy - k0.h / 2, w: k0.w, h: k0.h };
   if (o.t === 'troca') {
-    const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: o.fundo, bold: o.bold, fonte: o.fonte, titulo: 'Mudar texto' }); if (txt == null || txt === o.txt) return;
+    const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: o.fundo, bold: o.bold, italic: o.italic, familia: o.familia, sub: o.sub, alinha: o.alinha, entre: o.entre, fonte: o.fonte, titulo: 'Mudar texto' }); if (txt == null || txt === o.txt) return;
     paGuardarHist(); o.txt = txt.replace(/\s+$/, '');
     const m = paMedirTexto({ t: 'texto', txt: o.txt, fs: o.fs, bold: o.bold, fonte: o.fonte }, pa.BW), W = m.w - o.fs * 0.4 + (o.padx || 0) * 2;
     if (W > o.w) { const k = paCaixaVista(o), cs = Math.cos(k.ang), sn = Math.sin(k.ang), dx = (W - o.w) * pa.BW / 2; const b = paVistaParaBase(k.cx + dx * cs, k.cy + dx * sn); o.cx = b.x / pa.BW; o.cy = b.y / pa.BH; o.w = W; }
     return paMudou();
   }
-  const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: 'rgba(255,255,255,0.75)', bold: o.bold, titulo: 'Texto' });
+  const txt = await paEscrever({ r: rect, rodado: rod, txt: o.txt, fs: o.fs * pa.BW, cor: o.cor, fundo: 'rgba(255,255,255,0.75)', bold: o.bold, italic: o.italic, familia: o.familia, sub: o.sub, alinha: o.alinha, entre: o.entre, titulo: 'Texto' });
   if (txt == null || txt === o.txt) return;
   paGuardarHist();
   if (!txt.trim()) { const p = pe.paginas[pa.idx]; p.anot = p.anot.filter(x => x !== o); pa.sel = null; return paMudou(); }
@@ -12704,7 +12859,7 @@ function paApagarSel() {
 function paAtualizarBarra() {
   document.querySelectorAll('#paFerr [data-pa]').forEach(b => b.classList.toggle('on', b.dataset.pa === pa.ferr));
   document.querySelectorAll('#paCores [data-pa-cor]').forEach(b => b.classList.toggle('on', b.dataset.paCor === pa.cor));
-  const dica = { editar: 'Toque num texto marcado a azul para o mudar (ou arraste por cima de uma zona)', sel: 'Toque num objeto para o mover; puxe a bolinha azul para mudar o tamanho', texto: 'Toque onde quer escrever', assinar: 'Toque onde quer pôr a assinatura', data: 'Toque onde quer pôr a data', visto: 'Toque para marcar ✓', cruz: 'Toque para marcar ✗', destacar: 'Arraste por cima do texto a destacar', desenhar: 'Desenhe com o dedo ou o rato', ret: 'Arraste para desenhar um retângulo', seta: 'Arraste para desenhar uma seta', corretor: 'Arraste para tapar com branco (depois pode escrever por cima)', tapar: 'Arraste para tapar a preto (o que fica por baixo desaparece do PDF)' };
+  const dica = { imagem: 'Toque onde quer pôr a imagem (logótipo, foto, carimbo)', editar: 'Toque num texto marcado a azul para o mudar (ou arraste por cima de uma zona)', sel: 'Toque num objeto para o mover; puxe a bolinha azul para mudar o tamanho', texto: 'Toque onde quer escrever', assinar: 'Toque onde quer pôr a assinatura', data: 'Toque onde quer pôr a data', visto: 'Toque para marcar ✓', cruz: 'Toque para marcar ✗', destacar: 'Arraste por cima do texto a destacar', desenhar: 'Desenhe com o dedo ou o rato', ret: 'Arraste para desenhar um retângulo', seta: 'Arraste para desenhar uma seta', corretor: 'Arraste para tapar com branco (depois pode escrever por cima)', tapar: 'Arraste para tapar a preto (o que fica por baixo desaparece do PDF)' };
   $pe('paDica').textContent = dica[pa.ferr] || '';
 }
 // Assinatura: desenhar, guardar e reutilizar
@@ -12743,6 +12898,7 @@ function paAssRecortada() {
 }
 function paLigar() {
   const cv = $pe('paCanvas');
+  paLigarFormatar();
   $pe('paFerr').addEventListener('click', e => {
     const b = e.target.closest('[data-pa]'); if (!b || !pa) return;
     paFecharEscrita(true);
@@ -12773,10 +12929,25 @@ function paLigar() {
   $pe('paConcluir').addEventListener('click', () => { if (!pa) return; setTimeout(() => { if (!pa) return; sair(); peAbrirGuardar(); }, 30); });
   $pe('paZoomMenos').addEventListener('click', () => { if (!pa) return; pa.zoom = PA_ZOOMS[Math.max(0, PA_ZOOMS.indexOf(pa.zoom || 1) - 1)]; paAplicarZoom(); });
   $pe('paZoomMais').addEventListener('click', () => { if (!pa) return; pa.zoom = PA_ZOOMS[Math.min(PA_ZOOMS.length - 1, PA_ZOOMS.indexOf(pa.zoom || 1) + 1)]; paAplicarZoom(); });
+  // "Outras opções" (como no Adobe) — no telemóvel estão no "Mais…"
+  const marcaDagua = async () => { const ex = pe.extras || (pe.extras = {}); const t = await pedirTexto({ titulo: 'Marca d’água', texto: 'Aparece em diagonal, em cinzento claro, em todas as páginas. Deixe vazio para tirar.', rotulo: 'Texto', valor: ex.marca || '', sugestoes: ['CÓPIA', 'CONFIDENCIAL', 'ORIGINAL', 'PAGO'] }); if (t == null) return; ex.marca = t.trim(); pe.alterado = true; paDesenhar(); };
+  const outra = a => {
+    if (!pa) return;
+    const ex = pe.extras || (pe.extras = {});
+    if (a === 'organizar') { sair(); peMostrar('grelha'); }
+    else if (a === 'combinar') { paFecharEscrita(true); peAbrirJuntar(null); }
+    else if (a === 'cortar') { sair(); peAbrirCorte(); }
+    else if (a === 'numerar') { ex.numerar = !ex.numerar; pe.alterado = true; paDesenhar(); toast(ex.numerar ? 'Páginas numeradas.' : 'Números das páginas tirados.'); }
+    else if (a === 'marca') marcaDagua();
+  };
+  document.querySelector('.pa-outras').addEventListener('click', e => { const b = e.target.closest('[data-pa-outra]'); if (b) outra(b.dataset.paOutra); });
   $pe('paMais').addEventListener('click', ev => {
     if (!pa) return;
     const r = ev.currentTarget.getBoundingClientRect(), ex = pe.extras || (pe.extras = {});
     abrirMenuContexto(r.left, r.top - 4, [
+      { label: 'Organizar páginas', fn: () => outra('organizar') },
+      { label: 'Combinar ficheiros', fn: () => outra('combinar') },
+      { label: 'Cortar página', fn: () => outra('cortar') },
       { titulo: 'Todas as páginas' },
       { label: ex.numerar ? 'Tirar números das páginas' : 'Numerar as páginas', fn: () => { ex.numerar = !ex.numerar; pe.alterado = true; paDesenhar(); } },
       { label: ex.marca ? 'Mudar a marca d’água' : 'Marca d’água', fn: async () => { const t = await pedirTexto({ titulo: 'Marca d’água', texto: 'Aparece em diagonal, em cinzento claro, em todas as páginas. Deixe vazio para tirar.', rotulo: 'Texto', valor: ex.marca || '', sugestoes: ['CÓPIA', 'CONFIDENCIAL', 'ORIGINAL', 'PAGO'] }); if (t == null) return; ex.marca = t.trim(); pe.alterado = true; paDesenhar(); } }
@@ -12822,7 +12993,7 @@ function paLigar() {
       paDesenhar(); return;
     }
     // texto e assinatura abrem uma janela: só no "click" (senão, no telemóvel, o mesmo toque fecha-a logo)
-    if (f === 'texto' || f === 'assinar') { pa.toque = { x, y, f }; return; }
+    if (f === 'texto' || f === 'assinar' || f === 'imagem') { pa.toque = { x, y, f }; return; }
     if (f === 'editar') { pa.arr = { novo: true, editar: true, x0: x, y0: y, x1: x, y1: y }; return; }
     if (f === 'data') {
       const d = new Date(), txt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
@@ -12874,7 +13045,9 @@ function paLigar() {
   cv.addEventListener('click', () => {
     if (!pa || !pa.toque) return;
     const t = pa.toque; pa.toque = null;
-    if (t.f === 'texto') paTextoEm(t.x, t.y); else if (t.f === 'editar') paTrocarTexto(t.x, t.y, t.x1, t.y1); else paAbrirAssinatura(t.x, t.y);
+    if (t.f === 'texto') paTextoEm(t.x, t.y); else if (t.f === 'editar') paTrocarTexto(t.x, t.y, t.x1, t.y1);
+    else if (t.f === 'imagem') { pa.imgEm = { x: t.x, y: t.y }; $pe('paImgInput').click(); }
+    else paAbrirAssinatura(t.x, t.y);
   });
   cv.addEventListener('dblclick', ev => { if (!pa) return; const { x, y } = paPonto(ev), o = paAcertar(x, y); if (o && (o.t === 'texto' || o.t === 'troca')) { pa.sel = o.id; paEditarTexto(); } });
   document.addEventListener('keydown', ev => {
