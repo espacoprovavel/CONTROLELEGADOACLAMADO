@@ -2885,6 +2885,7 @@ function empRowHtml(e) {
           <td data-label="Função">${escapeHtml(e.funcao)}</td>
           <td data-label="Cliente">${escapeHtml(e.cliente) || '—'}</td>
           <td data-label="Entrada" class="cell-mono">${e.adm ? escapeHtml(formatDate(e.adm)) : '—'}</td>
+          ${estadoFiltro === 'inativo' ? `<td data-label="Saída" class="cell-mono">${e.cess ? escapeHtml(formatDate(e.cess)) : '—'}</td>` : ''}
           <td data-label="Estado">${e.estado === 'ativo' ? '<span class="badge badge-on">Activo</span>' : '<span class="badge badge-off">Inactivo</span>'}</td>
           <td data-label="Docs">${e.doc_count ? '<span class="docbadge">' + e.doc_count + '</span>' : '—'}</td>
           <td data-label="Acções"><div class="row-actions">
@@ -2896,10 +2897,11 @@ function empRowHtml(e) {
 
 function subTableHtml(list, q) {
   const rows = list.length === 0
-    ? `<tr class="empty-row"><td colspan="8">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem colaboradores.'}</td></tr>`
+    ? `<tr class="empty-row"><td colspan="${estadoFiltro === 'inativo' ? 9 : 8}">${q ? 'Nenhum resultado para a pesquisa.' : 'Sem colaboradores.'}</td></tr>`
     : list.map(empRowHtml).join('');
+  // nos inativos mostra também a data de saída
   return `<div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Data de entrada</th><th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
+        <thead><tr><th>Nome</th><th>NIF</th><th>Função</th><th>Cliente</th><th>Data de entrada</th>${estadoFiltro === 'inativo' ? '<th>Data de saída</th>' : ''}<th>Estado</th><th>Docs</th><th style="text-align:right;">Acções</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
 }
