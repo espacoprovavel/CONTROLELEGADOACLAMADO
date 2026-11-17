@@ -1839,7 +1839,6 @@ footer .ver { color: #9ca3af; }
         <button type="button" class="vw-btn vw-acao" id="viewerEditar" aria-label="Cortar" title="Cortar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span class="vw-lbl">Cortar</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerPaginas" aria-label="Páginas" title="Páginas: selecionar, eliminar, rodar, mudar de lugar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/></svg><span class="vw-lbl">Páginas</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="vw-lbl">Enviar</span></button>
-        <button type="button" class="vw-btn vw-acao" id="viewerComprimir" aria-label="Comprimir PDF" title="Comprimir PDF: ficheiro mais leve" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg><span class="vw-lbl">Comprimir</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerImprimir" aria-label="Imprimir" title="Imprimir" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span class="vw-lbl">Imprimir</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="vw-lbl">Descarregar</span></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
@@ -2217,21 +2216,21 @@ footer .ver { color: #9ca3af; }
     </div>
   </div>
 </div>
-<!-- Comprimir PDF (como no Adobe): escolhe o nível, mostra o tamanho antes/depois e descarrega -->
+<!-- Descarregar / enviar PDF: original ou comprimido (como no Adobe) -->
 <div class="modal-backdrop pe-modal" id="czModal">
   <div class="modal narrow">
-    <div class="modal-head"><h2>Comprimir PDF</h2><button class="modal-close" id="czFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-head"><h2 id="czTitulo">Descarregar PDF</h2><button class="modal-close" id="czFechar" aria-label="Fechar">×</button></div>
     <div class="modal-body">
       <div class="cz-fich"><strong id="czNome">documento.pdf</strong><span id="czTamanho"></span></div>
-      <label class="pg-opcao"><input type="radio" name="czNivel" value="alta"><span><strong>Alta compressão</strong><em>Ficheiro mais pequeno, qualidade mais baixa. Bom para email e WhatsApp.</em></span></label>
-      <label class="pg-opcao on"><input type="radio" name="czNivel" value="media" checked><span><strong>Média compressão (recomendado)</strong><em>Bom equilíbrio entre tamanho e qualidade.</em></span></label>
-      <label class="pg-opcao"><input type="radio" name="czNivel" value="baixa"><span><strong>Baixa compressão</strong><em>Melhor qualidade, ficheiro um pouco mais pequeno.</em></span></label>
+      <label class="pg-opcao"><input type="radio" name="czNivel" value="original"><span><strong>Original (sem comprimir)</strong><em>O ficheiro tal como está guardado.</em></span></label>
+      <label class="pg-opcao"><input type="radio" name="czNivel" value="alta"><span><strong>Comprimido: alta compressão</strong><em>Ficheiro mais pequeno, qualidade mais baixa. Bom para email e WhatsApp.</em></span></label>
+      <label class="pg-opcao on"><input type="radio" name="czNivel" value="media" checked><span><strong>Comprimido: média (recomendado)</strong><em>Bom equilíbrio entre tamanho e qualidade.</em></span></label>
+      <label class="pg-opcao"><input type="radio" name="czNivel" value="baixa"><span><strong>Comprimido: baixa compressão</strong><em>Melhor qualidade, ficheiro um pouco mais pequeno.</em></span></label>
       <div class="cz-res" id="czRes" hidden></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="czCancelar" style="margin-right:auto;">Cancelar</button>
-      <button class="btn btn-ghost" id="czGuardar" hidden>Guardar cópia na pasta</button>
-      <button class="btn btn-primary" id="czOk">Comprimir</button>
+      <button class="btn btn-primary" id="czOk">Descarregar</button>
     </div>
   </div>
 </div>
@@ -3804,7 +3803,7 @@ function ligarLeitorPdf() {
   document.getElementById('viewerEnviar').addEventListener('click', () => {
     if (!vwDoc) return;
     // com o ficheiro já aberto, envia logo (sem esperar pela rede)
-    if (vwDoc.blob) partilharFicheiros([ficheiroDe(vwDoc.blob, vwDoc.nome)]).then(ok => { if (!ok) downloadDocument(vwDoc.url, vwDoc.nome); });
+    if (vwDoc.blob) partilharFicheiros([ficheiroDe(vwDoc.blob, vwDoc.nome)]).then(ok => { if (!ok) downloadDocument(vwDoc.url, vwDoc.nome, true); });
     else enviarDocumento(vwDoc.url, vwDoc.nome);
   });
   document.getElementById('pdEnviar').addEventListener('click', enviarPartilhaPronta);
@@ -3818,7 +3817,6 @@ function ligarLeitorPdf() {
   document.getElementById('viewerPaginas').addEventListener('click', () => abrirNoEditor({ paginas: true }));
   document.getElementById('viewerAnotar').addEventListener('click', () => abrirNoEditor({ anotar: true }));
   document.getElementById('viewerImprimir').addEventListener('click', () => { if (vwDoc) imprimirDocumento(vwDoc.url, vwDoc.fmt); });
-  document.getElementById('viewerComprimir').addEventListener('click', () => { if (vwDoc) czAbrir({ url: vwDoc.url, nome: vwDoc.nome, guardar: vwDoc.guardarCopia }); });
   document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   // toque duplo: aproxima / volta à página inteira
@@ -3862,14 +3860,13 @@ function viewDocument(url, format, filename, opcoes) {
   const body = document.getElementById('viewerBody');
   if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
   fecharLeitor();
-  vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar, guardarCopia: opcoes && opcoes.guardarCopia, fmt: String(format || docFmt({ url, original_filename: filename })).toLowerCase() };
+  vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar, fmt: String(format || docFmt({ url, original_filename: filename })).toLowerCase() };
   // no telemóvel imprime-se pelo botão de enviar (menu do sistema)
   document.getElementById('viewerImprimir').hidden = ehTelemovel() || !(vwDoc.fmt === 'pdf' || isImageFormat(vwDoc.fmt));
   document.getElementById('viewerEditar').hidden = !(vwDoc.editar && podeEditarPdf() && podeEditarDocFmt(format || docFmt({ url, original_filename: filename })));
   document.getElementById('viewerRodar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerAnotar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerPaginas').hidden = document.getElementById('viewerEditar').hidden || (format || docFmt({ url, original_filename: filename })).toLowerCase() !== 'pdf';
-  document.getElementById('viewerComprimir').hidden = vwDoc.fmt !== 'pdf' || typeof czAbrir !== 'function';
   const podeEnviar = podePartilharFicheiros();
   document.getElementById('viewerEnviar').hidden = !podeEnviar;
   document.getElementById('viewerDown').hidden = partilhaNoTelemovel(); // no telemóvel, "Enviar" já tem "Guardar em Ficheiros"
@@ -3896,7 +3893,9 @@ function viewDocument(url, format, filename, opcoes) {
 }
 
 // Descarrega o ficheiro (também offline, se estiver guardado); recorre ao link direto em último caso.
-async function downloadDocument(url, filename) {
+async function downloadDocument(url, filename, direto) {
+  // PDF: pergunta se vai o original ou comprimido (a própria janela é a confirmação)
+  if (!direto && typeof czAbrir === 'function' && czEhPdf(url, filename)) { czAbrir({ url, nome: filename, modo: 'descarregar' }); return; }
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -4009,7 +4008,8 @@ function enviarPartilhaPronta() {
 }
 async function obterBlob(url) { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }
 // Envia um documento (vai buscar o ficheiro e abre a janela de partilha)
-async function enviarDocumento(url, nome) {
+async function enviarDocumento(url, nome, direto) {
+  if (!direto && typeof czAbrir === 'function' && czEhPdf(url, nome)) { czAbrir({ url, nome, modo: 'enviar' }); return; }
   try {
     const f = ficheiroDe(await obterBlob(url), nome);
     if (!(await partilharFicheiros([f]))) { dlJaConfirmado = true; saveAs(f, f.name); }
@@ -5073,7 +5073,7 @@ function bind() {
       // editar a partir da ficha: fecha a ficha e abre o editor com os documentos desta pessoa
       const editar = d && typeof abrirEditorPx === 'function' ? o => { unsubscribeDocsFn(); closeModal('detailModal'); abrirEditorPx(emp, d, Object.assign({ lista: detailDocs.slice() }, o)); } : null;
       if (btn.classList.contains('act-doc-edit')) { if (editar) editar({ anotar: true }); }
-      else viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename, editar ? { editar, guardarCopia: emp ? pxGuardarCopia(emp, d) : null } : null);
+      else viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename, editar ? { editar } : null);
     }
     else if (btn.classList.contains('act-doc-dl')) downloadDocument(btn.dataset.url);
     else if (btn.classList.contains('act-doc-del')) deleteDocument(fid, fnome, btn.dataset.docid, btn.dataset.filename, btn.dataset.size === '' ? null : Number(btn.dataset.size));
@@ -6067,12 +6067,6 @@ function juntarEscolher(docs) {
   if (fora) toast(`${fora} ficheiro(s) que não são PDF nem foto ficam de fora.`);
   return bons;
 }
-// guardar um ficheiro novo (ex.: PDF comprimido) na mesma pasta do documento
-function pxGuardarCopia(emp, d) {
-  if (!emp) return null;
-  const subs = pxSubpastas(emp), pasta = d && d.pasta && subs.includes(d.pasta) ? d.pasta : null;
-  return f => openUploadWidget(emp.id, emp.nome, pasta, [f], null, true);
-}
 function pxJuntarPdf(emp, docs) {
   const bons = juntarEscolher(docs); if (!bons) return;
   abrirEditorPx(emp, bons[0], { juntar: bons.slice(1) });
@@ -6546,7 +6540,6 @@ function renderPastas() {
         + `<span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
         + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
         + (podeEditarPdf() && podeEditarDocFmt(docFmt(d)) ? `<button type="button" class="px-btn-editar" data-px-doc="editar" data-px-did="${id}" title="Editar PDF: mudar texto, escrever, assinar…">Editar PDF</button>` : '')
-        + (czEhPdf(d) ? `<button type="button" data-px-doc="comprimir" data-px-did="${id}" title="Comprimir PDF: ficheiro mais leve para descarregar ou enviar">Comprimir</button>` : '')
         + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
         + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
@@ -6730,7 +6723,6 @@ function pxLigarEventos(root) {
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
         podeEditarPdf() && d && docFmt(d) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorPx(emp, d, { paginas: true }) } : null,
-        d && czEhPdf(d) ? { label: 'Comprimir PDF', fn: () => czAbrir({ url: d.url, nome: docFullName(d), guardar: pxGuardarCopia(emp, d) }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
@@ -6818,8 +6810,7 @@ function pxOnClick(ev) {
   if (t.dataset.pxDoc) {
     const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
-    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o), guardarCopia: pxGuardarCopia(emp, d) } : null);
-    else if (t.dataset.pxDoc === 'comprimir') czAbrir({ url: d.url, nome: docFullName(d), guardar: emp ? pxGuardarCopia(emp, d) : null });
+    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o) } : null);
     if (t.dataset.pxDoc === 'editar' && emp) abrirEditorPx(emp, d, { anotar: true });
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
@@ -10243,7 +10234,7 @@ function edOperacao(op, x) {
   if (op === 'abrir') { if (x.tipo === 'pasta') edGo(x.id); else if (x.tipo === 'ficha') edAbrirFicha(x); else edOperacao('ver', x); }
   else if (op === 'pdf') edFichaPdfDescarregar(x);
   else if (op === 'ver') {
-    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: o => abrirEditorEd(x, o), guardarCopia: f => edUpload(edPaiDe(x), [f], null, true) });
+    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: o => abrirEditorEd(x, o) });
     else downloadDocument(x.url, docFullName(x)); // Excel/CSV: não há pré-visualização → descarrega
   }
   else if (op === 'down') { if (x.tipo === 'ficheiro') downloadDocument(x.url, docFullName(x)); else edDescarregar([x.id]); }
@@ -10266,7 +10257,6 @@ function edMenuItem(x) {
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
   if (podeEditarPdf() && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
-  if (x.tipo === 'ficheiro' && czEhPdf(x)) itens.push({ label: 'Comprimir PDF', fn: () => czAbrir({ url: x.url, nome: docFullName(x), guardar: f => edUpload(edPaiDe(x), [f], null, true) }) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -10470,7 +10460,7 @@ async function edGuardarFicheiro(pai, info, silencioso, extra) {
 // descarrega o documento para não se perder e explica o que falta
 function paSemRegrasNovas(err, info) {
   if (isEditor() || !err || err.code !== 'permission-denied') return false;
-  try { downloadDocument(info.secure_url, (info.original_filename || 'documento') + (info.format ? '.' + info.format : '')); } catch (e) { /* sem download */ }
+  try { downloadDocument(info.secure_url, (info.original_filename || 'documento') + (info.format ? '.' + info.format : ''), true); } catch (e) { /* sem download */ }
   toast('Ainda não deu para guardar na app: o utilizador master tem de publicar as regras novas (aviso "Falta um passo"). O documento foi descarregado para o seu aparelho.', true);
   return true;
 }
@@ -11747,98 +11737,102 @@ function peRetangulo(c, conv, r) { // converte um retângulo {x0,y0,x1,y1}
 }
 
 /* ============================================================
-   Comprimir PDF (como no Adobe)
+   Descarregar / enviar PDF com opção de comprimir (como no Adobe)
+   Ao descarregar ou enviar um PDF, a pessoa escolhe: original ou comprimido
+   (alta / média / baixa). A compressão é feita sozinha e o ficheiro sai logo.
    O texto continua a ser texto (dá para selecionar e pesquisar): só as imagens
    dentro do PDF (fotos, digitalizações) ficam mais leves. Num PDF protegido,
    as páginas passam a imagem.
-   czAbrir({ url, nome, guardar(file) opcional → guardar cópia na pasta })
+   czAbrir({ url, nome, modo: 'descarregar' | 'enviar' })
    ============================================================ */
 const CZ_NIVEIS = {
   alta: { lado: 1300, q: 0.5 },   // ~110 ppp numa folha A4
   media: { lado: 1750, q: 0.66 }, // ~150 ppp
   baixa: { lado: 2400, q: 0.8 }   // ~200 ppp
 };
-let cz = null, czLigado = false;
+let cz = null, czLigado = false, czUltimoNivel = 'media';
+try { const g = localStorage.getItem('legado_cz_nivel'); if (g) czUltimoNivel = g; } catch (e) { /* sem armazenamento local */ }
 const $cz = id => document.getElementById(id);
-function czEhPdf(d) { return docFmt(d) === 'pdf'; }
+// é um PDF? (pelo nome ou pelo endereço)
+function czEhPdf(url, nome) { return /\.pdf$/i.test(String(nome || '')) || /\.pdf(?:$|[?#])/i.test(String(url || '')); }
 function czAbrir(o) {
   czLigar();
-  const meu = cz = {
-    url: o.url, nome: String(o.nome || 'documento').replace(/\.pdf$/i, '') || 'documento',
-    guardar: o.guardar && podeEditarPdf() ? o.guardar : null, bytes: null, resultado: null, ocupado: false
-  };
+  const nomeUrl = decodeURIComponent(String(o.url || '').split(/[?#]/)[0].split('/').pop() || '');
+  const enviar = o.modo === 'enviar';
+  const meu = cz = { url: o.url, nome: String(o.nome || nomeUrl || 'documento').replace(/\.pdf$/i, '') || 'documento', enviar, bytes: null, ocupado: false };
+  $cz('czTitulo').textContent = enviar ? 'Enviar PDF' : 'Descarregar PDF';
   $cz('czNome').textContent = meu.nome + '.pdf';
   $cz('czTamanho').textContent = 'a ler…';
-  document.querySelector('input[name="czNivel"][value="media"]').checked = true;
+  const r = document.querySelector(`input[name="czNivel"][value="${czUltimoNivel}"]`) || document.querySelector('input[name="czNivel"][value="media"]');
+  r.checked = true;
   czMarcarNivel();
-  czLimpar();
+  $cz('czRes').hidden = true; $cz('czRes').className = 'cz-res';
+  $cz('czOk').textContent = enviar ? 'Enviar' : 'Descarregar'; $cz('czOk').disabled = false;
   openModal('czModal');
-  meu.carregar = fetch(o.url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+  meu.carregar = fetch(o.url).then(x => { if (!x.ok) throw new Error('HTTP ' + x.status); return x.arrayBuffer(); })
     .then(b => { meu.bytes = new Uint8Array(b); if (cz === meu) $cz('czTamanho').textContent = formatBytes(b.byteLength); })
     .catch(() => { if (cz === meu) $cz('czTamanho').textContent = ''; });
 }
 function czMarcarNivel() { document.querySelectorAll('#czModal .pg-opcao').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); }
-function czLimpar() {
-  if (cz) cz.resultado = null;
-  $cz('czRes').hidden = true; $cz('czRes').className = 'cz-res';
-  $cz('czOk').textContent = 'Comprimir'; $cz('czOk').disabled = false;
-  $cz('czGuardar').hidden = true;
-}
 function czProg(txt, p) {
   const r = $cz('czRes'); r.hidden = false; r.className = 'cz-res';
   r.innerHTML = `${escapeHtml(txt)}<div class="cz-barra"><i style="width:${Math.round((p || 0) * 100)}%"></i></div>`;
 }
-function czFechar() { cz = null; closeModal('czModal'); document.getElementById('czModal').querySelector('.modal').classList.remove('cz-ocupado'); }
+function czFechar() { cz = null; closeModal('czModal'); $cz('czModal').querySelector('.modal').classList.remove('cz-ocupado'); }
 function czLigar() {
   if (czLigado) return; czLigado = true;
-  document.querySelectorAll('input[name="czNivel"]').forEach(r => r.addEventListener('change', () => { czMarcarNivel(); if (cz && !cz.ocupado) czLimpar(); }));
+  document.querySelectorAll('input[name="czNivel"]').forEach(r => r.addEventListener('change', czMarcarNivel));
   $cz('czFechar').addEventListener('click', czFechar);
   $cz('czCancelar').addEventListener('click', czFechar);
-  $cz('czOk').addEventListener('click', () => { if (!cz || cz.ocupado) return; if (cz.resultado) czDescarregar(); else czExecutar(); });
-  $cz('czGuardar').addEventListener('click', () => {
-    if (!cz || !cz.resultado || !cz.guardar) return;
-    const f = new File([cz.resultado], cz.nome + ' (comprimido).pdf', { type: 'application/pdf' }), g = cz.guardar;
-    czFechar(); g(f);
-  });
+  $cz('czOk').addEventListener('click', () => { if (cz && !cz.ocupado) czExecutar(); });
 }
-function czDescarregar() {
-  if (!cz || !cz.resultado) return;
-  saveAs(new Blob([cz.resultado], { type: 'application/pdf' }), cz.nome + ' (comprimido).pdf'); // pede confirmação (e no telemóvel abre "Enviar ou guardar")
+// entrega o ficheiro (a janela já foi a confirmação "tem a certeza")
+async function czEntregar(meu, bytes) {
+  const f = new File([bytes], meu.nome + '.pdf', { type: 'application/pdf' });
+  if (meu.enviar && (await partilharFicheiros([f]))) return;
+  dlJaConfirmado = true; saveAs(f, f.name);
 }
 async function czExecutar() {
   const meu = cz; if (!meu) return;
   const nivelNome = document.querySelector('input[name="czNivel"]:checked').value, nivel = CZ_NIVEIS[nivelNome];
+  czUltimoNivel = nivelNome; // da próxima vez já vem escolhido (neste aparelho)
+  try { localStorage.setItem('legado_cz_nivel', nivelNome); } catch (e) { /* sem armazenamento local */ }
   const parou = () => cz !== meu;
   const janela = $cz('czModal').querySelector('.modal');
-  meu.ocupado = true; janela.classList.add('cz-ocupado'); $cz('czOk').disabled = true; $cz('czGuardar').hidden = true;
+  meu.ocupado = true; janela.classList.add('cz-ocupado'); $cz('czOk').disabled = true;
   try {
     czProg('A abrir o documento…', 0);
     await meu.carregar;
-    if (!meu.bytes) throw new Error('sem ficheiro');
+    if (parou()) return;
+    if (!meu.bytes) { // não deu para ler aqui: segue o caminho normal (sem comprimir)
+      czFechar();
+      if (meu.enviar) enviarDocumento(meu.url, meu.nome + '.pdf', true); else { dlJaConfirmado = true; downloadDocument(meu.url, meu.nome + '.pdf', true); }
+      return;
+    }
+    if (!nivel) { czFechar(); await czEntregar(meu, meu.bytes); return; } // original
     const prog = p => { if (!parou()) czProg('A comprimir… ' + Math.round(p * 100) + '%', p); };
     let out = null;
     try { out = await czInteligente(meu.bytes, nivel, prog, parou); }
     catch (e) { if (parou()) return; console.warn('Comprimir (manter texto):', e); }
-    if (!out) out = await czPaginasImagem(meu.bytes, nivel, prog, parou); // PDF protegido ou danificado
+    if (!out) {
+      try { out = await czPaginasImagem(meu.bytes, nivel, prog, parou); } // PDF protegido ou danificado
+      catch (e) { if (parou()) return; console.warn('Comprimir (páginas em imagem):', e); }
+    }
     if (parou()) return;
-    const antes = meu.bytes.byteLength, depois = out.byteLength, r = $cz('czRes');
-    r.hidden = false;
-    if (depois < antes * 0.97) {
-      meu.resultado = out;
-      const pct = Math.round((1 - depois / antes) * 100);
-      r.className = 'cz-res ok';
-      r.innerHTML = `<span class="cz-big">${escapeHtml(formatBytes(antes))} → ${escapeHtml(formatBytes(depois))}</span>Ficou ${pct}% mais pequeno.`;
-      $cz('czOk').textContent = partilhaNoTelemovel() ? 'Enviar ou guardar' : 'Descarregar';
-      $cz('czGuardar').hidden = !meu.guardar;
+    const antes = meu.bytes.byteLength;
+    czFechar();
+    if (out && out.byteLength < antes * 0.97) {
+      toast(`PDF comprimido: ${formatBytes(antes)} → ${formatBytes(out.byteLength)} (${Math.round((1 - out.byteLength / antes) * 100)}% mais pequeno).`);
+      await czEntregar(meu, out);
     } else {
-      r.className = 'cz-res';
-      r.innerHTML = `<span class="cz-big">Este PDF já está otimizado</span>Não foi possível reduzir mais o tamanho (${escapeHtml(formatBytes(antes))})${nivelNome !== 'alta' ? '. Experimente "Alta compressão".' : '.'}`;
+      toast(out ? 'Este PDF já estava otimizado: segue com o tamanho original.' : 'Não deu para comprimir este PDF: segue o original.');
+      await czEntregar(meu, meu.bytes);
     }
   } catch (err) {
     if (parou()) return;
     console.warn('Comprimir PDF:', err);
-    const r = $cz('czRes'); r.hidden = false; r.className = 'cz-res';
-    r.innerHTML = navigator.onLine === false ? 'Sem Internet: não foi possível abrir o documento.' : 'Não foi possível comprimir este PDF (pode estar protegido com palavra-passe).';
+    czFechar();
+    toast(navigator.onLine === false ? 'Sem Internet: não foi possível abrir o documento.' : 'Não foi possível preparar o PDF.', true);
   } finally {
     meu.ocupado = false;
     if (!parou()) { janela.classList.remove('cz-ocupado'); $cz('czOk').disabled = false; }
