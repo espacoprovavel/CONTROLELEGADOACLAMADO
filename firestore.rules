@@ -14,7 +14,9 @@ service cloud.firestore {
     // Dois níveis de acesso:
     //  - Master (users/{uid}.master == true): faz tudo — criar, alterar, substituir,
     //    anexar, mover, eliminar, gerir utilizadores, logs e salários;
-    //  - Utilizador (perfil sem master): só vê e descarrega.
+    //  - Utilizador (perfil sem master): vê e descarrega; nas ferramentas de PDF (juntar,
+    //    cortar, organizar, editar) pode guardar o resultado como documento NOVO —
+    //    nunca altera, substitui nem elimina o que já existe.
     function isMaster() {
       return temPerfil() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.master == true;
     }
@@ -32,10 +34,10 @@ service cloud.firestore {
       return isMaster() && exists(/databases/$(database)/documents/acesso_contab/$(request.auth.uid));
     }
 
-    // Marca da versão das regras: a app lê regras/v4 para confirmar que estas
+    // Marca da versão das regras: a app lê regras/v5 para confirmar que estas
     // regras estão publicadas (se a leitura for recusada, avisa o master).
     match /regras/{versao} {
-      allow read: if temPerfil() && versao == 'v4';
+      allow read: if temPerfil() && versao == 'v5';
       allow write: if false;
     }
 
@@ -55,13 +57,16 @@ service cloud.firestore {
 
     match /funcionarios/{docId} {
       allow read: if temPerfil();
-      allow create, update: if isEditor();
+      allow create: if isEditor();
+      // utilizador: só o contador de documentos, ao guardar um documento novo
+      allow update: if isEditor() || (temPerfil() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doc_count']));
       allow delete: if isAdmin();
     }
 
     match /funcionarios/{funcionarioId}/documentos/{docId} {
       allow read: if temPerfil();
-      allow create: if isEditor();
+      // utilizador: só documentos novos feitos por ele (ferramentas de PDF)
+      allow create: if isEditor() || (temPerfil() && request.resource.data.uploaded_by_uid == request.auth.uid);
       // renomear ficheiros e mover entre subpastas (nome e pasta)
       allow update: if isEditor();
       allow delete: if isAdmin();
@@ -107,7 +112,8 @@ service cloud.firestore {
     // Documentos da empresa (separador Empresa): pastas, fichas e ficheiros
     match /empresa_itens/{itemId} {
       allow read: if temPerfil();
-      allow create, update: if isEditor();
+      allow create: if isEditor() || (temPerfil() && request.resource.data.tipo == 'ficheiro');
+      allow update: if isEditor();
       allow delete: if isAdmin();
     }
 
