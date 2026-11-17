@@ -2686,6 +2686,9 @@ const GROUPS = [
 //    utilizadores, logs e salários);
 //  - Utilizador: só vê e descarrega.
 function temAcesso() { return currentHasProfile === true; }
+// Ferramentas de PDF (juntar, cortar, organizar, editar): para todos os utilizadores com acesso.
+// Quem não é master guarda o resultado como documento NOVO (não substitui nem elimina originais).
+function podeEditarPdf() { return temAcesso(); }
 function isMaster() { return currentHasProfile === true && currentIsMaster === true; }
 function isAdmin() { return isMaster(); }
 function isEditor() { return isMaster(); }
@@ -3325,7 +3328,7 @@ function renderDocs(docs) {
       </div>
       <div class="doc-actions">
         <button class="btn btn-ghost btn-sm act-doc-view" data-docid="${d.id}" data-url="${escapeHtml(d.url)}" data-format="${escapeHtml(d.format)}" data-filename="${escapeHtml(name)}">Ver</button>
-        ${isEditor() && podeEditarDocFmt(docFmt(d)) ? `<button class="btn btn-primary btn-sm act-doc-edit" data-docid="${d.id}">Editar PDF</button>` : ''}
+        ${podeEditarPdf() && podeEditarDocFmt(docFmt(d)) ? `<button class="btn btn-primary btn-sm act-doc-edit" data-docid="${d.id}">Editar PDF</button>` : ''}
         <button class="btn btn-ghost btn-sm act-doc-dl" data-url="${escapeHtml(d.url)}">Descarregar</button>
         ${delBtn}
       </div>
@@ -3349,7 +3352,8 @@ function upToque() { return !!(window.matchMedia && matchMedia('(pointer: coarse
 function upVisiveis() { return upItens.filter(i => i.ctx === upCtx); }
 
 function abrirEnvio(opts) {
-  if (!isEditor()) { toast('Sem permissões para anexar ficheiros.', true); return; }
+  // quem não é master só envia o resultado do editor de PDF (documento novo)
+  if (!isEditor() && !(opts && opts.doEditor && podeEditarPdf())) { toast('Sem permissões para anexar ficheiros.', true); return; }
   upLigar();
   upCtx = Object.assign({ titulo: 'Anexar ficheiros', destino: '', formatos: UP_FORMATOS_DOC }, opts);
   upItens = upItens.filter(i => i.estado === 'fila' || i.estado === 'envio'); // envios anteriores continuam em segundo plano
@@ -3507,13 +3511,13 @@ function upLigar() {
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && upAberto()) upFechar(); });
 }
 
-function openUploadWidget(funcId, funcNome, pasta, ficheiros, extra) {
+function openUploadWidget(funcId, funcNome, pasta, ficheiros, extra, doEditor) {
   abrirEnvio({
     titulo: 'Anexar documentos',
     destino: (funcNome || 'Colaborador') + (pasta ? ' › ' + pasta : ''),
     pastaCloud: `${CLOUDINARY_FOLDER}/${funcId}`,
     formatos: UP_FORMATOS_DOC,
-    ficheiros,
+    ficheiros, doEditor: !!doEditor,
     guardar: info => saveDocumentMetadata(funcId, funcNome, info, pasta, true, extra)
   });
 }
@@ -3540,6 +3544,7 @@ async function saveDocumentMetadata(funcId, funcNome, info, pasta, silencioso, e
     if (!silencioso) toast('Documento anexado.');
     return true;
   } catch (err) {
+    if (paSemRegrasNovas(err, info)) return false;
     toast('Erro ao guardar documento: ' + friendlyError(err), true);
     return false;
   }
@@ -3831,7 +3836,7 @@ function viewDocument(url, format, filename, opcoes) {
   vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar, fmt: String(format || docFmt({ url, original_filename: filename })).toLowerCase() };
   // no telemóvel imprime-se pelo botão de enviar (menu do sistema)
   document.getElementById('viewerImprimir').hidden = ehTelemovel() || !(vwDoc.fmt === 'pdf' || isImageFormat(vwDoc.fmt));
-  document.getElementById('viewerEditar').hidden = !(vwDoc.editar && isEditor() && podeEditarDocFmt(format || docFmt({ url, original_filename: filename })));
+  document.getElementById('viewerEditar').hidden = !(vwDoc.editar && podeEditarPdf() && podeEditarDocFmt(format || docFmt({ url, original_filename: filename })));
   document.getElementById('viewerRodar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerAnotar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerPaginas').hidden = document.getElementById('viewerEditar').hidden || (format || docFmt({ url, original_filename: filename })).toLowerCase() !== 'pdf';
@@ -4774,7 +4779,7 @@ async function addUser() {
 /* ---------- Regras de segurança publicadas? (só o master é avisado) ----------
    firestore.rules autoriza a leitura de regras/<versão>; se a leitura for recusada,
    as regras publicadas no Firebase são mais antigas do que esta versão da app. */
-const REGRAS_VERSAO = 'v4';
+const REGRAS_VERSAO = 'v5';
 let regrasDesatualizadas = false;
 async function verificarRegras(avisarOk) {
   if (!isMaster()) { document.getElementById('regrasAviso').hidden = true; return; }
@@ -5966,7 +5971,7 @@ function abrirEditorPx(emp, d, opcoes) {
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(x => ({ nome: docFullName(x), url: x.url, format: docFmt(x) })) : null,
     edicao: d.edicao || null, pastaCloud: `${CLOUDINARY_FOLDER}/${emp.id}`,
-    guardarCopia: (file, edicao) => openUploadWidget(emp.id, emp.nome, pasta, [file], edicao ? { edicao } : null),
+    guardarCopia: (file, edicao) => openUploadWidget(emp.id, emp.nome, pasta, [file], edicao ? { edicao } : null, true),
     substituir: async (file, edicao) => {
       const info = await upCloudinary(file, `${CLOUDINARY_FOLDER}/${emp.id}`, p => { const el = document.getElementById('overlayMsg'); if (el) el.textContent = `A substituir o original… ${Math.round(p * 100)}%`; });
       await db.collection('funcionarios').doc(emp.id).collection('documentos').doc(d.id).update({
@@ -6504,7 +6509,7 @@ function renderPastas() {
         + `<input type="checkbox" class="px-sel" data-px-sel="${id}"${marcado ? ' checked' : ''} aria-label="Selecionar ${escapeHtml(nome)}">`
         + `<span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
         + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
-        + (isEditor() && podeEditarDocFmt(docFmt(d)) ? `<button type="button" class="px-btn-editar" data-px-doc="editar" data-px-did="${id}" title="Editar PDF: mudar texto, escrever, assinar…">Editar PDF</button>` : '')
+        + (podeEditarPdf() && podeEditarDocFmt(docFmt(d)) ? `<button type="button" class="px-btn-editar" data-px-doc="editar" data-px-did="${id}" title="Editar PDF: mudar texto, escrever, assinar…">Editar PDF</button>` : '')
         + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
         + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
@@ -6519,7 +6524,7 @@ function renderPastas() {
     const selTodos = !daVista.length ? ''
       : (ehTelemovel() && !pxModoSel && !nSel ? `<button type="button" class="px-selbtn" data-px-act="modo-sel">Selecionar</button>`
         : `<label class="px-selall"><input type="checkbox" data-px-selall${nSel && nSel === daVista.length ? ' checked' : ''}> Selecionar todos</label>`);
-    const barra = barraSelecaoHtml('px', nSel, { modo: pxModoSel, juntar: isEditor(), mover: isEditor(), enviar: podePartilharFicheiros(), eliminar: isAdmin() })
+    const barra = barraSelecaoHtml('px', nSel, { modo: pxModoSel, juntar: podeEditarPdf(), mover: isEditor(), enviar: podePartilharFicheiros(), eliminar: isAdmin() })
       || (isEditor() && daVista.length && !ehTelemovel() ? `<div class="px-hint">Clica nos ficheiros para os selecionar, ou arrasta-os com o rato para uma pasta.</div>` : '');
     // Faixa para largar ficheiros arrastados (aparece só enquanto se arrasta)
     const destinos = [''].concat(subs).filter(x => x !== (sub || ''));
@@ -6669,7 +6674,7 @@ function pxLigarEventos(root) {
       if (pxSelecionados.size > 1 && pxSelecionados.has(id)) {
         const docs = [...pxSelecionados].map(pxDocPorId).filter(Boolean);
         abrirMenuContexto(ev.clientX, ev.clientY, [{ titulo: `${docs.length} selecionados` },
-          isEditor() ? { label: 'Juntar num PDF', fn: () => pxJuntarPdf(emp, docs) } : null,
+          podeEditarPdf() ? { label: 'Juntar num PDF', fn: () => pxJuntarPdf(emp, docs) } : null,
           isEditor() ? { label: 'Mover para…', fn: () => pxAbrirMover(emp, docs) } : null,
           podePartilharFicheiros() ? { label: 'Enviar', fn: () => enviarVarios(docs.map(x => ({ url: x.url, nome: docFullName(x) })), slug(emp.nome)) } : null,
           { label: 'Descarregar (ZIP)', fn: () => pxDescarregarVarios(emp, docs) },
@@ -6685,11 +6690,11 @@ function pxLigarEventos(root) {
         !partilhaNoTelemovel() && podePartilharFicheiros() ? { label: 'Enviar…', fn: () => d && enviarDocumento(d.url, docFullName(d)) } : null,
         isEditor() ? { label: 'Mover para…', fn: carregar('mov') } : null,
         isEditor() ? { label: 'Renomear', fn: carregar('ren') } : null,
-        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
-        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
-        isEditor() && d && docFmt(d) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorPx(emp, d, { paginas: true }) } : null,
-        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
-        isEditor() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorPx(emp, d) } : null,
+        podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
+        podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
+        podeEditarPdf() && d && docFmt(d) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorPx(emp, d, { paginas: true }) } : null,
+        podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
+        podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
         isAdmin() ? '-' : null,
         isAdmin() ? { label: 'Eliminar', fn: carregar('del'), perigo: true } : null]);
@@ -10075,7 +10080,7 @@ function edAtualizarSelecao() {
   root.classList.toggle('px-modo-sel', edModoSel || edSel.size > 0);
 }
 function edBarraSelecao() {
-  return barraSelecaoHtml('ed', edSel.size, { modo: edModoSel, juntar: isEditor(), mover: isEditor(), enviar: podePartilharFicheiros(), eliminar: isAdmin() })
+  return barraSelecaoHtml('ed', edSel.size, { modo: edModoSel, juntar: podeEditarPdf(), mover: isEditor(), enviar: podePartilharFicheiros(), eliminar: isAdmin() })
     || (isEditor() && edIdsVista.length && !ehTelemovel() ? '<div class="px-hint">Clica para selecionar · arrasta com o rato para uma pasta · botão direito para mais opções.</div>' : '');
 }
 
@@ -10221,7 +10226,7 @@ function edMenuItem(x) {
     else itens.push({ label: 'Descarregar', fn: op('down') }, podePartilharFicheiros() ? { label: 'Enviar…', fn: () => enviarDocumento(x.url, docFullName(x)) } : null);
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
-  if (ed && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
+  if (podeEditarPdf() && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -10233,7 +10238,7 @@ function edJuntarPdf(ids) {
 }
 function edMenuVarios(ids) {
   return [{ titulo: `${ids.length} selecionados` },
-    isEditor() ? { label: 'Juntar num PDF', fn: () => edJuntarPdf(ids) } : null,
+    podeEditarPdf() ? { label: 'Juntar num PDF', fn: () => edJuntarPdf(ids) } : null,
     isEditor() ? { label: 'Mover para…', fn: () => edAbrirMover(ids) } : null,
     podePartilharFicheiros() ? { label: 'Enviar', fn: () => edEnviar(ids) } : null,
     { label: 'Descarregar (ZIP)', fn: () => edDescarregar(ids) },
@@ -10396,13 +10401,13 @@ function edExtensao(info) {
   const m = /\.([a-z0-9]{2,5})$/i.exec(info.public_id || '') || /\.([a-z0-9]{2,5})$/i.exec(info.secure_url || '');
   return m ? m[1].toLowerCase() : '';
 }
-function edUpload(pai, ficheiros, extra) {
+function edUpload(pai, ficheiros, extra, doEditor) {
   abrirEnvio({
     titulo: 'Anexar ficheiros',
     destino: edCaminhoTxt(pai),
     pastaCloud: ED_CLOUD_FOLDER,
     formatos: ED_FORMATOS,
-    ficheiros,
+    ficheiros, doEditor: !!doEditor,
     guardar: info => edGuardarFicheiro(pai, info, true, extra)
   });
 }
@@ -10419,7 +10424,15 @@ async function edGuardarFicheiro(pai, info, silencioso, extra) {
     logAudit('empresa_docs', ref.id, `ficheiro anexado: ${edCaminhoTxt(pai)} › ${base}${format ? '.' + format : ''}`);
     if (!silencioso) toast('Ficheiro anexado.');
     return true;
-  } catch (err) { toast('Erro ao guardar ficheiro: ' + friendlyError(err), true); return false; }
+  } catch (err) { if (paSemRegrasNovas(err, info)) return false; toast('Erro ao guardar ficheiro: ' + friendlyError(err), true); return false; }
+}
+// Utilizador (não master) a guardar um PDF feito no editor antes de o master publicar as regras novas:
+// descarrega o documento para não se perder e explica o que falta
+function paSemRegrasNovas(err, info) {
+  if (isEditor() || !err || err.code !== 'permission-denied') return false;
+  try { downloadDocument(info.secure_url, (info.original_filename || 'documento') + (info.format ? '.' + info.format : '')); } catch (e) { /* sem download */ }
+  toast('Ainda não deu para guardar na app: o utilizador master tem de publicar as regras novas (aviso "Falta um passo"). O documento foi descarregado para o seu aparelho.', true);
+  return true;
 }
 
 // ---------- Fichas (campos escolhidos pelo utilizador) ----------
@@ -10589,7 +10602,7 @@ function abrirEditorEd(x, opcoes) {
     rodar: !!(opcoes && opcoes.rodar), cortar: !!(opcoes && opcoes.cortar), paginas: !!(opcoes && opcoes.paginas), anotar: !!(opcoes && opcoes.anotar),
     juntar: opcoes && opcoes.juntar ? opcoes.juntar.map(y => ({ nome: docFullName(y), url: y.url, format: docFmt(y) })) : null,
     edicao: x.edicao || null, pastaCloud: ED_CLOUD_FOLDER,
-    guardarCopia: (file, edicao) => edUpload(pai, [file], edicao ? { edicao } : null),
+    guardarCopia: (file, edicao) => edUpload(pai, [file], edicao ? { edicao } : null, true),
     substituir: async (file, edicao) => {
       const info = await upCloudinary(file, ED_CLOUD_FOLDER, () => {});
       await db.collection(ED_COL).doc(x.id).update({
@@ -11225,7 +11238,7 @@ let sc = null;
 const $sc = id => document.getElementById(id);
 
 function abrirScanner(opts) {
-  if (typeof isEditor === 'function' && !isEditor()) { toast('Sem permissões para digitalizar.', true); return; }
+  if (typeof isEditor === 'function' && !isEditor() && !(opts && opts.doEditor && podeEditarPdf())) { toast('Sem permissões para digitalizar.', true); return; }
   scLigar();
   sc = { destino: opts.destino || '', aoTerminar: opts.aoTerminar, paginas: [], atual: 0, filtro: 'documento', auto: true, stream: null, raf: 0, ultimaDet: 0, vivos: null, ultimosCantos: null, estavelDesde: 0, ultimaCaptura: 0, ocupado: false, tDet: 60 };
   $sc('scDestino').textContent = sc.destino ? 'Guardar em: ' + sc.destino : '';
@@ -11694,7 +11707,7 @@ function peRetangulo(c, conv, r) { // converte um retângulo {x0,y0,x1,y1}
 }
 
 async function abrirEditorDoc(o) {
-  if (typeof isEditor === 'function' && !isEditor()) { toast('Sem permissões para editar.', true); return; }
+  if (typeof podeEditarPdf === 'function' && !podeEditarPdf()) { toast('Sem permissões para editar.', true); return; }
   peLigar();
   showOverlay('A abrir o documento…');
   try {
@@ -12118,7 +12131,7 @@ function peAbrirGuardar(extrair) {
   pe.nomeMexido = false;
   document.querySelector('input[name="pgModo"][value="copia"]').checked = true;
   // ao juntar vários ficheiros ou extrair páginas guarda-se sempre um documento novo (os originais ficam)
-  document.querySelector('input[name="pgModo"][value="substituir"]').closest('.pg-opcao').hidden = !!((pe.o.juntar && pe.o.juntar.length) || pe.extrair);
+  document.querySelector('input[name="pgModo"][value="substituir"]').closest('.pg-opcao').hidden = !!((pe.o.juntar && pe.o.juntar.length) || pe.extrair || !isEditor());
   $pe('pgReduzir').checked = false;
   $pe('peGuardarModal').querySelector('h2').textContent = pe.extrair ? `Extrair ${pe.extrair.length} página${pe.extrair.length === 1 ? '' : 's'}` : 'Guardar alterações';
   peModoGuardar();
@@ -13173,7 +13186,7 @@ function peLigar() {
   $pe('pjInput').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) peJuntarFicheiros(fs); });
   $pe('pjDigitalizar').addEventListener('click', () => {
     closeModal('peJuntarModal');
-    abrirScanner({ destino: 'anexar a "' + (pe.o.nome || 'documento') + '"', aoTerminar: f => peJuntarDe(() => f.arrayBuffer(), f.name, 'application/pdf') });
+    abrirScanner({ doEditor: true, destino: 'anexar a "' + (pe.o.nome || 'documento') + '"', aoTerminar: f => peJuntarDe(() => f.arrayBuffer(), f.name, 'application/pdf') });
   });
   $pe('pjFechar').addEventListener('click', () => closeModal('peJuntarModal'));
   window.addEventListener('resize', () => { if (pe && pe.ecra === 'corte') peLayoutCorte(); });
