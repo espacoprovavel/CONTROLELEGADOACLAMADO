@@ -1285,6 +1285,15 @@ footer .ver { color: #9ca3af; }
 .pg-opcao { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; margin-bottom: 10px; transition: border-color .15s, background .15s; }
 .pg-opcao.on { border-color: var(--accent); background: #f5f8ff; }
 .pg-opcao[hidden] { display: none; }
+.cz-fich { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 14px; font-size: 14px; }
+.cz-fich strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cz-fich span { color: var(--ink-soft); flex-shrink: 0; }
+.cz-res { margin-top: 6px; padding: 14px; border-radius: 14px; background: #f4f6f9; font-size: 14px; line-height: 1.45; }
+.cz-res.ok { background: #eef8f1; }
+.cz-res .cz-big { display: block; font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.cz-barra { height: 6px; border-radius: 4px; background: #dfe4ea; overflow: hidden; margin-top: 8px; }
+.cz-barra i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.cz-ocupado .pg-opcao { opacity: .55; pointer-events: none; }
 .px-fbtns .px-btn-editar { background: #0b57d0 !important; color: #fff !important; border-color: #0b57d0 !important; }
 .pg-reduzir { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: 13.5px; cursor: pointer; }
 .pg-reduzir input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
@@ -1830,6 +1839,7 @@ footer .ver { color: #9ca3af; }
         <button type="button" class="vw-btn vw-acao" id="viewerEditar" aria-label="Cortar" title="Cortar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span class="vw-lbl">Cortar</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerPaginas" aria-label="Páginas" title="Páginas: selecionar, eliminar, rodar, mudar de lugar" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/></svg><span class="vw-lbl">Páginas</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerEnviar" aria-label="Enviar" title="Enviar (WhatsApp, email…)" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="vw-lbl">Enviar</span></button>
+        <button type="button" class="vw-btn vw-acao" id="viewerComprimir" aria-label="Comprimir PDF" title="Comprimir PDF: ficheiro mais leve" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg><span class="vw-lbl">Comprimir</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerImprimir" aria-label="Imprimir" title="Imprimir" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span class="vw-lbl">Imprimir</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="vw-lbl">Descarregar</span></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
@@ -2204,6 +2214,24 @@ footer .ver { color: #9ca3af; }
       <button class="btn btn-ghost" id="pgNaoGuardar" style="margin-right:auto;">Não guardar</button>
       <button class="btn btn-ghost" id="pgVoltar">Continuar a editar</button>
       <button class="btn btn-primary" id="pgGuardar">Guardar cópia</button>
+    </div>
+  </div>
+</div>
+<!-- Comprimir PDF (como no Adobe): escolhe o nível, mostra o tamanho antes/depois e descarrega -->
+<div class="modal-backdrop pe-modal" id="czModal">
+  <div class="modal narrow">
+    <div class="modal-head"><h2>Comprimir PDF</h2><button class="modal-close" id="czFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="cz-fich"><strong id="czNome">documento.pdf</strong><span id="czTamanho"></span></div>
+      <label class="pg-opcao"><input type="radio" name="czNivel" value="alta"><span><strong>Alta compressão</strong><em>Ficheiro mais pequeno, qualidade mais baixa. Bom para email e WhatsApp.</em></span></label>
+      <label class="pg-opcao on"><input type="radio" name="czNivel" value="media" checked><span><strong>Média compressão (recomendado)</strong><em>Bom equilíbrio entre tamanho e qualidade.</em></span></label>
+      <label class="pg-opcao"><input type="radio" name="czNivel" value="baixa"><span><strong>Baixa compressão</strong><em>Melhor qualidade, ficheiro um pouco mais pequeno.</em></span></label>
+      <div class="cz-res" id="czRes" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="czCancelar" style="margin-right:auto;">Cancelar</button>
+      <button class="btn btn-ghost" id="czGuardar" hidden>Guardar cópia na pasta</button>
+      <button class="btn btn-primary" id="czOk">Comprimir</button>
     </div>
   </div>
 </div>
@@ -3790,6 +3818,7 @@ function ligarLeitorPdf() {
   document.getElementById('viewerPaginas').addEventListener('click', () => abrirNoEditor({ paginas: true }));
   document.getElementById('viewerAnotar').addEventListener('click', () => abrirNoEditor({ anotar: true }));
   document.getElementById('viewerImprimir').addEventListener('click', () => { if (vwDoc) imprimirDocumento(vwDoc.url, vwDoc.fmt); });
+  document.getElementById('viewerComprimir').addEventListener('click', () => { if (vwDoc) czAbrir({ url: vwDoc.url, nome: vwDoc.nome, guardar: vwDoc.guardarCopia }); });
   document.getElementById('pdCancelar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   document.getElementById('pdFechar').addEventListener('click', () => { partilhaPronta = null; closeModal('partilhaModal'); });
   // toque duplo: aproxima / volta à página inteira
@@ -3833,13 +3862,14 @@ function viewDocument(url, format, filename, opcoes) {
   const body = document.getElementById('viewerBody');
   if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
   fecharLeitor();
-  vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar, fmt: String(format || docFmt({ url, original_filename: filename })).toLowerCase() };
+  vwDoc = { url, nome: filename, blob: null, editar: opcoes && opcoes.editar, guardarCopia: opcoes && opcoes.guardarCopia, fmt: String(format || docFmt({ url, original_filename: filename })).toLowerCase() };
   // no telemóvel imprime-se pelo botão de enviar (menu do sistema)
   document.getElementById('viewerImprimir').hidden = ehTelemovel() || !(vwDoc.fmt === 'pdf' || isImageFormat(vwDoc.fmt));
   document.getElementById('viewerEditar').hidden = !(vwDoc.editar && podeEditarPdf() && podeEditarDocFmt(format || docFmt({ url, original_filename: filename })));
   document.getElementById('viewerRodar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerAnotar').hidden = document.getElementById('viewerEditar').hidden;
   document.getElementById('viewerPaginas').hidden = document.getElementById('viewerEditar').hidden || (format || docFmt({ url, original_filename: filename })).toLowerCase() !== 'pdf';
+  document.getElementById('viewerComprimir').hidden = vwDoc.fmt !== 'pdf' || typeof czAbrir !== 'function';
   const podeEnviar = podePartilharFicheiros();
   document.getElementById('viewerEnviar').hidden = !podeEnviar;
   document.getElementById('viewerDown').hidden = partilhaNoTelemovel(); // no telemóvel, "Enviar" já tem "Guardar em Ficheiros"
@@ -5043,7 +5073,7 @@ function bind() {
       // editar a partir da ficha: fecha a ficha e abre o editor com os documentos desta pessoa
       const editar = d && typeof abrirEditorPx === 'function' ? o => { unsubscribeDocsFn(); closeModal('detailModal'); abrirEditorPx(emp, d, Object.assign({ lista: detailDocs.slice() }, o)); } : null;
       if (btn.classList.contains('act-doc-edit')) { if (editar) editar({ anotar: true }); }
-      else viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename, editar ? { editar } : null);
+      else viewDocument(btn.dataset.url, btn.dataset.format, btn.dataset.filename, editar ? { editar, guardarCopia: emp ? pxGuardarCopia(emp, d) : null } : null);
     }
     else if (btn.classList.contains('act-doc-dl')) downloadDocument(btn.dataset.url);
     else if (btn.classList.contains('act-doc-del')) deleteDocument(fid, fnome, btn.dataset.docid, btn.dataset.filename, btn.dataset.size === '' ? null : Number(btn.dataset.size));
@@ -6037,6 +6067,12 @@ function juntarEscolher(docs) {
   if (fora) toast(`${fora} ficheiro(s) que não são PDF nem foto ficam de fora.`);
   return bons;
 }
+// guardar um ficheiro novo (ex.: PDF comprimido) na mesma pasta do documento
+function pxGuardarCopia(emp, d) {
+  if (!emp) return null;
+  const subs = pxSubpastas(emp), pasta = d && d.pasta && subs.includes(d.pasta) ? d.pasta : null;
+  return f => openUploadWidget(emp.id, emp.nome, pasta, [f], null, true);
+}
 function pxJuntarPdf(emp, docs) {
   const bons = juntarEscolher(docs); if (!bons) return;
   abrirEditorPx(emp, bons[0], { juntar: bons.slice(1) });
@@ -6510,6 +6546,7 @@ function renderPastas() {
         + `<span class="px-ico">${docIcon(d.format)}</span><span class="px-txt"><div class="px-name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</div><div class="px-sub">${escapeHtml(formatBytes(d.bytes))} · ${escapeHtml(docDateStr(d.uploaded_at))}</div></span><span class="px-fbtns">`
         + `<button type="button" data-px-doc="view" data-px-did="${id}" title="Ver">Ver</button>`
         + (podeEditarPdf() && podeEditarDocFmt(docFmt(d)) ? `<button type="button" class="px-btn-editar" data-px-doc="editar" data-px-did="${id}" title="Editar PDF: mudar texto, escrever, assinar…">Editar PDF</button>` : '')
+        + (czEhPdf(d) ? `<button type="button" data-px-doc="comprimir" data-px-did="${id}" title="Comprimir PDF: ficheiro mais leve para descarregar ou enviar">Comprimir</button>` : '')
         + `<button type="button" data-px-doc="down" data-px-did="${id}" title="Descarregar">Descarregar</button>`
         + (isEditor() ? `<button type="button" data-px-doc="ren" data-px-did="${id}" title="Mudar o nome do ficheiro">Renomear</button>` : '')
         + (isEditor() ? `<button type="button" data-px-doc="mov" data-px-did="${id}" title="Mover para outra pasta">Mover</button>` : '')
@@ -6693,6 +6730,7 @@ function pxLigarEventos(root) {
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorPx(emp, d, { anotar: true }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Cortar', fn: () => abrirEditorPx(emp, d, { cortar: true }) } : null,
         podeEditarPdf() && d && docFmt(d) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorPx(emp, d, { paginas: true }) } : null,
+        d && czEhPdf(d) ? { label: 'Comprimir PDF', fn: () => czAbrir({ url: d.url, nome: docFullName(d), guardar: pxGuardarCopia(emp, d) }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Rodar', fn: () => abrirEditorPx(emp, d, { rodar: true }) } : null,
         podeEditarPdf() && d && podeEditarDocFmt(docFmt(d)) ? { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorPx(emp, d) } : null,
         { label: pxSelecionados.has(id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (pxSelecionados.has(id)) pxSelecionados.delete(id); else pxSelecionados.add(id); renderPastas(); } },
@@ -6780,7 +6818,8 @@ function pxOnClick(ev) {
   if (t.dataset.pxDoc) {
     const d = pxDocPorId(t.dataset.pxDid); if (!d) return;
     const emp = employees.find(x => x.id === pxPath.funcId);
-    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o) } : null);
+    if (t.dataset.pxDoc === 'view') viewDocument(d.url, d.format, docFullName(d), emp ? { editar: o => abrirEditorPx(emp, d, o), guardarCopia: pxGuardarCopia(emp, d) } : null);
+    else if (t.dataset.pxDoc === 'comprimir') czAbrir({ url: d.url, nome: docFullName(d), guardar: emp ? pxGuardarCopia(emp, d) : null });
     if (t.dataset.pxDoc === 'editar' && emp) abrirEditorPx(emp, d, { anotar: true });
     else if (t.dataset.pxDoc === 'down') downloadDocument(d.url, docFullName(d));
     else if (t.dataset.pxDoc === 'ren' && emp) pxRenomearFicheiro(emp, d);
@@ -10204,7 +10243,7 @@ function edOperacao(op, x) {
   if (op === 'abrir') { if (x.tipo === 'pasta') edGo(x.id); else if (x.tipo === 'ficha') edAbrirFicha(x); else edOperacao('ver', x); }
   else if (op === 'pdf') edFichaPdfDescarregar(x);
   else if (op === 'ver') {
-    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: o => abrirEditorEd(x, o) });
+    if (isImageFormat(x.format) || String(x.format || '').toLowerCase() === 'pdf') viewDocument(x.url, x.format, docFullName(x), { editar: o => abrirEditorEd(x, o), guardarCopia: f => edUpload(edPaiDe(x), [f], null, true) });
     else downloadDocument(x.url, docFullName(x)); // Excel/CSV: não há pré-visualização → descarrega
   }
   else if (op === 'down') { if (x.tipo === 'ficheiro') downloadDocument(x.url, docFullName(x)); else edDescarregar([x.id]); }
@@ -10227,6 +10266,7 @@ function edMenuItem(x) {
   }
   if (ed) itens.push({ label: 'Mover para…', fn: op('mov') }, { label: 'Renomear', fn: op('ren') });
   if (podeEditarPdf() && x.tipo === 'ficheiro' && podeEditarDocFmt(docFmt(x))) itens.push({ label: 'Editar PDF (mudar texto, assinar…)', fn: () => abrirEditorEd(x, { anotar: true }) }, { label: 'Cortar', fn: () => abrirEditorEd(x, { cortar: true }) }, docFmt(x) === 'pdf' ? { label: 'Páginas (eliminar, rodar…)', fn: () => abrirEditorEd(x, { paginas: true }) } : null, { label: 'Rodar', fn: () => abrirEditorEd(x, { rodar: true }) }, { label: 'Editar (anexar, ordenar…)', fn: () => abrirEditorEd(x) });
+  if (x.tipo === 'ficheiro' && czEhPdf(x)) itens.push({ label: 'Comprimir PDF', fn: () => czAbrir({ url: x.url, nome: docFullName(x), guardar: f => edUpload(edPaiDe(x), [f], null, true) }) });
   if (x.tipo === 'pasta') itens.push({ label: partilhaNoTelemovel() ? 'Enviar pasta (ZIP)' : 'Descarregar pasta (ZIP)', fn: () => edDescarregar([x.id]) }, { label: 'Guardar offline', fn: () => edGuardarOffline(x.id) });
   if (x.tipo !== 'pasta') itens.push({ label: edSel.has(x.id) ? 'Tirar da seleção' : 'Selecionar', fn: () => { if (edSel.has(x.id)) edSel.delete(x.id); else edSel.add(x.id); edAtualizarSelecao(); } });
   if (adm) itens.push('-', { label: x.tipo === 'pasta' ? 'Eliminar pasta' : 'Eliminar', fn: op('del'), perigo: true });
@@ -11704,6 +11744,201 @@ function peParaBase(u, v, r) { return r === 1 ? { x: v, y: 1 - u } : r === 2 ? {
 function peRetangulo(c, conv, r) { // converte um retângulo {x0,y0,x1,y1}
   const a = conv(c.x0, c.y0, r), b = conv(c.x1, c.y1, r);
   return { x0: Math.min(a.x, b.x), y0: Math.min(a.y, b.y), x1: Math.max(a.x, b.x), y1: Math.max(a.y, b.y) };
+}
+
+/* ============================================================
+   Comprimir PDF (como no Adobe)
+   O texto continua a ser texto (dá para selecionar e pesquisar): só as imagens
+   dentro do PDF (fotos, digitalizações) ficam mais leves. Num PDF protegido,
+   as páginas passam a imagem.
+   czAbrir({ url, nome, guardar(file) opcional → guardar cópia na pasta })
+   ============================================================ */
+const CZ_NIVEIS = {
+  alta: { lado: 1300, q: 0.5 },   // ~110 ppp numa folha A4
+  media: { lado: 1750, q: 0.66 }, // ~150 ppp
+  baixa: { lado: 2400, q: 0.8 }   // ~200 ppp
+};
+let cz = null, czLigado = false;
+const $cz = id => document.getElementById(id);
+function czEhPdf(d) { return docFmt(d) === 'pdf'; }
+function czAbrir(o) {
+  czLigar();
+  const meu = cz = {
+    url: o.url, nome: String(o.nome || 'documento').replace(/\.pdf$/i, '') || 'documento',
+    guardar: o.guardar && podeEditarPdf() ? o.guardar : null, bytes: null, resultado: null, ocupado: false
+  };
+  $cz('czNome').textContent = meu.nome + '.pdf';
+  $cz('czTamanho').textContent = 'a ler…';
+  document.querySelector('input[name="czNivel"][value="media"]').checked = true;
+  czMarcarNivel();
+  czLimpar();
+  openModal('czModal');
+  meu.carregar = fetch(o.url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+    .then(b => { meu.bytes = new Uint8Array(b); if (cz === meu) $cz('czTamanho').textContent = formatBytes(b.byteLength); })
+    .catch(() => { if (cz === meu) $cz('czTamanho').textContent = ''; });
+}
+function czMarcarNivel() { document.querySelectorAll('#czModal .pg-opcao').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); }
+function czLimpar() {
+  if (cz) cz.resultado = null;
+  $cz('czRes').hidden = true; $cz('czRes').className = 'cz-res';
+  $cz('czOk').textContent = 'Comprimir'; $cz('czOk').disabled = false;
+  $cz('czGuardar').hidden = true;
+}
+function czProg(txt, p) {
+  const r = $cz('czRes'); r.hidden = false; r.className = 'cz-res';
+  r.innerHTML = `${escapeHtml(txt)}<div class="cz-barra"><i style="width:${Math.round((p || 0) * 100)}%"></i></div>`;
+}
+function czFechar() { cz = null; closeModal('czModal'); document.getElementById('czModal').querySelector('.modal').classList.remove('cz-ocupado'); }
+function czLigar() {
+  if (czLigado) return; czLigado = true;
+  document.querySelectorAll('input[name="czNivel"]').forEach(r => r.addEventListener('change', () => { czMarcarNivel(); if (cz && !cz.ocupado) czLimpar(); }));
+  $cz('czFechar').addEventListener('click', czFechar);
+  $cz('czCancelar').addEventListener('click', czFechar);
+  $cz('czOk').addEventListener('click', () => { if (!cz || cz.ocupado) return; if (cz.resultado) czDescarregar(); else czExecutar(); });
+  $cz('czGuardar').addEventListener('click', () => {
+    if (!cz || !cz.resultado || !cz.guardar) return;
+    const f = new File([cz.resultado], cz.nome + ' (comprimido).pdf', { type: 'application/pdf' }), g = cz.guardar;
+    czFechar(); g(f);
+  });
+}
+function czDescarregar() {
+  if (!cz || !cz.resultado) return;
+  saveAs(new Blob([cz.resultado], { type: 'application/pdf' }), cz.nome + ' (comprimido).pdf'); // pede confirmação (e no telemóvel abre "Enviar ou guardar")
+}
+async function czExecutar() {
+  const meu = cz; if (!meu) return;
+  const nivelNome = document.querySelector('input[name="czNivel"]:checked').value, nivel = CZ_NIVEIS[nivelNome];
+  const parou = () => cz !== meu;
+  const janela = $cz('czModal').querySelector('.modal');
+  meu.ocupado = true; janela.classList.add('cz-ocupado'); $cz('czOk').disabled = true; $cz('czGuardar').hidden = true;
+  try {
+    czProg('A abrir o documento…', 0);
+    await meu.carregar;
+    if (!meu.bytes) throw new Error('sem ficheiro');
+    const prog = p => { if (!parou()) czProg('A comprimir… ' + Math.round(p * 100) + '%', p); };
+    let out = null;
+    try { out = await czInteligente(meu.bytes, nivel, prog, parou); }
+    catch (e) { if (parou()) return; console.warn('Comprimir (manter texto):', e); }
+    if (!out) out = await czPaginasImagem(meu.bytes, nivel, prog, parou); // PDF protegido ou danificado
+    if (parou()) return;
+    const antes = meu.bytes.byteLength, depois = out.byteLength, r = $cz('czRes');
+    r.hidden = false;
+    if (depois < antes * 0.97) {
+      meu.resultado = out;
+      const pct = Math.round((1 - depois / antes) * 100);
+      r.className = 'cz-res ok';
+      r.innerHTML = `<span class="cz-big">${escapeHtml(formatBytes(antes))} → ${escapeHtml(formatBytes(depois))}</span>Ficou ${pct}% mais pequeno.`;
+      $cz('czOk').textContent = partilhaNoTelemovel() ? 'Enviar ou guardar' : 'Descarregar';
+      $cz('czGuardar').hidden = !meu.guardar;
+    } else {
+      r.className = 'cz-res';
+      r.innerHTML = `<span class="cz-big">Este PDF já está otimizado</span>Não foi possível reduzir mais o tamanho (${escapeHtml(formatBytes(antes))})${nivelNome !== 'alta' ? '. Experimente "Alta compressão".' : '.'}`;
+    }
+  } catch (err) {
+    if (parou()) return;
+    console.warn('Comprimir PDF:', err);
+    const r = $cz('czRes'); r.hidden = false; r.className = 'cz-res';
+    r.innerHTML = navigator.onLine === false ? 'Sem Internet: não foi possível abrir o documento.' : 'Não foi possível comprimir este PDF (pode estar protegido com palavra-passe).';
+  } finally {
+    meu.ocupado = false;
+    if (!parou()) { janela.classList.remove('cz-ocupado'); $cz('czOk').disabled = false; }
+  }
+}
+// Reduz as imagens dentro do PDF; texto, desenhos e letras ficam como estão
+async function czInteligente(bytes, nivel, prog, parou) {
+  const lib = await carregarPdfLib();
+  const { PDFDocument, PDFName, PDFRawStream, PDFRef } = lib, N = n => PDFName.of(n);
+  const doc = await PDFDocument.load(bytes, { updateMetadata: false }); // protegido → erro → páginas em imagem
+  const ctx = doc.context, objs = ctx.enumerateIndirectObjects();
+  // imagens que servem de máscara (transparência) ficam como estão
+  const mascaras = new Set();
+  for (const [, o] of objs) if (o instanceof PDFRawStream) ['SMask', 'Mask'].forEach(k => { const v = o.dict.get(N(k)); if (v instanceof PDFRef) mascaras.add(v.toString()); });
+  const imgs = objs.filter(([ref, o]) => o instanceof PDFRawStream && o.dict.lookup(N('Subtype')) === N('Image') && !mascaras.has(ref.toString()));
+  for (let i = 0; i < imgs.length; i++) {
+    if (parou()) throw new Error('cancelado');
+    prog(i / Math.max(1, imgs.length));
+    const [ref, o] = imgs[i];
+    try { const novo = await czImagem(lib, ctx, o, nivel); if (novo) ctx.assign(ref, novo); } catch (e) { /* esta imagem fica como estava */ }
+    await new Promise(r => setTimeout(r, 0));
+  }
+  prog(1);
+  return doc.save({ useObjectStreams: true });
+}
+async function czImagem(lib, ctx, o, nivel) {
+  const { PDFName, PDFArray, PDFRawStream, PDFNumber } = lib, N = n => PDFName.of(n);
+  const d = o.dict, L = k => d.lookup(N(k));
+  const im = L('ImageMask'); if (im && String(im) === 'true') return null;
+  if (L('Decode') || L('Mask') instanceof PDFArray) return null; // casos especiais: não mexer
+  const w = L('Width'), h = L('Height'); if (!w || !h) return null;
+  const W0 = w.asNumber(), H0 = h.asNumber();
+  if (W0 * H0 < 40000) return null; // imagens pequenas (logótipos): não vale a pena
+  let filtro = L('Filter');
+  if (filtro instanceof PDFArray) filtro = filtro.size() === 1 ? filtro.lookup(0) : null;
+  // só RGB e tons de cinzento (CMYK e paletas ficam como estão)
+  let cs = L('ColorSpace'), comps = 0;
+  if (cs === N('DeviceRGB') || cs === N('CalRGB')) comps = 3;
+  else if (cs === N('DeviceGray') || cs === N('CalGray')) comps = 1;
+  else if (cs instanceof PDFArray) {
+    const t = cs.lookup(0);
+    if (t === N('ICCBased')) { const s = cs.lookup(1), n = s && s.dict ? s.dict.lookup(N('N')) : null; comps = n ? n.asNumber() : 0; }
+    else if (t === N('CalRGB')) comps = 3; else if (t === N('CalGray')) comps = 1;
+  }
+  if (comps !== 1 && comps !== 3) return null;
+  let fonte;
+  if (filtro === N('DCTDecode')) {
+    fonte = await createImageBitmap(new Blob([o.contents], { type: 'image/jpeg' }));
+  } else if (filtro === N('FlateDecode')) {
+    const parms = L('DecodeParms'), pred = parms && parms.lookup ? parms.lookup(N('Predictor')) : null;
+    const bpc = L('BitsPerComponent');
+    if ((pred && pred.asNumber() > 1) || !bpc || bpc.asNumber() !== 8) return null;
+    const raw = lib.decodePDFRawStream(o).decode();
+    if (raw.length < W0 * H0 * comps) return null;
+    const id = new ImageData(W0, H0), px = id.data;
+    for (let i = 0, j = 0, k = 0, n = W0 * H0; i < n; i++, k += 4) {
+      if (comps === 3) { px[k] = raw[j++]; px[k + 1] = raw[j++]; px[k + 2] = raw[j++]; } else { px[k] = px[k + 1] = px[k + 2] = raw[j++]; }
+      px[k + 3] = 255;
+    }
+    fonte = document.createElement('canvas'); fonte.width = W0; fonte.height = H0; fonte.getContext('2d').putImageData(id, 0, 0);
+  } else return null;
+  const esc = Math.min(1, nivel.lado / Math.max(W0, H0));
+  const W = Math.max(1, Math.round(W0 * esc)), H = Math.max(1, Math.round(H0 * esc));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.imageSmoothingQuality = 'high'; g.drawImage(fonte, 0, 0, W, H);
+  if (fonte.close) fonte.close(); else { fonte.width = fonte.height = 0; }
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', nivel.q));
+  c.width = c.height = 0;
+  if (!blob) return null;
+  const jpg = new Uint8Array(await blob.arrayBuffer());
+  if (jpg.length >= o.contents.length * 0.92) return null; // não ficou mais leve: fica a original
+  const nd = d.clone(ctx);
+  nd.set(N('Filter'), N('DCTDecode')); nd.delete(N('DecodeParms'));
+  nd.set(N('Width'), PDFNumber.of(W)); nd.set(N('Height'), PDFNumber.of(H));
+  nd.set(N('ColorSpace'), N('DeviceRGB')); nd.set(N('BitsPerComponent'), PDFNumber.of(8));
+  return PDFRawStream.of(nd, jpg);
+}
+// Último recurso (PDF protegido): cada página passa a imagem, com o tamanho de página original
+async function czPaginasImagem(bytes, nivel, prog, parou) {
+  const lib = await carregarPdfJs();
+  const pdf = await lib.getDocument({ data: bytes.slice() }).promise;
+  let doc = null;
+  try {
+    for (let n = 1; n <= pdf.numPages; n++) {
+      if (parou()) throw new Error('cancelado');
+      prog((n - 1) / pdf.numPages);
+      const page = await pdf.getPage(n), v1 = page.getViewport({ scale: 1 });
+      const v = page.getViewport({ scale: Math.min(4, nivel.lado / Math.max(v1.width, v1.height)) });
+      const c = document.createElement('canvas'); c.width = Math.round(v.width); c.height = Math.round(v.height);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: g, viewport: v }).promise;
+      const ori = v1.width > v1.height ? 'landscape' : 'portrait';
+      if (!doc) doc = new jsPDF({ unit: 'pt', format: [v1.width, v1.height], orientation: ori, compress: true });
+      else doc.addPage([v1.width, v1.height], ori);
+      doc.addImage(c.toDataURL('image/jpeg', nivel.q), 'JPEG', 0, 0, v1.width, v1.height, undefined, 'FAST');
+      c.width = c.height = 0; page.cleanup();
+    }
+  } finally { pdf.destroy(); }
+  prog(1);
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 async function abrirEditorDoc(o) {
