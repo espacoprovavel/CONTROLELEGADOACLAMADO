@@ -1285,6 +1285,32 @@ footer .ver { color: #9ca3af; }
 .pg-opcao { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; margin-bottom: 10px; transition: border-color .15s, background .15s; }
 .pg-opcao.on { border-color: var(--accent); background: #f5f8ff; }
 .pg-opcao[hidden] { display: none; }
+.px-sec-acoes { display: inline-flex; align-items: center; gap: 14px; }
+.or-dica { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
+.or-rapido { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; color: var(--ink-soft); }
+.or-rapido button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.or-rapido button:hover { border-color: var(--accent); color: var(--accent); }
+.or-lista { max-height: min(56vh, 520px); overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; padding: 6px; background: #f8fafc; }
+.or-item { display: flex; align-items: center; gap: 10px; padding: 8px 8px; margin: 4px 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; user-select: none; -webkit-user-select: none; }
+.or-item.a-arrastar { position: relative; z-index: 2; border-color: var(--accent); box-shadow: 0 8px 22px rgba(0,30,70,.18); }
+.or-pega { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 36px; color: #8a94a3; cursor: grab; touch-action: none; flex-shrink: 0; border-radius: 8px; }
+.or-pega:active { cursor: grabbing; }
+.or-num { min-width: 22px; text-align: right; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); flex-shrink: 0; }
+.or-ico { flex-shrink: 0; }
+.or-txt { flex: 1; min-width: 0; }
+.or-txt b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.or-txt small { display: block; font-size: 12px; color: var(--ink-soft); }
+.or-setas { display: flex; gap: 4px; flex-shrink: 0; }
+.or-setas button { width: 34px; height: 34px; border: 1px solid var(--line); background: #fff; border-radius: 9px; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; }
+.or-setas button:disabled { opacity: .35; cursor: default; }
+@media (max-width: 600px) {
+  .or-item { gap: 6px; padding: 8px 6px; }
+  .or-ico { display: none; }
+  .or-pega { width: 26px; }
+  .or-num { min-width: 16px; }
+  .or-txt b { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .or-rapido > span { width: 100%; }
+}
 .cz-fich { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 14px; font-size: 14px; }
 .cz-fich strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .cz-fich span { color: var(--ink-soft); flex-shrink: 0; }
@@ -2213,6 +2239,21 @@ footer .ver { color: #9ca3af; }
       <button class="btn btn-ghost" id="pgNaoGuardar" style="margin-right:auto;">Não guardar</button>
       <button class="btn btn-ghost" id="pgVoltar">Continuar a editar</button>
       <button class="btn btn-primary" id="pgGuardar">Guardar cópia</button>
+    </div>
+  </div>
+</div>
+<!-- Ordenar ficheiros de uma pasta (ordem escolhida, igual para todos) -->
+<div class="modal-backdrop pe-modal" id="orModal">
+  <div class="modal narrow">
+    <div class="modal-head"><h2 id="orTitulo">Ordenar ficheiros</h2><button class="modal-close" id="orFechar" aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <p class="or-dica">Arraste pela pega ou use as setas para pôr os ficheiros na ordem que quer. A ordem fica igual para todos.</p>
+      <div class="or-rapido"><span>Ordenar por:</span><button type="button" data-or-por="az">Nome A-Z</button><button type="button" data-or-por="za">Nome Z-A</button><button type="button" data-or-por="novos">Mais recentes</button><button type="button" data-or-por="antigos">Mais antigos</button></div>
+      <div class="or-lista" id="orLista"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="orCancelar" style="margin-right:auto;">Cancelar</button>
+      <button class="btn btn-primary" id="orGuardar">Guardar ordem</button>
     </div>
   </div>
 </div>
@@ -6067,6 +6108,144 @@ function juntarEscolher(docs) {
   if (fora) toast(`${fora} ficheiro(s) que não são PDF nem foto ficam de fora.`);
   return bons;
 }
+/* ---------- Ordenar ficheiros (ordem escolhida, igual para todos) ----------
+   Cada ficheiro guarda "ordem" (10, 20, 30…). Os que não têm ordem (ex.: anexados
+   depois) aparecem no fim, pela ordem normal. */
+function ordemCmp(a, b) {
+  const oa = typeof a.ordem === 'number', ob = typeof b.ordem === 'number';
+  if (oa && ob) return a.ordem - b.ordem;
+  if (oa !== ob) return oa ? -1 : 1;
+  return 0;
+}
+function tsMillis(t) { return t && t.toMillis ? t.toMillis() : 0; }
+let orCtx = null, orLigado = false;
+const OR_GRIP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+const OR_CIMA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>';
+const OR_BAIXO = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+// abrirOrdenar({ titulo, itens: [{ id, nome, ico, data(ms), sub }], guardar(idsPorOrdem) → Promise })
+function abrirOrdenar(o) {
+  orLigar();
+  orCtx = { itens: o.itens.slice(), guardar: o.guardar, inicial: o.itens.map(x => x.id).join('|') };
+  document.getElementById('orTitulo').textContent = o.titulo || 'Ordenar ficheiros';
+  orDesenhar();
+  document.getElementById('orGuardar').disabled = false;
+  openModal('orModal');
+}
+function orDesenhar() {
+  const n = orCtx.itens.length;
+  document.getElementById('orLista').innerHTML = orCtx.itens.map((x, i) =>
+    `<div class="or-item" data-or-id="${escapeHtml(x.id)}"><span class="or-pega" title="Arrastar" aria-label="Arrastar">${OR_GRIP}</span>`
+    + `<span class="or-num">${i + 1}</span><span class="or-ico">${x.ico || ''}</span>`
+    + `<span class="or-txt"><b title="${escapeHtml(x.nome)}">${escapeHtml(x.nome)}</b>${x.sub ? `<small>${escapeHtml(x.sub)}</small>` : ''}</span>`
+    + `<span class="or-setas"><button type="button" data-or-mov="-1" aria-label="Subir" title="Subir"${i === 0 ? ' disabled' : ''}>${OR_CIMA}</button>`
+    + `<button type="button" data-or-mov="1" aria-label="Descer" title="Descer"${i === n - 1 ? ' disabled' : ''}>${OR_BAIXO}</button></span></div>`).join('');
+}
+// lê a ordem atual da lista (depois de arrastar)
+function orLerDoEcra() {
+  const ids = [...document.querySelectorAll('#orLista .or-item')].map(e => e.dataset.orId);
+  orCtx.itens = ids.map(id => orCtx.itens.find(x => x.id === id)).filter(Boolean);
+}
+function orFechar() { orCtx = null; closeModal('orModal'); }
+function orLigar() {
+  if (orLigado) return; orLigado = true;
+  const lista = document.getElementById('orLista');
+  document.getElementById('orFechar').addEventListener('click', orFechar);
+  document.getElementById('orCancelar').addEventListener('click', orFechar);
+  document.querySelectorAll('[data-or-por]').forEach(b => b.addEventListener('click', () => {
+    if (!orCtx) return;
+    const por = b.dataset.orPor, nome = (a, c) => pxSortPt(a.nome, c.nome);
+    orCtx.itens.sort(por === 'az' ? nome : por === 'za' ? (a, c) => nome(c, a) : por === 'novos' ? (a, c) => (c.data || 0) - (a.data || 0) : (a, c) => (a.data || 0) - (c.data || 0));
+    orDesenhar();
+  }));
+  lista.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-or-mov]'); if (!b || !orCtx) return;
+    const id = b.closest('.or-item').dataset.orId, i = orCtx.itens.findIndex(x => x.id === id), j = i + Number(b.dataset.orMov);
+    if (i < 0 || j < 0 || j >= orCtx.itens.length) return;
+    const [x] = orCtx.itens.splice(i, 1); orCtx.itens.splice(j, 0, x);
+    orDesenhar();
+    const el = lista.querySelector(`[data-or-id="${CSS.escape(id)}"] [data-or-mov="${b.dataset.orMov}"]`);
+    if (el && !el.disabled) el.focus(); else { const o = lista.querySelector(`[data-or-id="${CSS.escape(id)}"]`); if (o) o.scrollIntoView({ block: 'nearest' }); }
+  });
+  // arrastar pela pega (rato ou dedo)
+  let arr = null;
+  lista.addEventListener('pointerdown', ev => {
+    const pega = ev.target.closest('.or-pega'); if (!pega || !orCtx) return;
+    ev.preventDefault();
+    const item = pega.closest('.or-item');
+    arr = { item, id: ev.pointerId, rolar: 0, y: ev.clientY };
+    item.classList.add('a-arrastar');
+    try { pega.setPointerCapture(ev.pointerId); } catch (e) { /* sem captura */ }
+    const passo = () => { // rola a lista quando o dedo está perto das pontas
+      if (!arr) return;
+      const r = lista.getBoundingClientRect();
+      const v = arr.y < r.top + 40 ? -10 : arr.y > r.bottom - 40 ? 10 : 0;
+      if (v) { lista.scrollTop += v; orMoverPara(arr.item, arr.y); }
+      arr.rolar = requestAnimationFrame(passo);
+    };
+    arr.rolar = requestAnimationFrame(passo);
+  });
+  lista.addEventListener('pointermove', ev => { if (!arr || ev.pointerId !== arr.id) return; arr.y = ev.clientY; orMoverPara(arr.item, ev.clientY); });
+  const largar = ev => {
+    if (!arr || (ev && ev.pointerId !== arr.id)) return;
+    cancelAnimationFrame(arr.rolar); arr.item.classList.remove('a-arrastar'); arr = null;
+    orLerDoEcra(); orDesenhar();
+  };
+  lista.addEventListener('pointerup', largar);
+  lista.addEventListener('pointercancel', largar);
+  document.getElementById('orGuardar').addEventListener('click', async () => {
+    if (!orCtx) return;
+    const ctx = orCtx, ids = ctx.itens.map(x => x.id);
+    const btn = document.getElementById('orGuardar'); btn.disabled = true;
+    try { await ctx.guardar(ids); if (orCtx === ctx) orFechar(); toast('Ordem guardada.'); }
+    catch (err) { toast('Não foi possível guardar a ordem: ' + friendlyError(err), true); }
+    finally { btn.disabled = false; }
+  });
+}
+function orMoverPara(item, y) {
+  const lista = document.getElementById('orLista');
+  const outros = [...lista.querySelectorAll('.or-item')].filter(e => e !== item);
+  const antes = outros.find(e => { const r = e.getBoundingClientRect(); return y < r.top + r.height / 2; });
+  if (antes) { if (item.nextElementSibling !== antes) lista.insertBefore(item, antes); }
+  else if (lista.lastElementChild !== item) lista.appendChild(item);
+  [...lista.querySelectorAll('.or-item')].forEach((e, i) => { const n = e.querySelector('.or-num'); if (n) n.textContent = i + 1; });
+}
+// grava "ordem" só nos que mudaram (em lotes)
+async function orGravar(refDe, atuais, ids) {
+  const mudam = ids.map((id, i) => ({ id, ordem: (i + 1) * 10 })).filter(x => { const d = atuais.find(y => y.id === x.id); return d && d.ordem !== x.ordem; });
+  for (let i = 0; i < mudam.length; i += 400) {
+    const b = db.batch();
+    mudam.slice(i, i + 400).forEach(x => b.update(refDe(x.id), { ordem: x.ordem }));
+    await b.commit();
+  }
+  return mudam.length;
+}
+function pxOrdenarFicheiros(emp) {
+  if (!isEditor()) return;
+  const subs = pxSubpastas(emp), sub = pxPath.sub;
+  const daVista = (pxDocs || []).filter(d => sub ? d.pasta === sub : (!d.pasta || !subs.includes(d.pasta)));
+  if (daVista.length < 2) return;
+  abrirOrdenar({
+    titulo: 'Ordenar ficheiros',
+    itens: daVista.map(d => ({ id: d.id, nome: docFullName(d), ico: docIcon(d.format), data: tsMillis(d.uploaded_at), sub: [formatBytes(d.bytes), docDateStr(d.uploaded_at)].filter(Boolean).join(' · ') })),
+    guardar: async ids => {
+      const n = await orGravar(id => db.collection('funcionarios').doc(emp.id).collection('documentos').doc(id), daVista, ids);
+      if (n) logAudit('documentos_ordem', emp.id, `ordem dos ficheiros: ${emp.nome}${sub ? ' › ' + sub : ''}`);
+    }
+  });
+}
+function edOrdenarFicheiros() {
+  if (!isEditor()) return;
+  const outros = edFilhos(edPasta).filter(x => x.tipo !== 'pasta').sort(edOrdenar);
+  if (outros.length < 2) return;
+  abrirOrdenar({
+    titulo: 'Ordenar fichas e ficheiros',
+    itens: outros.map(x => ({ id: x.id, nome: edNome(x), ico: x.tipo === 'ficha' ? '<span class="ftype ftype-ficha">FICHA</span>' : docIcon(x.format), data: tsMillis(x.uploaded_at || x.created_at), sub: x.tipo === 'ficha' ? 'Ficha' : [formatBytes(x.bytes), docDateStr(x.uploaded_at || x.created_at)].filter(Boolean).join(' · ') })),
+    guardar: async ids => {
+      const n = await orGravar(id => db.collection(ED_COL).doc(id), outros, ids);
+      if (n) logAudit('empresa_docs', edPasta || '', `ordem dos ficheiros: ${edCaminhoTxt(edPasta)}`);
+    }
+  });
+}
 function pxJuntarPdf(emp, docs) {
   const bons = juntarEscolher(docs); if (!bons) return;
   abrirEditorPx(emp, bons[0], { juntar: bons.slice(1) });
@@ -6526,7 +6705,7 @@ function renderPastas() {
       pxDocs = null; // a carregar
       pxDocsUnsub = db.collection('funcionarios').doc(funcId).collection('documentos').onSnapshot(snap => {
         pxDocs = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
-          .sort((a, b) => pxSortPt(docFullName(a), docFullName(b)));
+          .sort((a, b) => ordemCmp(a, b) || pxSortPt(docFullName(a), docFullName(b)));
         if (pxPath.funcId === funcId) renderPastas();
       }, err => toast('Erro ao carregar documentos: ' + friendlyError(err), true));
     }
@@ -6551,6 +6730,7 @@ function renderPastas() {
     pxIdsVista = daVista.map(d => d.id);
     [...pxSelecionados].forEach(id => { if (!pxIdsVista.includes(id)) pxSelecionados.delete(id); });
     const nSel = pxSelecionados.size;
+    const ordenarBtn = isEditor() && daVista.length > 1 ? '<button type="button" class="px-selbtn" data-px-act="ordenar" title="Pôr os ficheiros na ordem que quiser">Ordenar</button>' : '';
     const selTodos = !daVista.length ? ''
       : (ehTelemovel() && !pxModoSel && !nSel ? `<button type="button" class="px-selbtn" data-px-act="modo-sel">Selecionar</button>`
         : `<label class="px-selall"><input type="checkbox" data-px-selall${nSel && nSel === daVista.length ? ' checked' : ''}> Selecionar todos</label>`);
@@ -6585,7 +6765,7 @@ function renderPastas() {
       if (isEditor()) actions += pxBtn('scan', 'Digitalizar');
       if (isEditor()) actions += pxBtn('renomear-sub', 'Renomear pasta');
       if (isAdmin()) actions += pxBtn('eliminar-sub', 'Eliminar pasta', 'btn-danger');
-      body = `${faixa}${subsHtml}${daVista.length || !filhas.length ? `<div class="px-section-title px-section-row"><span>Ficheiros</span>${selTodos}</div>${barra}${docsHtml}` : ''}`;
+      body = `${faixa}${subsHtml}${daVista.length || !filhas.length ? `<div class="px-section-title px-section-row"><span>Ficheiros</span><span class="px-sec-acoes">${ordenarBtn}${selTodos}</span></div>${barra}${docsHtml}` : ''}`;
     } else {
       if (isEditor()) actions += pxBtn('editar', 'Editar dados', 'btn-primary');
       if (isEditor()) actions += pxBtn('upload', 'Anexar ficheiros');
@@ -6597,7 +6777,7 @@ function renderPastas() {
       actions += pxBtn('offline', 'Guardar offline');
       if (isAdmin()) actions += pxBtn('eliminar-ficha', 'Eliminar ficha', 'btn-danger');
       const ficha = `<div class="px-card px-file px-ficha" data-px-act="ficha" title="Descarregar a ficha em PDF"><span class="px-ico"><span class="ftype ftype-ficha">FICHA</span></span><span class="px-txt"><div class="px-name">${escapeHtml(nomePdf(emp.nome))}</div><div class="px-sub">Ficha do cadastro (gerada na hora)</div></span><span class="px-fbtns"><button type="button" data-px-act="ficha" title="Descarregar ficha">Descarregar</button></span></div>`;
-      body = `${faixa}${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title px-section-row"><span>Documentos</span>${selTodos}</div>${barra}${docsHtml}`;
+      body = `${faixa}${subsHtml}<div class="px-section-title">Ficha</div><div class="px-grid">${ficha}</div><div class="px-section-title px-section-row"><span>Documentos</span><span class="px-sec-acoes">${ordenarBtn}${selTodos}</span></div>${barra}${docsHtml}`;
     }
   } else {
     pxStopDocs();
@@ -6825,6 +7005,7 @@ function pxOnClick(ev) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome, sub || null); break;
     case 'scan': if (emp) abrirScanner({ destino: emp.nome + (sub ? ' › ' + sub : ''), aoTerminar: f => openUploadWidget(emp.id, emp.nome, sub || null, [f]) }); break;
     case 'nova-subpasta': if (emp) pxNovaSubpasta(emp, sub || ''); break;
+    case 'ordenar': if (emp) pxOrdenarFicheiros(emp); break;
     case 'modo-sel': pxModoSel = true; renderPastas(); break;
     case 'renomear-sub': if (emp && sub) pxRenomearSubpasta(emp, sub); break;
     case 'eliminar-sub': if (emp && sub) pxEliminarSubpasta(emp, sub); break;
@@ -9979,7 +10160,9 @@ function edDescendentes(id) {
 }
 function edOrdenar(a, b) {
   const ordem = { pasta: 0, ficha: 1, ficheiro: 2 };
-  return (ordem[a.tipo] - ordem[b.tipo]) || pxSortPt(edNome(a), edNome(b));
+  if (a.tipo === 'pasta' || b.tipo === 'pasta') return (ordem[a.tipo] - ordem[b.tipo]) || pxSortPt(edNome(a), edNome(b));
+  // fichas e ficheiros: primeiro a ordem escolhida (botão "Ordenar"), depois fichas antes de ficheiros e por nome
+  return ordemCmp(a, b) || (ordem[a.tipo] - ordem[b.tipo]) || pxSortPt(edNome(a), edNome(b));
 }
 function edContagem(id) {
   const filhos = edFilhos(id);
@@ -10071,6 +10254,7 @@ function renderEmpresaDocs() {
   edIdsVista = outros.map(x => x.id);
   [...edSel].forEach(id => { if (!edIdsVista.includes(id)) edSel.delete(id); });
   const nSel = edSel.size;
+  const ordenarBtn = ed && outros.length > 1 ? '<button type="button" class="px-selbtn" data-ed-act="ordenar" title="Pôr as fichas e ficheiros na ordem que quiser">Ordenar</button>' : '';
   const selTodos = !outros.length ? ''
     : (ehTelemovel() && !edModoSel && !nSel ? '<button type="button" class="px-selbtn" data-ed-act="modo-sel">Selecionar</button>'
       : `<label class="px-selall"><input type="checkbox" data-ed-selall${nSel && nSel === outros.length ? ' checked' : ''}> Selecionar todos</label>`);
@@ -10091,7 +10275,7 @@ function renderEmpresaDocs() {
     ? `<div class="px-empty">${edPasta ? 'Esta pasta está vazia.' : 'Ainda não há pastas.'}${ed ? ' Usa <strong>+ Nova pasta</strong>, <strong>+ Nova ficha</strong> ou <strong>Anexar ficheiros</strong> (PDF, JPG, PNG ou Excel).' : ''}</div>`
     : '';
   const outrosHtml = outros.length
-    ? `<div class="px-section-title px-section-row"><span>Fichas e ficheiros</span>${selTodos}</div><div id="edBulkWrap">${edBarraSelecao()}</div><div class="px-grid">${outros.map(x => linha(x, false)).join('')}</div>`
+    ? `<div class="px-section-title px-section-row"><span>Fichas e ficheiros</span><span class="px-sec-acoes">${ordenarBtn}${selTodos}</span></div><div id="edBulkWrap">${edBarraSelecao()}</div><div class="px-grid">${outros.map(x => linha(x, false)).join('')}</div>`
     : '';
   root.innerHTML = `<div class="px-head">${voltar}<div class="px-crumbs">${crumbsHtml}</div><div class="px-actions">${actions}</div></div>${faixa}${pastasHtml}${outrosHtml}${vazio}`;
   root.classList.toggle('px-modo-sel', edModoSel || edSel.size > 0);
@@ -10221,6 +10405,7 @@ function edAcao(a) {
   if (a === 'limpar-pesquisa') { document.getElementById('edSearch').value = ''; renderEmpresaDocs(); }
   else if (a === 'nova-pasta') edNovaPasta(edPasta);
   else if (a === 'nova-ficha') edAbrirFicha(null, edPasta);
+  else if (a === 'ordenar') edOrdenarFicheiros();
   else if (a === 'upload') edUpload(edPasta);
   else if (a === 'scan') { const pasta = edPasta; abrirScanner({ destino: edCaminhoTxt(pasta), aoTerminar: f => edUpload(pasta, [f]) }); }
   else if (a === 'zip') edDescarregar(edPasta ? [edPasta] : edFilhos('').map(x => x.id), edPasta ? null : ED_RAIZ);
