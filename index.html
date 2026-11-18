@@ -392,7 +392,20 @@ footer strong { color: var(--ink); }
 .vw-head { cursor: move; user-select: none; -webkit-user-select: none; gap: 12px; padding: 12px 14px 12px 22px; touch-action: none; }
 .vw-janela.max .vw-head { cursor: default; }
 .vw-head h2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
-.vw-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.vw-btns { display: flex; gap: 8px; flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.vw-btns::-webkit-scrollbar { display: none; }
+.vw-btns > * { flex-shrink: 0; }
+.vw-btns { touch-action: pan-x; }
+.vw-fechar { flex-shrink: 0; }
+.vw-voltar { display: none; align-items: center; gap: 2px; flex-shrink: 0; height: 36px; padding: 0 12px 0 6px; border: none; border-radius: 10px; background: #f3f4f6; color: #111827; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+/* Telemóvel e tablet: "Voltar" sempre à vista; os botões passam para uma 2.ª linha que desliza para o lado */
+@media (max-width: 760px), (pointer: coarse) {
+  .vw-voltar { display: inline-flex; }
+  .vw-head { flex-wrap: wrap; row-gap: 8px; }
+  .vw-head > .vw-fechar { display: none; }
+  .vw-head h2 { min-width: 0; }
+  .vw-btns { order: 3; flex: 1 1 100%; }
+}
 .vw-btn { width: 32px; height: 32px; border-radius: 8px; border: none; cursor: pointer; background: rgba(255,255,255,0.15); color: #fff; display: flex; align-items: center; justify-content: center; }
 .vw-btn:hover { background: rgba(255,255,255,0.28); }
 .vw-body { flex: 1; min-height: 0; max-height: none; padding: 12px; overflow: auto; display: flex; background: #eef2f7; }
@@ -1853,6 +1866,7 @@ footer .ver { color: #9ca3af; }
 <div class="modal-backdrop vw-backdrop" id="viewerModal">
   <div class="modal vw-janela" id="viewerJanela" role="dialog" aria-labelledby="viewerTitle">
     <div class="modal-head vw-head" id="viewerHead" title="Arrasta para mover · duplo clique para maximizar">
+      <button type="button" class="vw-voltar" id="viewerVoltar" aria-label="Voltar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></button>
       <h2 id="viewerTitle">Documento</h2>
       <div class="vw-btns">
         <div class="vw-zoom" id="viewerZoom" hidden>
@@ -1868,8 +1882,8 @@ footer .ver { color: #9ca3af; }
         <button type="button" class="vw-btn vw-acao" id="viewerImprimir" aria-label="Imprimir" title="Imprimir" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span class="vw-lbl">Imprimir</span></button>
         <button type="button" class="vw-btn vw-acao" id="viewerDown" aria-label="Descarregar" title="Descarregar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="vw-lbl">Descarregar</span></button>
         <button type="button" class="vw-btn" id="viewerMax" aria-label="Maximizar" title="Maximizar"></button>
-        <button class="modal-close" id="viewerClose" aria-label="Fechar">×</button>
       </div>
+      <button class="modal-close vw-fechar" id="viewerClose" aria-label="Fechar" title="Fechar">×</button>
     </div>
     <div class="modal-body vw-body" id="viewerBody"></div>
     <span class="vw-h vw-n" data-vw="n"></span><span class="vw-h vw-s" data-vw="s"></span>
@@ -3655,7 +3669,28 @@ function vwAbrir() {
   if (!vwEstado) vwEstado = vwLer() || vwPadrao();
   vwLimitar(); vwAplicar();
   openModal('viewerModal');
+  // botão "voltar" do telemóvel / navegador: fecha o documento e fica na mesma pasta
+  if (!vwHist) { try { history.pushState({ legadoVw: 1 }, ''); vwHist = true; } catch (e) { /* sem histórico */ } }
 }
+let vwHist = false;
+// "voltar" pedido pela própria app (ao fechar com o botão): o popstate que vem a seguir é ignorado
+let histAVoltar = false;
+function histVoltar() { histAVoltar = true; try { history.back(); } catch (e) { histAVoltar = false; } }
+// fecha o leitor (botão Voltar, ×, Esc ou "voltar" do telemóvel)
+function fecharViewer(semHistorico) {
+  if (typeof fecharLeitor === 'function') fecharLeitor();
+  closeModal('viewerModal');
+  document.getElementById('viewerBody').innerHTML = '';
+  if (vwHist) { vwHist = false; if (!semHistorico && history.state && history.state.legadoVw) histVoltar(); }
+}
+window.addEventListener('popstate', ev => {
+  if (histAVoltar) { histAVoltar = false; ev.stopImmediatePropagation(); return; }
+  if (vwHist && document.getElementById('viewerModal').classList.contains('open')) fecharViewer(true);
+  else vwHist = false;
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && document.getElementById('viewerModal').classList.contains('open') && !document.querySelector('.pe-modal.open, #upModal.open')) fecharViewer();
+});
 function vwAlternarMax() { vwEstado.max = !vwEstado.max; vwLimitar(); vwAplicar(); vwGuardar(); }
 // Arrastar: título (mover) ou bordas/cantos (tamanho)
 function vwLigar() {
@@ -3668,7 +3703,7 @@ function vwLigar() {
     j.classList.add('vw-ativo');
     try { ev.target.setPointerCapture(ev.pointerId); } catch (e) { /* sem captura */ }
   };
-  head.addEventListener('pointerdown', ev => { if (!ev.target.closest('button')) inicio(ev, 'mover'); });
+  head.addEventListener('pointerdown', ev => { if (!ev.target.closest('button, .vw-btns')) inicio(ev, 'mover'); });
   j.querySelectorAll('[data-vw]').forEach(h => h.addEventListener('pointerdown', ev => inicio(ev, h.dataset.vw)));
   document.addEventListener('pointermove', ev => {
     if (!op) return;
@@ -3850,7 +3885,7 @@ function ligarLeitorPdf() {
   document.getElementById('pdEnviar').addEventListener('click', enviarPartilhaPronta);
   const abrirNoEditor = opcoes => {
     const ed = vwDoc && vwDoc.editar; if (!ed) return;
-    fecharLeitor(); closeModal('viewerModal'); document.getElementById('viewerBody').innerHTML = '';
+    fecharViewer();
     ed(opcoes);
   };
   document.getElementById('viewerEditar').addEventListener('click', () => abrirNoEditor({ cortar: true }));
@@ -5123,11 +5158,8 @@ function bind() {
   // Visualizador de documento
   vwLigar();
   ligarLeitorPdf();
-  document.getElementById('viewerClose').addEventListener('click', () => {
-    fecharLeitor();
-    closeModal('viewerModal');
-    document.getElementById('viewerBody').innerHTML = '';
-  });
+  document.getElementById('viewerClose').addEventListener('click', () => fecharViewer());
+  document.getElementById('viewerVoltar').addEventListener('click', () => fecharViewer());
 
   // Users modal
   document.getElementById('usersClose').addEventListener('click', () => closeModal('usersModal'));
@@ -12155,6 +12187,7 @@ async function abrirEditorDoc(o) {
   }
   hideOverlay();
   const raiz = $pe('pe'); raiz.classList.add('open'); raiz.setAttribute('aria-hidden', 'false');
+  setTimeout(peHistEntrar, 0); // depois de o leitor (se estava aberto) libertar o histórico
   document.documentElement.style.overflow = 'hidden';
   peMostrar('rever');
   if (o.cortar) peAbrirCorte(); // "Cortar" direto do menu ou do leitor
@@ -12233,9 +12266,29 @@ async function peCarregarReceita(txt) {
   pe.paginas = rec.paginas.map(p => ({ s: idx[p.s], i: p.i, r: p.r || 0, crop: p.crop || null, anot: Array.isArray(p.anot) ? p.anot : [] }));
   pe.extras = rec.extras || null;
 }
-function fecharEditorDoc(forcar) {
+// botão "voltar" do telemóvel / navegador dentro do editor: faz o mesmo que o "Voltar" do ecrã
+let peHist = false;
+function peHistEntrar() {
+  if (!pe || peHist) return;
+  if (histAVoltar) { setTimeout(peHistEntrar, 60); return; } // espera que o leitor liberte o histórico
+  try { history.pushState({ legadoPe: 1 }, ''); peHist = true; } catch (e) { /* sem histórico */ }
+}
+window.addEventListener('popstate', () => {
+  if (!peHist) return;
+  peHist = false;
+  if (!pe) return;
+  const modal = document.querySelector('#pe .modal-backdrop.open, .pe-modal.open, #upModal.open');
+  if (modal) { if (modal.id === 'upModal') upFechar(); else closeModal(modal.id); }
+  else if (pe.ecra === 'anot') $pe('paVoltar').click();
+  else if (pe.ecra === 'grelha') $pe('peGrelhaVoltar').click();
+  else if (pe.ecra === 'corte') $pe('peCorteCancelar').click();
+  else { fecharEditorDoc(false, true); }
+  if (pe) peHistEntrar(); // continua no editor (ex.: escolheu não sair)
+});
+function fecharEditorDoc(forcar, doHistorico) {
   if (!pe) return;
   if (!forcar && pe.alterado && !confirm('Sair sem guardar as alterações?')) return;
+  if (peHist) { peHist = false; if (!doHistorico && history.state && history.state.legadoPe) histVoltar(); }
   pe.fontes.forEach(f => { try { if (f.doc) f.doc.destroy(); if (f.bmp && f.bmp.close) f.bmp.close(); } catch (e) { /* já fechado */ } });
   pe = null;
   const raiz = $pe('pe'); raiz.classList.remove('open'); raiz.setAttribute('aria-hidden', 'true');
