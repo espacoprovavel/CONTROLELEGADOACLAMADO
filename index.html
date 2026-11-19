@@ -3918,6 +3918,13 @@ function ligarLeitorPdf() {
 }
 
 // Imprimir um PDF ou uma foto (abre a janela de impressão do navegador)
+// Imprimir uma imagem: página sem margens (@page margin 0), para o navegador não escrever
+// data, título, endereço e nº de página no topo e no fundo da folha; a margem branca fica dentro da página
+const IMPRIMIR_IMG_HTML = u => `<!doctype html><html><head><meta charset="utf-8"><title>&#8203;</title><style>`
+  + `@page{size:auto;margin:0}html,body{margin:0;padding:0;height:100%;background:#fff}`
+  + `body{box-sizing:border-box;padding:10mm;display:flex;align-items:center;justify-content:center;overflow:hidden}`
+  + `img{display:block;max-width:100%;max-height:100%;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}`
+  + `</style></head><body><img src="${u}"></body></html>`;
 async function imprimirDocumento(url, fmt) {
   showOverlay('A preparar a impressão…');
   try {
@@ -3928,7 +3935,7 @@ async function imprimirDocumento(url, fmt) {
     document.body.appendChild(fr);
     const imprimir = () => { hideOverlay(); try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { window.open(u, '_blank'); } setTimeout(() => { fr.remove(); URL.revokeObjectURL(u); }, 60000); };
     if (fmt === 'pdf') { fr.onload = () => setTimeout(imprimir, 400); fr.src = u; }
-    else { fr.onload = () => { const im = fr.contentDocument.querySelector('img'); if (im.complete) imprimir(); else im.onload = imprimir; }; fr.srcdoc = `<!doctype html><html><head><style>@page{margin:10mm}html,body{margin:0}img{max-width:100%;max-height:100vh;display:block;margin:auto}</style></head><body><img src="${u}"></body></html>`; }
+    else { fr.onload = () => { const im = fr.contentDocument.querySelector('img'); if (im.complete) imprimir(); else im.onload = imprimir; }; fr.srcdoc = IMPRIMIR_IMG_HTML(u); }
   } catch (e) { hideOverlay(); toast('Não foi possível imprimir: ' + friendlyError(e), true); }
 }
 function viewDocument(url, format, filename, opcoes) {
