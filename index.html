@@ -4264,23 +4264,42 @@ function buildNamesPdf(list, titulo, subtitulo) {
   });
   const chaves = [...grupos.keys()].sort(cmp);
   const varios = chaves.length > 1;
+  // colunas: n.º | Nome | NIF | NISS | Data de nascimento
+  const X = { n: margin + 7, nome: margin + 10, nif: 104, niss: 132, nasc: 163 }, LNOME = X.nif - X.nome - 3;
+  const data = v => { const t = String(v || '').trim(); return /^\d{4}-\d{2}-\d{2}$/.test(t) ? formatDate(t) : (t || '—'); };
+  const cabTabela = () => {
+    doc.setFillColor(...C.bgalt); doc.rect(margin, y - 4.6, pageW - 2 * margin, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...C.navy);
+    doc.text('N.º', X.n, y, { align: 'right' }); doc.text('NOME', X.nome, y); doc.text('NIF', X.nif, y); doc.text('NISS', X.niss, y); doc.text('DATA DE NASC.', X.nasc, y);
+    y += 7;
+  };
+  const novaPagina = () => { doc.addPage(); y = cab(); cabTabela(); };
   let n = 0;
+  if (!varios) cabTabela();
   chaves.forEach(k => {
-    const nomes = grupos.get(k).map(e => String(e.nome || '(sem nome)').trim()).sort(cmp);
+    const pessoas = grupos.get(k).slice().sort((a, b) => cmp(String(a.nome || '').trim(), String(b.nome || '').trim()));
     if (varios) {
-      if (y > pageH - 30) { doc.addPage(); y = cab(); }
+      if (y > pageH - 34) { doc.addPage(); y = cab(); }
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C.navy);
-      doc.text(`${k}  (${nomes.length})`, margin, y); y += 2;
+      doc.text(`${k}  (${pessoas.length})`, margin, y); y += 2;
       doc.setDrawColor(...C.gold); doc.setLineWidth(0.4); doc.line(margin, y, pageW - margin, y); y += 6;
+      cabTabela();
     }
-    nomes.forEach(nome => {
-      if (y > pageH - 18) { doc.addPage(); y = cab(); }
+    pessoas.forEach(e => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const linhas = doc.splitTextToSize(String(e.nome || '(sem nome)').trim(), LNOME);
+      const alt = Math.max(1, linhas.length) * 4.6 + 2.6;
+      if (y + alt > pageH - 16) { novaPagina(); doc.setFont('helvetica', 'normal'); doc.setFontSize(10); }
       n++;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...C.gray);
-      doc.text(String(n) + '.', margin + 8, y, { align: 'right' });
+      doc.setTextColor(...C.gray); doc.text(String(n) + '.', X.n, y, { align: 'right' });
       doc.setTextColor(...C.text);
-      doc.text(nome, margin + 11, y);
-      y += 7;
+      doc.text(linhas, X.nome, y);
+      doc.text(String(e.nif || '').trim() || '—', X.nif, y);
+      doc.text(String(e.niss || '').trim() || '—', X.niss, y);
+      doc.text(data(e.nasc), X.nasc, y);
+      y += alt - 2.6;
+      doc.setDrawColor(225, 230, 237); doc.setLineWidth(0.2); doc.line(margin, y - 2.4, pageW - margin, y - 2.4);
+      y += 2.6 + 1.4;
     });
     y += varios ? 4 : 0;
   });
@@ -10083,7 +10102,7 @@ function abrirMenuMais(btn) {
   };
   abrirMenuContexto(r.left, r.bottom + 6, [
     item('btnPdfAll', 'PDF de todos (fichas completas)'),
-    { label: 'PDF só com os nomes', fn: () => generateNamesPdf(employees.filter(e => (e.estado || 'ativo') === 'ativo'), 'Lista de colaboradores', 'Ativos', 'Colaboradores (nomes)') },
+    { label: 'PDF da lista (nome, NIF, NISS, nascimento)', fn: () => generateNamesPdf(employees.filter(e => (e.estado || 'ativo') === 'ativo'), 'Lista de colaboradores', 'Ativos', 'Colaboradores (nomes)') },
     item('btnZipAll', 'ZIP completo'),
     item('btnBackup', 'Backup (JSON)'),
     item('btnImport', 'Importar'),
