@@ -1726,7 +1726,8 @@ footer .ver { color: #9ca3af; }
         <div class="form-section">
           <div class="form-section-title">5 · Cliente / Destacamento</div>
           <div class="form-grid">
-            <div class="field full"><label for="f_cliente">Empresa cliente</label><select id="f_cliente" data-lista="empresas"></select></div>
+            <div class="field"><label for="f_cliente">Empresa cliente</label><select id="f_cliente" data-lista="empresas"></select></div>
+            <div class="field"><label for="f_fabrica">Fábrica / local de trabalho</label><input type="text" id="f_fabrica" list="dlFabricas" maxlength="80" placeholder="Ex.: Rover" autocomplete="off"><datalist id="dlFabricas"></datalist></div>
             <div class="field"><label for="f_cli_pais">País de destacamento</label><select id="f_cli_pais" data-lista="paises"></select></div>
             <div class="field"><label for="f_cli_morada">Morada do local de trabalho</label><input type="text" id="f_cli_morada"></div>
           </div>
@@ -2643,7 +2644,7 @@ function formatDate(d) {
 }
 // Nome do PDF de uma ficha: só o nome (ex.: "Adelmo De Souza Costa.pdf"), sem "Ficha_", traços nem data
 function nomePdf(nome) {
-  const n = String(nome || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const n = String(nome || '').replace(/\s*›\s*/g, ' - ').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 120);
   return (n || 'Ficha') + '.pdf';
 }
 function slug(s) {
@@ -3107,7 +3108,7 @@ const FIELDS = ['nome','nasc','nacionalidade','naturalidade','estadocivil','gene
   'cc','cc_val','cc_obs','nif','niss','passaporte','pass_val','pass_obs',
   'tel','email','morada','cp','loc','pais',
   'funcao','categoria','tipocontrato','estado','adm','cess','venc','horario','modo_pagamento','valor_hora',
-  'cliente','cli_pais','cli_morada','banco','iban','swift',
+  'cliente','fabrica','cli_pais','cli_morada','banco','iban','swift',
   'emerg_nome','emerg_rel','emerg_tel','obs'];
 
 function openForm(emp) {
@@ -3117,6 +3118,7 @@ function openForm(emp) {
   document.getElementById('f_id').value = emp ? emp.id : '';
   // Repopular selects ligados a listas geridas (paises/empresas) para garantir opções actualizadas
   refreshListaSelects();
+  setTimeout(fabSugestoes, 0);
   if (emp) {
     FIELDS.forEach(f => {
       const el = document.getElementById('f_' + f);
@@ -3253,7 +3255,7 @@ function viewDetail(id) {
         ${detailItem('Função', e.funcao)}${detailItem('Categoria profissional', e.categoria)}${detailItem('Tipo de contrato', e.tipocontrato)}${detailItem('Estado', e.estado === 'ativo' ? 'Activo' : 'Inactivo')}${detailItem('Data admissão', formatDate(e.adm))}${detailItem('Data cessação', formatDate(e.cess))}${detailItem('Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : '')}${detailItem('Horário semanal (h)', e.horario)}${detailItem('Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? 'Só por horas' : 'Salário fixo + horas extra')}${((e.modo_pagamento || '') === 'so_horas') ? detailItem('Valor/hora (€)', (e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '') : ''}
       </div></div>
       <div class="detail-section"><div class="form-section-title">5 · Cliente / Destacamento</div><div class="detail-grid">
-        ${detailItem('Empresa cliente', e.cliente)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
+        ${detailItem('Empresa cliente', e.cliente)}${detailItem('Fábrica', e.fabrica)}${detailItem('País de destacamento', e.cli_pais)}${detailItem('Morada do local de trabalho', e.cli_morada)}
       </div></div>
       <div class="detail-section"><div class="form-section-title">6 · Conta Bancária</div><div class="detail-grid">
         ${detailItem('Banco', e.banco)}${detailItem('IBAN', e.iban)}${detailItem('SWIFT / BIC', e.swift)}
@@ -4193,7 +4195,7 @@ function drawEmployeePdf(doc, e) {
     ['2 · DOCUMENTAÇÃO', [['CC / BI', e.cc],['Validade CC', formatDate(e.cc_val)],['Observações CC', e.cc_obs],['NIF', e.nif],['NISS', e.niss],['N.º Passaporte', e.passaporte],['Validade Passaporte', formatDate(e.pass_val)],['Observações Passaporte', e.pass_obs]]],
     ['3 · CONTACTO E MORADA', [['Telemóvel', e.tel],['Email', e.email],['Morada', e.morada],['Código postal', e.cp],['Localidade', e.loc],['País', e.pais]]],
     ['4 · CONTRATO DE TRABALHO', [['Função', e.funcao],['Categoria profissional', e.categoria],['Tipo de contrato', e.tipocontrato],['Estado', estado],['Data admissão', formatDate(e.adm)],['Data cessação', formatDate(e.cess)],['Vencimento base (€)', (e.venc !== '' && e.venc != null) ? Number(e.venc).toFixed(2) : ''],['Horário semanal (h)', e.horario],['Modo de pagamento', ((e.modo_pagamento || 'salario_horas_extra') === 'so_horas') ? 'Só por horas' : 'Salário fixo + horas extra'],['Valor/hora (€)', ((e.modo_pagamento || '') === 'so_horas' && e.valor_hora !== '' && e.valor_hora != null) ? Number(e.valor_hora).toFixed(2) : '']]],
-    ['5 · CLIENTE / DESTACAMENTO', [['Empresa cliente', e.cliente],['País de destacamento', e.cli_pais],['Morada do local de trabalho', e.cli_morada]]],
+    ['5 · CLIENTE / DESTACAMENTO', [['Empresa cliente', e.cliente],['Fábrica', e.fabrica],['País de destacamento', e.cli_pais],['Morada do local de trabalho', e.cli_morada]]],
     ['6 · CONTA BANCÁRIA', [['Banco', e.banco],['IBAN', e.iban],['SWIFT / BIC', e.swift]]],
     ['7 · CONTACTO DE EMERGÊNCIA', [['Nome', e.emerg_nome],['Relação', e.emerg_rel],['Telefone', e.emerg_tel]]],
     ['8 · OBSERVAÇÕES', [['', e.obs]]]
@@ -4258,7 +4260,7 @@ function buildNamesPdf(list, titulo, subtitulo) {
   let y = cab();
   const grupos = new Map();
   list.forEach(e => {
-    const k = (String(e.cli_pais || '').trim() || 'Sem país') + ' › ' + (String(e.cliente || '').trim() || 'Sem empresa');
+    const k = (String(e.cli_pais || '').trim() || 'Sem país') + ' › ' + (String(e.cliente || '').trim() || 'Sem empresa') + (String(e.fabrica || '').trim() ? ' › ' + (typeof pxFabNome === 'function' ? pxFabNome(e) : String(e.fabrica).trim()) : '');
     if (!grupos.has(k)) grupos.set(k, []);
     grupos.get(k).push(e);
   });
@@ -4322,7 +4324,7 @@ function generateGroupPdf(group) {
 
 /* ---------- CSV ---------- */
 function buildCsv(list) {
-  const cols = ['id','nome','nif','niss','cc','funcao','estado','adm','cess','tel','email','morada','loc','cliente','cli_pais','venc','iban'];
+  const cols = ['id','nome','nif','niss','cc','funcao','estado','adm','cess','tel','email','morada','loc','cliente','fabrica','cli_pais','venc','iban'];
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
   const rows = list.map(e => cols.map(c => c === 'estado' ? esc(e.estado === 'ativo' ? 'Activo' : 'Inactivo') : esc(e[c])).join(';'));
   return '﻿' + cols.join(';') + '\r\n' + rows.join('\r\n');
@@ -4427,7 +4429,7 @@ const DEDUP_FIELD_LABELS = {
   nome: 'Nome', nif: 'NIF', niss: 'NISS', morada: 'Morada', cp: 'Cód. Postal',
   loc: 'Localidade', pais: 'País', tel: 'Telefone', email: 'Email',
   passaporte: 'Passaporte', pass_val: 'Validade passaporte', cc: 'Cartão cidadão',
-  cc_val: 'Validade CC', cliente: 'Cliente', cli_pais: 'País do cliente',
+  cc_val: 'Validade CC', cliente: 'Cliente', fabrica: 'Fábrica', cli_pais: 'País do cliente',
   nasc: 'Data nascimento', adm: 'Data admissão', cess: 'Data cessação',
   estado: 'Estado', funcao: 'Função', venc: 'Vencimento', horario: 'Horário',
   modo_pagamento: 'Modo pagamento', valor_hora: 'Valor/hora'
@@ -5860,7 +5862,7 @@ const PX_SEM_EMP = '(Sem empresa)';
 const PX_EX = 'Ex-colaboradores';
 const PX_FORMATOS = ['pdf', 'jpg', 'jpeg', 'png'];
 const PX_MAX_BYTES = 10485760; // 10 MB, igual ao upload manual
-let pxPath = { scope: 'ativos', pais: null, empresa: null, funcId: null, sub: null };
+let pxPath = { scope: 'ativos', pais: null, empresa: null, fabrica: null, funcId: null, sub: null };
 let pxItems = [];   // itens clicáveis da vista atual (cartões)
 let pxCrumbs = [];  // caminhos do breadcrumb
 let pxDocs = [];    // documentos do colaborador aberto
@@ -5884,6 +5886,11 @@ function pxSubscribeEstrutura() {
     window.pxEstrutura = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
     pxOnEmployeesChanged();
   }, err => console.warn('Pastas:', err && err.code));
+  pxFabricasUnsub = db.collection('config').doc('fabricas').onSnapshot(doc => {
+    const d = doc.exists ? doc.data() : null;
+    pxFabricasCfg = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
+    pxOnEmployeesChanged();
+  }, err => console.warn('Fábricas:', err && err.code));
   pxEstruturaExUnsub = db.collection('config').doc('pastas_ex').onSnapshot(doc => {
     const d = doc.exists ? doc.data() : null;
     pxEstruturaEx = (d && d.estrutura && typeof d.estrutura === 'object') ? d.estrutura : {};
@@ -5893,6 +5900,8 @@ function pxSubscribeEstrutura() {
 function pxUnsubscribeEstrutura() {
   if (pxEstruturaUnsub) { pxEstruturaUnsub(); pxEstruturaUnsub = null; }
   if (pxEstruturaExUnsub) { pxEstruturaExUnsub(); pxEstruturaExUnsub = null; }
+  if (pxFabricasUnsub) { pxFabricasUnsub(); pxFabricasUnsub = null; }
+  pxFabricasCfg = {};
   window.pxEstrutura = {};
   pxEstruturaEx = {};
 }
@@ -5926,6 +5935,42 @@ function pxNomeValido(s) {
   if (!s || s.startsWith('(')) return '';
   return s.slice(0, 80);
 }
+/* ---------- Fábricas (pastas dentro de uma empresa: País › Empresa › Fábrica › Colaborador) ----------
+   A fábrica de cada pessoa é o campo "fabrica" da ficha. Fábricas criadas à mão (ainda vazias)
+   ficam em config/fabricas: { estrutura: { 'País|Empresa': ['Rover', …] } } */
+let pxFabricasCfg = {}, pxFabricasUnsub = null;
+function pxFabrica(e) { return String((e && e.fabrica) || '').trim(); }
+function pxFabKey(pais, empresa) { return String(pais) + '|' + String(empresa); }
+function pxFabricasDe(lista, pais, empresa) {
+  const m = new Map();
+  (pxFabricasCfg[pxFabKey(pais, empresa)] || []).forEach(f => { const t = String(f || '').trim(); if (t && !m.has(pxNorm(t))) m.set(pxNorm(t), t); });
+  lista.forEach(e => { const f = pxFabrica(e); if (f && !m.has(pxNorm(f))) m.set(pxNorm(f), f); });
+  return [...m.values()].sort(pxSortPt);
+}
+function pxMesmaFab(e, fab) { return pxNorm(pxFabrica(e)) === pxNorm(fab); }
+// nome da fábrica como aparece na pasta (junta "De Roover" e "de roover")
+function pxFabNome(e) {
+  const f = pxFabrica(e); if (!f) return '';
+  const lista = pxFabricasDe(pxNaPasta(pxPais(e), pxEmpresa(e)), pxPais(e), pxEmpresa(e));
+  return lista.find(x => pxNorm(x) === pxNorm(f)) || f;
+}
+async function pxGuardarFabricas(novo, motivo) {
+  await db.collection('config').doc('fabricas').set({ estrutura: novo, updated_at: firebase.firestore.FieldValue.serverTimestamp(), updated_by: currentUser ? currentUser.email : '' });
+  pxFabricasCfg = novo;
+  logAudit('pastas', '', motivo);
+}
+function pxFabCfgClone() { const o = {}; Object.entries(pxFabricasCfg || {}).forEach(([k, v]) => { o[k] = Array.isArray(v) ? v.slice() : []; }); return o; }
+// sugestões no campo "Fábrica" do formulário: as da empresa escolhida, depois as outras
+function fabSugestoes() {
+  const dl = document.getElementById('dlFabricas'); if (!dl) return;
+  const emp = (document.getElementById('f_cliente') || {}).value || '', pais = (document.getElementById('f_cli_pais') || {}).value || '';
+  const daEmp = emp ? pxFabricasDe(employees.filter(e => String(e.cliente || '').trim() === emp), pais || PX_SEM_PAIS, emp) : [];
+  const todas = new Map();
+  daEmp.concat(employees.map(pxFabrica).filter(Boolean).sort(pxSortPt), Object.values(pxFabricasCfg || {}).flat()).forEach(f => { if (f && !todas.has(pxNorm(f))) todas.set(pxNorm(f), f); });
+  dl.innerHTML = [...todas.values()].map(f => `<option value="${escapeHtml(f)}"></option>`).join('');
+}
+document.addEventListener('change', ev => { if (ev.target && (ev.target.id === 'f_cliente' || ev.target.id === 'f_cli_pais')) fabSugestoes(); });
+
 function pxNaPasta(pais, empresa) {
   return employees.filter(e => empresa ? (pxPais(e) === pais && pxEmpresa(e) === empresa) : pxPais(e) === pais);
 }
@@ -6084,6 +6129,82 @@ async function migrarCisSeppe() {
   } catch (err) {
     pxMigracaoIniciada = false; // tenta de novo na próxima atualização
     console.warn('Unificação Cis & Seppe:', err);
+  }
+}
+
+/* ---------- Troca de nome: "RISA BV" → "DE ROOVER - RISA" ----------
+   Uma única vez (marca em config/migracoes.risa_v1), quando o master abre a app:
+   fichas (empresa e fábrica), lista de empresas, pastas, fábricas, pastas da Empresa
+   e folhas/relatórios da contabilidade. */
+const RISA_NOVO = 'DE ROOVER - RISA';
+function ehRisaBv(v) { const n = pxNorm(v).replace(/[^a-z0-9]/g, ''); return n === 'risabv' || n === 'risa'; }
+let risaMigracaoIniciada = false;
+async function migrarRisa() {
+  if (risaMigracaoIniciada || !isEditor() || !employees.length) return;
+  risaMigracaoIniciada = true;
+  try {
+    const flag = await db.collection('config').doc('migracoes').get();
+    if (flag.exists && flag.data() && flag.data().risa_v1) return;
+    const troca = v => (ehRisaBv(v) ? RISA_NOVO : v);
+    // 1) Fichas: empresa cliente e fábrica
+    const alvo = employees.filter(e => ehRisaBv(e.cliente) || ehRisaBv(e.fabrica));
+    for (let i = 0; i < alvo.length; i += 400) {
+      const b = db.batch();
+      alvo.slice(i, i + 400).forEach(e => {
+        const upd = {};
+        if (ehRisaBv(e.cliente)) upd.cliente = RISA_NOVO;
+        if (ehRisaBv(e.fabrica)) upd.fabrica = RISA_NOVO;
+        b.set(db.collection('funcionarios').doc(e.id), upd, { merge: true });
+      });
+      await b.commit();
+    }
+    // 2) Lista de empresas (menus)
+    const lst = await db.collection('config').doc('listas').get();
+    const empLst = lst.exists && lst.data() && Array.isArray(lst.data().empresas) ? lst.data().empresas : null;
+    if (empLst) {
+      const nova = [];
+      empLst.forEach(x => { const y = troca(x); if (!nova.includes(y)) nova.push(y); });
+      if (JSON.stringify(nova) !== JSON.stringify(empLst)) await db.collection('config').doc('listas').set({ empresas: nova }, { merge: true });
+    }
+    // 3) Pastas criadas à mão (ativos e ex-colaboradores)
+    for (const sc of ['ativos', 'ex']) {
+      const est = pxEstClone(sc); let mudou = false;
+      Object.keys(est).forEach(pais => {
+        const arr = [];
+        est[pais].forEach(x => { const y = troca(x); if (y !== x) mudou = true; if (!arr.includes(y)) arr.push(y); });
+        est[pais] = arr;
+      });
+      if (mudou) { await pxSaveEstrutura(est, `troca de nome: RISA BV → ${RISA_NOVO}`, sc); pxEstGuardada(sc, est); }
+    }
+    // 4) Fábricas criadas à mão
+    const cfg = pxFabCfgClone(); let mudouFab = false;
+    Object.keys(cfg).forEach(k => {
+      const [p0, e0] = k.split('|');
+      const lista = cfg[k].map(troca);
+      const nk = ehRisaBv(e0) ? pxFabKey(p0, RISA_NOVO) : k;
+      if (nk !== k || JSON.stringify(lista) !== JSON.stringify(cfg[k])) { mudouFab = true; delete cfg[k]; cfg[nk] = Array.from(new Set([].concat(cfg[nk] || [], lista))); }
+    });
+    if (mudouFab) await pxGuardarFabricas(cfg, `troca de nome nas fábricas: RISA BV → ${RISA_NOVO}`);
+    // 5) Pastas da área Empresa com esse nome
+    const its = await db.collection(ED_COL).get();
+    for (const d of its.docs) { const x = d.data() || {}; if (x.tipo === 'pasta' && ehRisaBv(x.nome)) await d.ref.update({ nome: RISA_NOVO }); }
+    // 6) Folhas e relatórios da contabilidade já guardados
+    const cs = await db.collection('contabilidade').get();
+    for (const d of cs.docs) {
+      const data = d.data() || {}; let mudou = false; const upd = {};
+      if (Array.isArray(data.linhas)) upd.linhas = data.linhas.map(l => (l && ehRisaBv(l.empresa) ? (mudou = true, Object.assign({}, l, { empresa: RISA_NOVO })) : l));
+      if (Array.isArray(data.grupos)) upd.grupos = data.grupos.map(g => (g && ehRisaBv(g.nome) ? (mudou = true, Object.assign({}, g, { nome: RISA_NOVO })) : g));
+      if (mudou) await d.ref.update(upd);
+    }
+    await db.collection('config').doc('migracoes').set({
+      risa_v1: { feito_em: firebase.firestore.FieldValue.serverTimestamp(), por: currentUser ? currentUser.email : '', funcionarios: alvo.length }
+    }, { merge: true });
+    logAudit('migracao', '', `troca de nome: RISA BV → ${RISA_NOVO} (${alvo.length} colaborador(es))`);
+    if (alvo.length) toast(`"RISA BV" passou a "${RISA_NOVO}" (${alvo.length} colaborador(es)).`);
+    if (pxPath.empresa && ehRisaBv(pxPath.empresa)) pxGo(Object.assign({}, pxPath, { empresa: RISA_NOVO, funcId: null, sub: null }));
+  } catch (err) {
+    console.warn('Troca RISA:', err);
+    risaMigracaoIniciada = false; // tenta de novo na próxima atualização
   }
 }
 
@@ -6318,7 +6439,7 @@ function pxSubZip(x) { return x.split(PX_SUB_SEP).map(pxSafe).join('/'); }
 function pxDocPorId(id) { return (pxDocs || []).find(d => d.id === id); }
 
 // Pasta de colaborador só com o nome: os documentos podem entrar já, a ficha preenche-se depois
-async function pxNovaPastaColab(pais, empresa, scope) {
+async function pxNovaPastaColab(pais, empresa, scope, fabrica) {
   const ex = scope === 'ex';
   if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
   const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova pasta', texto: `Dentro de "${empresa}". Pode anexar documentos já e preencher a ficha mais tarde.`, rotulo: 'Nome da pasta (ex.: nome do colaborador)', placeholder: 'Ex.: João Silva', botao: 'Criar pasta' }));
@@ -6327,14 +6448,69 @@ async function pxNovaPastaColab(pais, empresa, scope) {
   if (igual) { toast('Já existe uma pasta com esse nome aqui.', true); return; }
   const id = uid();
   const dados = { nome, estado: ex ? 'inativo' : 'ativo', modo_pagamento: 'salario_horas_extra',
-    cliente: empresa && empresa !== PX_SEM_EMP ? empresa : '', cli_pais: pais && pais !== PX_SEM_PAIS ? pais : '' };
+    cliente: empresa && empresa !== PX_SEM_EMP ? empresa : '', cli_pais: pais && pais !== PX_SEM_PAIS ? pais : '', ...(fabrica ? { fabrica } : {}) };
   try {
     await db.collection('funcionarios').doc(id).set(dados, { merge: true });
     logAudit('create', id, nome + ' (pasta sem ficha)');
     toast(`Pasta "${nome}" criada. Já pode anexar documentos.`);
     for (let i = 0; i < 25 && !employees.some(e => e.id === id); i++) await new Promise(r => setTimeout(r, 200));
-    pxGo({ scope: ex ? 'ex' : 'ativos', pais, empresa, funcId: id });
+    pxGo({ scope: ex ? 'ex' : 'ativos', pais, empresa, fabrica: fabrica || null, funcId: id });
   } catch (err) { toast('Erro ao criar pasta: ' + friendlyError(err), true); }
+}
+function pxFabPref(e) { return pxFabrica(e) ? pxSafe(pxFabNome(e)) + '/' : ''; }
+// Nova fábrica (pasta vazia dentro da empresa)
+async function pxNovaFabrica(pais, empresa, scope) {
+  if (!isEditor()) { toast('Sem permissões para criar pastas.', true); return; }
+  const nome = pxNomeValido(await pedirTexto({ titulo: 'Nova fábrica', texto: `Dentro de "${empresa}". Depois põe os colaboradores na fábrica em Editar dados (campo "Fábrica").`, rotulo: 'Nome da fábrica', placeholder: 'Ex.: Rover', botao: 'Criar fábrica' }));
+  if (!nome) return;
+  const daEmpresa = pxNaPasta(pais, empresa);
+  if (pxFabricasDe(daEmpresa, pais, empresa).some(f => pxNorm(f) === pxNorm(nome))) { toast('Já existe uma fábrica com esse nome nesta empresa.', true); return; }
+  const novo = pxFabCfgClone(), k = pxFabKey(pais, empresa);
+  novo[k] = (novo[k] || []).concat(nome);
+  try {
+    await pxGuardarFabricas(novo, `fábrica criada: ${pais} › ${empresa} › ${nome}`);
+    toast(`Fábrica "${nome}" criada.`);
+    pxGo({ scope, pais, empresa, fabrica: nome });
+  } catch (err) { toast('Erro ao criar fábrica: ' + friendlyError(err), true); }
+}
+async function pxRenomearFabrica(pais, empresa, fabrica, scope) {
+  if (!isEditor()) { toast('Sem permissões para renomear pastas.', true); return; }
+  const novo = pxNomeValido(await pedirTexto({ titulo: 'Renomear fábrica', rotulo: 'Novo nome', valor: fabrica, botao: 'Guardar' }));
+  if (!novo || novo === fabrica) return;
+  const afetados = pxNaPasta(pais, empresa).filter(e => pxMesmaFab(e, fabrica));
+  if (!confirm(`Renomear a fábrica "${fabrica}" para "${novo}"?\n\n${afetados.length} colaborador(es) (incluindo ex-colaboradores) passam a ter a fábrica "${novo}".`)) return;
+  showOverlay('A renomear fábrica…');
+  try {
+    for (let i = 0; i < afetados.length; i += 400) {
+      const b = db.batch();
+      afetados.slice(i, i + 400).forEach(e => b.set(db.collection('funcionarios').doc(e.id), { fabrica: novo }, { merge: true }));
+      await b.commit();
+    }
+    const cfg = pxFabCfgClone(), k = pxFabKey(pais, empresa);
+    if (cfg[k] && cfg[k].some(f => pxNorm(f) === pxNorm(fabrica))) {
+      cfg[k] = cfg[k].filter(f => pxNorm(f) !== pxNorm(fabrica)).concat(novo);
+      await pxGuardarFabricas(cfg, `fábrica renomeada: ${pais} › ${empresa} › ${fabrica} → ${novo}`);
+    } else logAudit('pastas', '', `fábrica renomeada: ${pais} › ${empresa} › ${fabrica} → ${novo} (${afetados.length} colaborador(es))`);
+    pxPath = Object.assign({}, pxPath, { fabrica: novo });
+    toast('Fábrica renomeada.');
+    renderPastas();
+  } catch (err) { toast('Erro ao renomear: ' + friendlyError(err), true); }
+  finally { hideOverlay(); }
+}
+// Eliminar fábrica: só quando está vazia (nunca apaga colaboradores)
+async function pxEliminarFabrica(pais, empresa, fabrica, scope) {
+  if (!isAdmin()) { toast('Apenas administradores podem eliminar pastas.', true); return; }
+  const dentro = pxNaPasta(pais, empresa).filter(e => pxMesmaFab(e, fabrica));
+  if (dentro.length) { alert(`A fábrica "${fabrica}" tem ${dentro.length} colaborador(es) (incluindo ex-colaboradores).\n\nPara a eliminar, primeiro muda-os de fábrica (Editar dados › Fábrica).`); return; }
+  if (!confirm(`Tem a certeza? Eliminar a pasta vazia "${fabrica}"?`)) return;
+  const cfg = pxFabCfgClone(), k = pxFabKey(pais, empresa);
+  cfg[k] = (cfg[k] || []).filter(f => pxNorm(f) !== pxNorm(fabrica));
+  if (!cfg[k].length) delete cfg[k];
+  try {
+    await pxGuardarFabricas(cfg, `fábrica eliminada: ${pais} › ${empresa} › ${fabrica}`);
+    toast('Pasta eliminada.');
+    pxGo({ scope, pais, empresa });
+  } catch (err) { toast('Erro ao eliminar pasta: ' + friendlyError(err), true); }
 }
 
 async function pxNovaSubpasta(emp, pai) {
@@ -6581,6 +6757,14 @@ async function pxRenomearPasta(pais, empresa, scope) {
       await pxSaveEstrutura(est, `pasta renomeada${sc === 'ex' ? ' (' + PX_EX + ')' : ''}: ${atual} → ${novo} (${afetados.length} colaborador(es))`, sc);
       pxEstGuardada(sc, est);
     }
+    // fábricas criadas à mão seguem a pasta
+    const cfg = pxFabCfgClone(); let mexeu = false;
+    Object.keys(cfg).forEach(k => {
+      const [p0, e0] = k.split('|');
+      const nk = empresa ? (p0 === pais && e0 === empresa ? pxFabKey(pais, novo) : null) : (p0 === pais ? pxFabKey(novo, e0) : null);
+      if (nk && nk !== k) { cfg[nk] = Array.from(new Set([].concat(cfg[nk] || [], cfg[k]))); delete cfg[k]; mexeu = true; }
+    });
+    if (mexeu) await pxGuardarFabricas(cfg, `fábricas seguem a pasta renomeada: ${atual} → ${novo}`);
     pxPath = empresa ? Object.assign({}, pxPath, { empresa: novo }) : Object.assign({}, pxPath, { pais: novo });
     toast('Pasta renomeada.');
     renderPastas();
@@ -6666,11 +6850,12 @@ function pxStopDocs() {
 }
 function pxGo(p) {
   pxSelecionados.clear(); pxModoSel = false;
-  pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, funcId: null, sub: null }, p);
+  pxPath = Object.assign({ scope: 'ativos', pais: null, empresa: null, fabrica: null, funcId: null, sub: null }, p);
   renderPastas();
 }
 function pxOnEmployeesChanged() {
   migrarCisSeppe(); // só faz algo uma vez (ver config/migracoes)
+  migrarRisa();     // idem: "RISA BV" → "DE ROOVER - RISA"
   importarPorLink();
   const area = document.getElementById('areaPastas');
   if (!area || area.style.display === 'none') return;
@@ -6686,7 +6871,7 @@ function pxSearchMatches(term) {
   return employees.filter(e => ['nome', 'nif', 'niss', 'funcao', 'cliente', 'cc', 'passaporte', 'cli_pais']
     .some(f => pxNorm(e[f]).includes(q))).sort(pxNomeOrd);
 }
-function pxPathOf(e) { return { scope: pxIsEx(e) ? 'ex' : 'ativos', pais: pxPais(e), empresa: pxEmpresa(e), funcId: e.id }; }
+function pxPathOf(e) { return { scope: pxIsEx(e) ? 'ex' : 'ativos', pais: pxPais(e), empresa: pxEmpresa(e), fabrica: pxFabrica(e) || null, funcId: e.id }; }
 
 function pxInitials(nome) {
   const p = String(nome || '').trim().split(/\s+/).filter(Boolean);
@@ -6719,7 +6904,7 @@ function renderPastas() {
     pxItems = res.map(e => Object.assign(pxPathOf(e), { limparPesquisa: true }));
     root.innerHTML = `<div class="px-head"><button type="button" class="px-back" data-px-act="limpar-pesquisa" title="Voltar" aria-label="Limpar pesquisa e voltar">←</button><div class="px-crumbs"><span class="cur">${res.length} resultado${res.length === 1 ? '' : 's'} para “${escapeHtml(termo)}”</span></div></div>`
       + (res.length
-        ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e))).join('') + '</div>'
+        ? '<div class="px-grid-big">' + res.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', (pxIsEx(e) ? PX_EX + ' › ' : '') + pxPais(e) + ' › ' + pxEmpresa(e) + (pxFabrica(e) ? ' › ' + pxFabrica(e) : ''))).join('') + '</div>'
         : '<div class="px-empty">Nenhum colaborador encontrado.</div>');
     return;
   }
@@ -6730,7 +6915,7 @@ function renderPastas() {
     // mantém a subpasta aberta (pode ter acabado de ser criada/renomeada e os dados ainda não chegaram)
     if (e0) pxPath = Object.assign(pxPathOf(e0), { sub: pxPath.sub || null });
   }
-  const { scope, pais, empresa, funcId, sub } = pxPath;
+  const { scope, pais, empresa, fabrica, funcId, sub } = pxPath;
 
   // Breadcrumb
   pxCrumbs = [{ scope: 'ativos' }];
@@ -6738,14 +6923,15 @@ function renderPastas() {
   if (scope === 'ex') { pxCrumbs.push({ scope: 'ex' }); labels.push('' + PX_EX); }
   if (pais) { pxCrumbs.push({ scope, pais }); labels.push(pais); }
   if (empresa) { pxCrumbs.push({ scope, pais, empresa }); labels.push(empresa); }
+  if (empresa && fabrica) { pxCrumbs.push({ scope, pais, empresa, fabrica }); labels.push(fabrica); }
   let emp = null;
   if (funcId) {
     emp = employees.find(x => x.id === funcId);
-    if (!emp) { pxGo({ scope, pais, empresa }); return; }
-    pxCrumbs.push({ scope, pais, empresa, funcId }); labels.push(emp.nome || '(sem nome)');
+    if (!emp) { pxGo({ scope, pais, empresa, fabrica }); return; }
+    pxCrumbs.push({ scope, pais, empresa, fabrica, funcId }); labels.push(emp.nome || '(sem nome)');
     if (sub) {
       const partes = sub.split(PX_SUB_SEP);
-      partes.forEach((nm, i) => { pxCrumbs.push({ scope, pais, empresa, funcId, sub: partes.slice(0, i + 1).join(PX_SUB_SEP) }); labels.push(nm); });
+      partes.forEach((nm, i) => { pxCrumbs.push({ scope, pais, empresa, fabrica, funcId, sub: partes.slice(0, i + 1).join(PX_SUB_SEP) }); labels.push(nm); });
     }
   }
   const crumbsHtml = labels.map((l, i) => i === labels.length - 1
@@ -6840,22 +7026,44 @@ function renderPastas() {
   } else {
     pxStopDocs();
     const list = pxList(scope);
-    if (empresa) {
-      // ----- Colaboradores da empresa -----
-      const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa).sort(pxNomeOrd);
+    if (empresa && fabrica) {
+      // ----- Colaboradores de uma fábrica -----
+      const emps = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa && pxMesmaFab(e, fabrica)).sort(pxNomeOrd);
       if (isEditor()) actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', scope === 'ex' ? '+ Novo ex-colaborador (com ficha)' : '+ Novo colaborador (com ficha)');
-      actions += pxBtn('zip-empresa', 'Download empresa', isEditor() ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('zip-fabrica', 'Download fábrica', isEditor() ? 'btn-ghost' : 'btn-primary');
       actions += pxBtn('pdf-nomes', 'PDF dos nomes');
+      actions += pxBtn('offline', 'Guardar offline');
+      if (isEditor()) actions += pxBtn('renomear-fabrica', 'Renomear fábrica');
+      if (isAdmin()) actions += pxBtn('eliminar-fabrica', 'Eliminar pasta', 'btn-danger');
+      pxItems = emps.map(e => ({ scope, pais, empresa, fabrica, funcId: e.id }));
+      const novaTile = isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-pasta-colab" title="Criar uma pasta só com o nome (a ficha preenche-se depois)"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Só com o nome</span></button>` : '';
+      body = emps.length || novaTile
+        ? '<div class="px-grid-big">' + novaTile + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
+        : '<div class="px-empty">Pasta vazia.</div>';
+    } else if (empresa) {
+      // ----- Empresa: pastas das fábricas + colaboradores sem fábrica -----
+      const daEmpresa = list.filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa);
+      const fabs = pxFabricasDe(daEmpresa, pais, empresa);
+      const emps = daEmpresa.filter(e => !pxFabrica(e)).sort(pxNomeOrd);
+      if (isEditor()) actions += pxBtn('nova-pasta-colab', '+ Nova pasta', 'btn-primary') + pxBtn('novo-aqui', scope === 'ex' ? '+ Novo ex-colaborador (com ficha)' : '+ Novo colaborador (com ficha)');
+      if (isEditor()) actions += pxBtn('nova-fabrica', '+ Nova fábrica');
+      actions += pxBtn('zip-empresa', fabs.length ? 'Download empresa (todos)' : 'Download empresa', isEditor() ? 'btn-ghost' : 'btn-primary');
+      actions += pxBtn('pdf-nomes', fabs.length ? 'PDF dos nomes (todos)' : 'PDF dos nomes');
       actions += pxBtn('offline', 'Guardar offline');
       if (empresa !== PX_SEM_EMP) {
         if (isEditor()) actions += pxBtn('renomear', 'Renomear pasta');
         if (isAdmin()) actions += pxBtn('eliminar-pasta', 'Eliminar pasta', 'btn-danger');
       }
-      pxItems = emps.map(e => ({ scope, pais, empresa, funcId: e.id }));
+      pxItems = fabs.map(f => ({ scope, pais, empresa, fabrica: f })).concat(emps.map(e => ({ scope, pais, empresa, funcId: e.id })));
       const novaTile = isEditor() ? `<button type="button" class="px-tile px-tile-nova" data-px-act="nova-pasta-colab" title="Criar uma pasta só com o nome (a ficha preenche-se depois)"><span class="px-plus"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="px-name">Nova pasta</span><span class="px-sub">Só com o nome</span></button>` : '';
-      body = emps.length || novaTile
-        ? '<div class="px-grid-big">' + novaTile + emps.map((e, i) => pxCard(i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('') + '</div>'
-        : '<div class="px-empty">Pasta vazia.</div>';
+      const fabCards = fabs.map((f, i) => { const n = daEmpresa.filter(e => pxMesmaFab(e, f)).length; return pxCard(i, scope === 'ex' ? 'ex' : 'fabrica', f, n ? `Fábrica · ${n} colaborador${n === 1 ? '' : 'es'}` : 'Fábrica · pasta vazia'); }).join('');
+      const pessoas = emps.map((e, i) => pxCard(fabs.length + i, 'func', e.nome || '(sem nome)', pxDocCountTxt(e))).join('');
+      if (fabs.length) {
+        body = `<div class="px-section-title">Fábricas</div><div class="px-grid-big">${fabCards}</div>`
+          + ((pessoas || novaTile) ? `<div class="px-section-title">Colaboradores sem fábrica</div><div class="px-grid-big">${novaTile}${pessoas}</div>` : '');
+      } else {
+        body = pessoas || novaTile ? '<div class="px-grid-big">' + novaTile + pessoas + '</div>' : '<div class="px-empty">Pasta vazia.</div>';
+      }
     } else if (pais) {
       // ----- Empresas do país (+ pastas de empresa criadas à mão) -----
       const extras = pxEstDe(scope)[pais] || [];
@@ -7042,7 +7250,7 @@ function pxOnClick(ev) {
   if (t.dataset.pxI !== undefined) {
     const p = pxItems[+t.dataset.pxI]; if (!p) return;
     if (p.limparPesquisa) { const s = document.getElementById('pxSearch'); if (s) s.value = ''; }
-    pxGo({ scope: p.scope, pais: p.pais, empresa: p.empresa, funcId: p.funcId, sub: p.sub || null });
+    pxGo({ scope: p.scope, pais: p.pais, empresa: p.empresa, fabrica: p.fabrica || null, funcId: p.funcId, sub: p.sub || null });
     return;
   }
   if (t.dataset.pxDoc) {
@@ -7056,8 +7264,9 @@ function pxOnClick(ev) {
     else if (t.dataset.pxDoc === 'del' && emp) deleteDocument(emp.id, emp.nome, d.id, docFullName(d), d.bytes);
     return;
   }
-  const { scope, pais, empresa, funcId, sub } = pxPath;
+  const { scope, pais, empresa, fabrica, funcId, sub } = pxPath;
   const emp = funcId ? employees.find(x => x.id === funcId) : null;
+  const naFabrica = e => !fabrica || pxMesmaFab(e, fabrica);
   const hoje = dateStamp();
   switch (t.dataset.pxAct) {
     case 'upload': if (emp) openUploadWidget(emp.id, emp.nome, sub || null); break;
@@ -7076,7 +7285,7 @@ function pxOnClick(ev) {
     case 'offline': {
       let alvo, label;
       if (emp) { alvo = [emp]; label = emp.nome; }
-      else if (empresa) { alvo = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa); label = empresa; }
+      else if (empresa) { alvo = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa && naFabrica(e)); label = fabrica ? empresa + ' › ' + fabrica : empresa; }
       else if (pais) { alvo = pxList(scope).filter(e => pxPais(e) === pais); label = pais; }
       else if (scope === 'ex') { alvo = pxList('ex'); label = PX_EX; }
       else { alvo = employees.slice(); label = 'Todas as pastas'; }
@@ -7085,10 +7294,18 @@ function pxOnClick(ev) {
     }
     case 'editar': if (emp) openForm(emp); break;
     case 'detalhe': if (emp) viewDetail(emp.id); break;
-    case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa, scope); break;
+    case 'nova-pasta-colab': pxNovaPastaColab(pais, empresa, scope, fabrica); break;
+    case 'nova-fabrica': pxNovaFabrica(pais, empresa, scope); break;
+    case 'renomear-fabrica': pxRenomearFabrica(pais, empresa, fabrica, scope); break;
+    case 'eliminar-fabrica': pxEliminarFabrica(pais, empresa, fabrica, scope); break;
+    case 'zip-fabrica': {
+      const emps = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa && pxMesmaFab(e, fabrica));
+      pxDownloadZip(emps.map(e => ({ e, prefix: pxSafe(empresa) + '/' + pxSafe(fabrica) + '/' })), `Legado_${slug(empresa)}_${slug(fabrica)}_${hoje}.zip`);
+      break;
+    }
     case 'pdf-nomes': {
-      const lista = pxList(scope).filter(e => pxPais(e) === pais && (!empresa || pxEmpresa(e) === empresa));
-      const onde = empresa || pais;
+      const lista = pxList(scope).filter(e => pxPais(e) === pais && (!empresa || pxEmpresa(e) === empresa) && naFabrica(e));
+      const onde = empresa ? empresa + (fabrica ? ' › ' + fabrica : '') : pais;
       generateNamesPdf(lista, (scope === 'ex' ? 'Ex-colaboradores' : 'Colaboradores') + ' — ' + onde, empresa ? pais : '', (scope === 'ex' ? 'Ex-colaboradores ' : 'Colaboradores ') + onde);
       break;
     }
@@ -7097,26 +7314,28 @@ function pxOnClick(ev) {
       setSelectValue('f_estado', scope === 'ex' ? 'inativo' : 'ativo');
       if (pais && pais !== PX_SEM_PAIS) setSelectValue('f_cli_pais', pais);
       if (empresa && empresa !== PX_SEM_EMP) setSelectValue('f_cliente', empresa);
+      if (fabrica) document.getElementById('f_fabrica').value = fabrica;
+      fabSugestoes();
       break;
     case 'zip-func':
       if (emp) pxDownloadZip([{ e: emp, prefix: '' }], `Legado_${slug(emp.nome)}_${hoje}.zip`);
       break;
     case 'zip-empresa': {
       const emps = pxList(scope).filter(e => pxPais(e) === pais && pxEmpresa(e) === empresa);
-      pxDownloadZip(emps.map(e => ({ e, prefix: pxSafe(empresa) + '/' })), `Legado_${slug(pais)}_${slug(empresa)}_${hoje}.zip`);
+      pxDownloadZip(emps.map(e => ({ e, prefix: pxSafe(empresa) + '/' + pxFabPref(e) })), `Legado_${slug(pais)}_${slug(empresa)}_${hoje}.zip`);
       break;
     }
     case 'zip-pais': {
       const emps = pxList(scope).filter(e => pxPais(e) === pais);
-      pxDownloadZip(emps.map(e => ({ e, prefix: `${pxSafe(pais)}/${pxSafe(pxEmpresa(e))}/` })), `Legado_${slug(pais)}_${hoje}.zip`);
+      pxDownloadZip(emps.map(e => ({ e, prefix: `${pxSafe(pais)}/${pxSafe(pxEmpresa(e))}/${pxFabPref(e)}` })), `Legado_${slug(pais)}_${hoje}.zip`);
       break;
     }
     case 'zip-ex':
-      pxDownloadZip(pxList('ex').map(e => ({ e, prefix: `${PX_EX}/${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/` })), `Legado_Ex-colaboradores_${hoje}.zip`);
+      pxDownloadZip(pxList('ex').map(e => ({ e, prefix: `${PX_EX}/${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/${pxFabPref(e)}` })), `Legado_Ex-colaboradores_${hoje}.zip`);
       break;
     case 'zip-geral': {
       const entries = employees.map(e => ({
-        e, prefix: (pxIsEx(e) ? PX_EX + '/' : '') + `${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/`
+        e, prefix: (pxIsEx(e) ? PX_EX + '/' : '') + `${pxSafe(pxPais(e))}/${pxSafe(pxEmpresa(e))}/${pxFabPref(e)}`
       }));
       pxDownloadZip(entries, `Legado_Pastas_Geral_${hoje}.zip`);
       break;
